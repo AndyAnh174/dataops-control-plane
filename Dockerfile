@@ -21,6 +21,11 @@ COPY src ./src
 
 RUN uv sync --frozen --no-dev --no-editable
 
+# Build tooling is not needed at runtime and carries avoidable transitive CVEs.
+RUN rm -rf \
+    /usr/local/lib/python3.11/site-packages/setuptools* \
+    /usr/local/lib/python3.11/site-packages/wheel*
+
 USER appuser
 
 EXPOSE 8000
