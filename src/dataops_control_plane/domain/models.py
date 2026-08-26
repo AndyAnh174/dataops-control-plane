@@ -35,3 +35,20 @@ class ProcessedEvent(SQLModel, table=True):
     event_id: str = Field(primary_key=True, max_length=255)
     pipeline_run_id: UUID = Field(foreign_key="pipeline_runs.id", index=True)
     received_at: datetime
+
+
+class Incident(SQLModel, table=True):
+    __tablename__ = "incidents"
+    __table_args__ = (
+        UniqueConstraint(
+            "pipeline_run_id",
+            name="uq_incident_pipeline_run_id",
+        ),
+    )
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    pipeline_run_id: UUID = Field(foreign_key="pipeline_runs.id", index=True)
+    status: str = Field(default="OPEN", index=True, max_length=32)
+    trigger_event_id: str = Field(foreign_key="processed_events.event_id", max_length=255)
+    created_at: datetime
+    updated_at: datetime

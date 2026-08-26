@@ -55,6 +55,36 @@ class PipelineRunRead(BaseModel):
         return value.astimezone(UTC)
 
 
+class IncidentStatus(StrEnum):
+    OPEN = "OPEN"
+    COLLECTING_EVIDENCE = "COLLECTING_EVIDENCE"
+    ANALYZING = "ANALYZING"
+    ACTION_REQUIRED = "ACTION_REQUIRED"
+    RESOLVED = "RESOLVED"
+
+
+class IncidentRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    status: IncidentStatus
+    trigger_event_id: str
+    created_at: datetime
+    updated_at: datetime
+    pipeline_run: PipelineRunRead
+
+    @field_validator("created_at", "updated_at", mode="before")
+    @classmethod
+    def normalize_timestamps(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+
+class IncidentListResponse(BaseModel):
+    items: list[IncidentRead]
+
+
 class PipelineLogEntryCreate(BaseModel):
     occurred_at: datetime
     job_name: str = Field(min_length=1, max_length=255)

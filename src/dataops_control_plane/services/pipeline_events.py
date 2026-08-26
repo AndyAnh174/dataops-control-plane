@@ -4,7 +4,7 @@ from typing import cast
 from sqlmodel import Session, select
 
 from dataops_control_plane.api.schemas import PipelineEventCreate
-from dataops_control_plane.domain.models import PipelineRun, ProcessedEvent
+from dataops_control_plane.domain.models import Incident, PipelineRun, ProcessedEvent
 
 
 class InvalidPipelineTransition(ValueError):
@@ -43,9 +43,34 @@ def create_pipeline_run(session: Session, event: PipelineEventCreate) -> Pipelin
             received_at=datetime.now(UTC),
         )
     )
+    ensure_incident_for_failed_run(session, run, event)
     session.commit()
     session.refresh(run)
     return run
+
+
+def ensure_incident_for_failed_run(
+    session: Session,
+    run: PipelineRun,
+    event: PipelineEventCreate,
+) -> None:
+    if event.status.value != "FAILED":
+        return
+
+    statement = select(Incident).where(Incident.pipeline_run_id == run.id)
+    if session.exec(statement).one_or_none() is not None:
+        return
+
+    now = datetime.now(UTC)
+    session.add(
+        Incident(
+            pipeline_run_id=run.id,
+            status="OPEN",
+            trigger_event_id=event.event_id,
+            created_at=now,
+            updated_at=now,
+        )
+    )
 
 
 def ingest_pipeline_event(
@@ -79,6 +104,7 @@ def ingest_pipeline_event(
             received_at=datetime.now(UTC),
         )
     )
+    ensure_incident_for_failed_run(session, run, event)
     session.commit()
     session.refresh(run)
     return run, False

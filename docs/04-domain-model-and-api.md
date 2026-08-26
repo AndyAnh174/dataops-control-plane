@@ -60,12 +60,11 @@ Unique key đề xuất:
 ```text
 Incident
 ├── id
-├── run_id
-├── type
-├── severity
+├── pipeline_run_id            # unique, một Incident cho mỗi run/attempt
 ├── status
-├── detected_at
-└── resolved_at
+├── trigger_event_id
+├── created_at
+└── updated_at
 
 Evidence
 ├── id
@@ -76,6 +75,11 @@ Evidence
 ├── excerpt
 └── collected_at
 ```
+
+Các trạng thái Incident chuẩn: `OPEN`, `COLLECTING_EVIDENCE`, `ANALYZING`,
+`ACTION_REQUIRED` và `RESOLVED`. M1 tự tạo `OPEN` khi nhận event `FAILED`; `SUCCESS` và
+`CANCELED` không tạo Incident. Unique constraint trên `pipeline_run_id` là lớp bảo vệ cuối
+cùng ngoài kiểm tra idempotency trong service.
 
 ### RCA và recovery
 
@@ -168,6 +172,13 @@ Callback API bổ sung dữ liệu domain-specific mà webhook provider không c
 ```http
 GET  /api/v1/incidents
 GET  /api/v1/incidents/{incident_id}
+```
+
+Hai read endpoint trên đã được triển khai. Response chứa `pipeline_run` lồng bên trong để
+client nhận provider, project, run/attempt, commit, branch, failed stage và timestamp trong
+một lần đọc. Các command endpoint dưới đây thuộc milestone RCA/Recovery:
+
+```http
 POST /api/v1/incidents/{incident_id}/analyze
 POST /api/v1/incidents/{incident_id}/plans/{plan_id}/approve
 POST /api/v1/incidents/{incident_id}/plans/{plan_id}/reject

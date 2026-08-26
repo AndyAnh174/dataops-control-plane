@@ -7,6 +7,7 @@ from sqlalchemy.engine import Engine
 from sqlmodel import SQLModel, create_engine
 
 from dataops_control_plane.api.routes.events import router as events_router
+from dataops_control_plane.api.routes.incidents import router as incidents_router
 from dataops_control_plane.api.routes.logs import router as logs_router
 from dataops_control_plane.api.routes.runs import router as runs_router
 from dataops_control_plane.config import Settings
@@ -51,6 +52,7 @@ def create_app(
         return HealthResponse(status="ok", service="dataops-control-plane")
 
     application.include_router(events_router)
+    application.include_router(incidents_router)
     application.include_router(logs_router)
     application.include_router(runs_router)
     return application

@@ -104,8 +104,9 @@ Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện t�
 ## Khởi chạy phiên bản hiện tại
 
 Phiên bản hiện tại đã có health API, normalized pipeline-event ingestion, idempotency
-theo `event_id`, cập nhật trạng thái run, API đọc run và pipeline-log ingestion/search
-trên Elasticsearch. Log được redact secret trước khi lưu và chống trùng bằng hash ổn định.
+theo `event_id`, cập nhật trạng thái run, API đọc run, tự tạo một Incident `OPEN` khi
+run thất bại, API đọc Incident và pipeline-log ingestion/search trên Elasticsearch.
+Log được redact secret trước khi lưu và chống trùng bằng hash ổn định.
 
 Chạy local bằng Python:
 
@@ -160,6 +161,20 @@ Agent tự lấy repository, commit, branch, run ID và attempt từ GitHub; ch�
 stage; giữ nguyên exit code; đồng thời gửi event và log có correlation về Control Plane.
 Runtime Node 24 đã được GitHub cung cấp nên ứng dụng không cần cài thêm Python hoặc Docker
 chỉ để chạy agent. Các command trong `dataops.yaml` vẫn cần toolchain riêng của dự án.
+
+### Incident API
+
+Mỗi pipeline run có tối đa một Incident. Event `FAILED` đầu tiên tạo Incident ở trạng
+thái `OPEN`; callback lặp lại hoặc một completion event khác của cùng run/attempt không
+tạo bản ghi thứ hai. `SUCCESS` và `CANCELED` không tạo Incident.
+
+```http
+GET /api/v1/incidents
+GET /api/v1/incidents/{incident_id}
+```
+
+Response Incident chứa event kích hoạt, timestamp và toàn bộ metadata của `PipelineRun`
+liên kết để UI hoặc Evidence Collector tiếp tục xử lý.
 
 ### Pipeline log API
 

@@ -89,19 +89,17 @@ stateDiagram-v2
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DETECTED
-    DETECTED --> COLLECTING_EVIDENCE
+    [*] --> OPEN
+    OPEN --> COLLECTING_EVIDENCE
     COLLECTING_EVIDENCE --> ANALYZING
-    ANALYZING --> PLANNED
-    ANALYZING --> ESCALATED
-    PLANNED --> AWAITING_APPROVAL
-    PLANNED --> RECOVERING
-    AWAITING_APPROVAL --> RECOVERING
-    AWAITING_APPROVAL --> REJECTED
-    RECOVERING --> VERIFYING
-    VERIFYING --> RESOLVED
-    VERIFYING --> ESCALATED
+    ANALYZING --> ACTION_REQUIRED
+    ANALYZING --> RESOLVED
+    ACTION_REQUIRED --> RESOLVED
 ```
+
+M1 đã triển khai việc tạo idempotent Incident ở trạng thái `OPEN`. Các transition còn
+lại được worker Evidence/RCA/Recovery bổ sung ở các milestone tiếp theo; không client nào
+được tự ý ghi trực tiếp trạng thái Incident.
 
 ## 3.6 Ví dụ schema drift
 
