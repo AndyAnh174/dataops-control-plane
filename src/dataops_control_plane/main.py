@@ -17,7 +17,9 @@ from dataops_control_plane.services.elasticsearch_logs import ElasticsearchPipel
 from dataops_control_plane.services.evidence import EvidenceSource
 from dataops_control_plane.services.github_evidence import GitHubCommitEvidenceSource
 from dataops_control_plane.services.ollama_embeddings import OllamaEmbeddingProvider
+from dataops_control_plane.services.ollama_rca import OllamaRCAClient
 from dataops_control_plane.services.pipeline_logs import PipelineLogStore
+from dataops_control_plane.services.rca_agent import RCAAgent
 from dataops_control_plane.services.retrieval import HybridRetriever
 
 
@@ -31,6 +33,7 @@ def create_app(
     log_store: PipelineLogStore | None = None,
     evidence_sources: Sequence[EvidenceSource] | None = None,
     hybrid_retriever: HybridRetriever | None = None,
+    rca_agent: RCAAgent | None = None,
 ) -> FastAPI:
     settings = Settings()
     database_engine = engine or create_engine(settings.database_url, pool_pre_ping=True)
@@ -44,6 +47,12 @@ def create_app(
         ElasticsearchKnowledgeStore.from_settings(settings),
         OllamaEmbeddingProvider.from_settings(settings),
     )
+    incident_rca_agent = rca_agent or RCAAgent(
+        knowledge_retriever,
+        OllamaRCAClient.from_settings(settings),
+        prompt_version=settings.rca_prompt_version,
+        context_max_chars=settings.rca_context_max_chars,
+    )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -56,6 +65,7 @@ def create_app(
                 close()
             for evidence_source in provider_evidence_sources:
                 evidence_source.close()
+            incident_rca_agent.close()
             knowledge_retriever.close()
 
     application = FastAPI(
@@ -67,6 +77,7 @@ def create_app(
     application.state.log_store = pipeline_log_store
     application.state.evidence_sources = provider_evidence_sources
     application.state.hybrid_retriever = knowledge_retriever
+    application.state.rca_agent = incident_rca_agent
     application.state.settings = settings
 
     @application.get("/health", tags=["system"])

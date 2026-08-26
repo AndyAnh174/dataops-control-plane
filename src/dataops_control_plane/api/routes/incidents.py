@@ -8,6 +8,7 @@ from dataops_control_plane.api.dependencies import (
     EvidenceSourcesDep,
     HybridRetrieverDep,
     LogStoreDep,
+    RCAAgentDep,
     SessionDep,
     require_agent_token,
 )
@@ -20,11 +21,21 @@ from dataops_control_plane.api.schemas import (
     IncidentRead,
     KnowledgeDocumentReceipt,
     PipelineRunRead,
+    RCAAnalysisReceipt,
+    RCAEvidenceClaim,
+    RCARecommendedAction,
+    RCAReportRead,
 )
-from dataops_control_plane.domain.models import Evidence, Incident, PipelineRun
+from dataops_control_plane.domain.models import Evidence, Incident, PipelineRun, RCAReport
 from dataops_control_plane.services.evidence import (
     collect_incident_evidence,
     list_incident_evidence,
+)
+from dataops_control_plane.services.rca_agent import (
+    InsufficientEvidence,
+    LLMResponseInvalid,
+    LLMUnavailable,
+    RCAValidationError,
 )
 from dataops_control_plane.services.retrieval import (
     EmbeddingUnavailable,
@@ -170,4 +181,89 @@ def index_incident_knowledge(
         result=result.result,
         embedding_model=result.document.embedding_model,
         redaction_count=result.redaction_count,
+    )
+
+
+@router.post(
+    "/{incident_id}/analyze",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(require_agent_token)],
+)
+def analyze_incident(
+    incident_id: Annotated[UUID, Path(description="Incident ID")],
+    session: SessionDep,
+    rca_agent: RCAAgentDep,
+) -> RCAAnalysisReceipt:
+    incident = session.get(Incident, incident_id)
+    if incident is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    try:
+        result = rca_agent.analyze(session, incident)
+    except InsufficientEvidence as exc:
+        incident.status = "ACTION_REQUIRED"
+        session.add(incident)
+        session.commit()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "message": str(exc),
+                "missing_information": list(exc.missing_information),
+            },
+        ) from exc
+    except (EmbeddingUnavailable, KnowledgeStoreUnavailable, LLMUnavailable) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+    except (LLMResponseInvalid, RCAValidationError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+    return RCAAnalysisReceipt(
+        **_report_read(result.report).model_dump(),
+        duplicate=result.duplicate,
+    )
+
+
+@router.get(
+    "/{incident_id}/rca",
+    dependencies=[Depends(require_agent_token)],
+)
+def get_incident_rca(
+    incident_id: Annotated[UUID, Path(description="Incident ID")],
+    session: SessionDep,
+) -> RCAReportRead:
+    if session.get(Incident, incident_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    report = session.exec(
+        select(RCAReport)
+        .where(RCAReport.incident_id == incident_id)
+        .order_by(RCAReport.created_at.desc())
+    ).first()
+    if report is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="RCA report not found")
+    return _report_read(report)
+
+
+def _report_read(report: RCAReport) -> RCAReportRead:
+    return RCAReportRead(
+        id=report.id,
+        incident_id=report.incident_id,
+        analysis_status=report.analysis_status,
+        incident_type=report.incident_type,
+        root_cause=report.root_cause,
+        confidence=report.confidence,
+        evidence=[RCAEvidenceClaim.model_validate(item) for item in report.evidence_claims],
+        knowledge_document_ids=report.knowledge_document_ids,
+        recommended_action=RCARecommendedAction.model_validate(report.recommended_action),
+        missing_information=report.missing_information,
+        model_name=report.model_name,
+        embedding_model=report.embedding_model,
+        prompt_version=report.prompt_version,
+        input_checksum=report.input_checksum,
+        llm_calls=report.llm_calls,
+        prompt_tokens=report.prompt_tokens,
+        completion_tokens=report.completion_tokens,
+        duration_ms=report.duration_ms,
+        graph_trace=report.graph_trace,
+        created_at=report.created_at,
     )

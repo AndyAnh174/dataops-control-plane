@@ -53,9 +53,9 @@ Push một commit gây lỗi
 ### Giai đoạn 5 — Agentic Hybrid RAG
 
 - BM25 + vector retrieval + filter/RRF. ✅ M4
-- LangGraph workflow.
-- Structured RCA output.
-- Evidence validation.
+- LangGraph workflow tuần tự, một LLM call. ✅ M5
+- Structured RCA output bằng Ollama JSON Schema. ✅ M5
+- Evidence citation/knowledge/approval validation. ✅ M5
 
 ### Giai đoạn 6 — Recovery và verification
 

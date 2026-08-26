@@ -354,3 +354,95 @@ class HybridSearchResponse(BaseModel):
     fusion: HybridSearchFusionRead
     redaction_count: int
     items: list[HybridSearchItemRead]
+
+
+class RCAIncidentType(StrEnum):
+    SCHEMA_DRIFT = "SCHEMA_DRIFT"
+    MISSING_VALUES = "MISSING_VALUES"
+    DATA_QUALITY_VALIDITY = "DATA_QUALITY_VALIDITY"
+    SOURCE_TIMEOUT = "SOURCE_TIMEOUT"
+    IMAGE_CRASH = "IMAGE_CRASH"
+    VOLUME_ANOMALY = "VOLUME_ANOMALY"
+    RESOURCE_EXHAUSTION = "RESOURCE_EXHAUSTION"
+    UNKNOWN = "UNKNOWN"
+
+
+class RecoveryActionType(StrEnum):
+    RETRY = "RETRY"
+    QUARANTINE = "QUARANTINE"
+    ROLLBACK_IMAGE = "ROLLBACK_IMAGE"
+    CREATE_PR = "CREATE_PR"
+    ESCALATE = "ESCALATE"
+    NO_ACTION = "NO_ACTION"
+
+
+class RCAEvidenceClaim(BaseModel):
+    citation_id: str = Field(min_length=5, max_length=64, pattern=r"^EVD-[A-Za-z0-9-]+$")
+    claim: str = Field(min_length=1, max_length=1_000)
+
+
+class RCARecommendedAction(BaseModel):
+    type: RecoveryActionType
+    rationale: str = Field(min_length=1, max_length=2_000)
+    parameters: dict[str, JsonValue] = Field(default_factory=dict)
+    requires_human_approval: bool
+
+    @model_validator(mode="after")
+    def require_approval_for_mutating_actions(self) -> "RCARecommendedAction":
+        non_mutating = {RecoveryActionType.ESCALATE, RecoveryActionType.NO_ACTION}
+        if self.type not in non_mutating and not self.requires_human_approval:
+            raise ValueError("Mutating recovery actions require human approval")
+        return self
+
+
+class RCAOutput(BaseModel):
+    incident_type: RCAIncidentType
+    root_cause: str = Field(min_length=1, max_length=4_000)
+    confidence: float = Field(ge=0, le=1)
+    evidence: list[RCAEvidenceClaim] = Field(min_length=1, max_length=20)
+    knowledge_document_ids: list[str] = Field(default_factory=list, max_length=5)
+    recommended_action: RCARecommendedAction
+    missing_information: list[str] = Field(default_factory=list, max_length=20)
+
+    @field_validator("knowledge_document_ids")
+    @classmethod
+    def require_unique_knowledge_ids(cls, value: list[str]) -> list[str]:
+        if len(value) != len(set(value)):
+            raise ValueError("knowledge document ids must be unique")
+        if any(len(document_id) != 64 for document_id in value):
+            raise ValueError("knowledge document ids must be SHA-256 identifiers")
+        return value
+
+
+class RCAReportRead(BaseModel):
+    id: UUID
+    incident_id: UUID
+    analysis_status: str
+    incident_type: RCAIncidentType
+    root_cause: str
+    confidence: float
+    evidence: list[RCAEvidenceClaim]
+    knowledge_document_ids: list[str]
+    recommended_action: RCARecommendedAction
+    missing_information: list[str]
+    model_name: str
+    embedding_model: str
+    prompt_version: str
+    input_checksum: str
+    llm_calls: int
+    prompt_tokens: int
+    completion_tokens: int
+    duration_ms: int
+    graph_trace: list[str]
+    created_at: datetime
+
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def normalize_created_at(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+
+class RCAAnalysisReceipt(RCAReportRead):
+    duplicate: bool

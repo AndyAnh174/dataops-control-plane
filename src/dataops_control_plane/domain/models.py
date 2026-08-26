@@ -103,3 +103,37 @@ class Evidence(SQLModel, table=True):
         sa_column=Column(JSON, nullable=False),
     )
     collected_at: datetime
+
+
+class RCAReport(SQLModel, table=True):
+    __tablename__ = "rca_reports"
+    __table_args__ = (
+        UniqueConstraint(
+            "incident_id",
+            "input_checksum",
+            "model_name",
+            "prompt_version",
+            name="uq_rca_report_reproducible_input",
+        ),
+    )
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    incident_id: UUID = Field(foreign_key="incidents.id", index=True)
+    analysis_status: str = Field(max_length=32)
+    incident_type: str = Field(index=True, max_length=64)
+    root_cause: str = Field(sa_column=Column(Text, nullable=False))
+    confidence: float
+    evidence_claims: list[dict[str, object]] = Field(sa_column=Column(JSON, nullable=False))
+    knowledge_document_ids: list[str] = Field(sa_column=Column(JSON, nullable=False))
+    recommended_action: dict[str, object] = Field(sa_column=Column(JSON, nullable=False))
+    missing_information: list[str] = Field(sa_column=Column(JSON, nullable=False))
+    input_checksum: str = Field(index=True, max_length=64)
+    model_name: str = Field(max_length=128)
+    embedding_model: str = Field(max_length=128)
+    prompt_version: str = Field(max_length=64)
+    llm_calls: int = Field(default=1, ge=0)
+    prompt_tokens: int = Field(default=0, ge=0)
+    completion_tokens: int = Field(default=0, ge=0)
+    duration_ms: int = Field(default=0, ge=0)
+    graph_trace: list[str] = Field(sa_column=Column(JSON, nullable=False))
+    created_at: datetime

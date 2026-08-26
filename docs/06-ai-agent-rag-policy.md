@@ -16,24 +16,22 @@ Agent thực hiện:
 
 Agent không trực tiếp thực thi recovery.
 
-## 6.2 LangGraph workflow dự kiến
+## 6.2 LangGraph workflow M5
 
 ```mermaid
 flowchart TD
-    START[Load incident] --> CLASSIFY[Classify failure]
-    CLASSIFY --> PLAN[Plan evidence collection]
-    PLAN --> COLLECT[Collect logs, diff, reports, metrics]
-    COLLECT --> RETRIEVE[Hybrid retrieval]
-    RETRIEVE --> CHECK{Enough evidence?}
-    CHECK -- No --> MORE[Request bounded additional evidence]
-    MORE --> COLLECT
-    CHECK -- Yes --> RCA[Generate structured RCA]
-    RCA --> VALIDATE[Schema and evidence validation]
-    VALIDATE --> PROPOSE[Propose recovery]
-    PROPOSE --> POLICY[Send to Policy Engine]
+    START[Load incident and current evidence] --> CHECK{Evidence gate}
+    CHECK -- Missing --> HUMAN[Action required; no LLM call]
+    CHECK -- Enough --> RETRIEVE[Hybrid retrieval]
+    RETRIEVE --> RCA[One structured Gemma call]
+    RCA --> VALIDATE[Schema, citation, knowledge and approval validation]
+    VALIDATE --> STORE[Persist versioned RCA]
+    STORE --> HUMAN[Action required for M6 policy]
 ```
 
-Vòng lấy thêm bằng chứng phải giới hạn số bước và thời gian.
+M5 dùng graph tuần tự có giới hạn, không có tool loop. Evidence/retrieval là node
+deterministic; `gemma4:e2b` chỉ được gọi một lần. Retry cùng input checksum/model/prompt
+trả report đã lưu mà không gọi embedding hoặc LLM lại.
 
 ## 6.3 Hybrid RAG
 
@@ -132,6 +130,10 @@ Verifier
 ```
 
 LLM không được tự gọi provider credential hoặc Kubernetes credential.
+
+Trong M5, mọi action thay đổi trạng thái (`RETRY`, `QUARANTINE`, `ROLLBACK_IMAGE`,
+`CREATE_PR`) bắt buộc có `requires_human_approval=true`. Policy Engine và Recovery
+Executor chỉ được nối vào graph ở M6.
 
 ## 6.7 Bảo vệ dữ liệu và prompt
 

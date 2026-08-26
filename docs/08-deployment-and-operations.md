@@ -70,8 +70,11 @@ làm mất metadata/log evidence; collector ghi warning và tiếp tục với p
 Cấu hình LLM chỉ nằm trên DataOps server:
 
 ```env
-DATAOPS_LLM_BASE_URL=http://ollama:11434
+DATAOPS_LLM_URL=http://ollama:11434
 DATAOPS_LLM_MODEL=gemma4:e2b
+DATAOPS_LLM_TIMEOUT_SECONDS=300
+DATAOPS_RCA_PROMPT_VERSION=rca-v1
+DATAOPS_RCA_CONTEXT_MAX_CHARS=16000
 DATAOPS_EMBEDDING_URL=http://ollama:11434
 DATAOPS_EMBEDDING_MODEL=bge-m3:567m
 DATAOPS_EMBEDDING_DIMENSIONS=1024
@@ -81,6 +84,11 @@ DATAOPS_EMBEDDING_TIMEOUT_SECONDS=60
 Ollama phải bật embedding API. Không public trực tiếp cổng `11434`; chỉ Control Plane
 được phép truy cập qua private network hoặc firewall allowlist. Không commit file secret
 vào repository.
+
+RCA request được xử lý tuần tự: một embedding query cho retrieval rồi một `/api/chat`
+structured-output request. Không chạy nhiều incident đồng thời trên model server nhỏ nếu
+chưa có queue/concurrency limit. Timeout không làm mất incident/evidence; report chỉ được
+commit sau khi schema và citation validation hoàn tất.
 
 ## 8.5 Logging và correlation
 

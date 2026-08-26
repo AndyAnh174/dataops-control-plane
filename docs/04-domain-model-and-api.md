@@ -104,13 +104,22 @@ redact lại evidence trước khi commit dù log ingestion đã redact trước
 
 ```text
 RCAReport
+├── id
 ├── incident_id
+├── analysis_status
 ├── incident_type
 ├── root_cause
 ├── confidence
-├── evidence_ids[]
+├── evidence_claims[]
+├── knowledge_document_ids[]
+├── recommended_action
+├── missing_information[]
+├── input_checksum
 ├── model_name
+├── embedding_model
 ├── prompt_version
+├── token/latency metrics
+├── graph_trace[]
 └── created_at
 
 RecoveryPlan
@@ -197,15 +206,18 @@ GET  /api/v1/incidents
 GET  /api/v1/incidents/{incident_id}
 POST /api/v1/incidents/{incident_id}/collect-evidence
 GET  /api/v1/incidents/{incident_id}/evidence
+POST /api/v1/incidents/{incident_id}/index-knowledge
+POST /api/v1/incidents/{incident_id}/analyze
+GET  /api/v1/incidents/{incident_id}/rca
 ```
 
-Bốn endpoint trên đã được triển khai. Response Incident chứa `pipeline_run` lồng bên trong;
+Các endpoint trên đã được triển khai đến M5. Response Incident chứa `pipeline_run` lồng bên trong;
 Evidence response chứa citation/checksum/provenance. Collect/read Evidence yêu cầu Bearer
 token. Collector giữ partial bundle và trả warning có cấu trúc khi Elasticsearch/GitHub
-không sẵn sàng. Các command endpoint dưới đây thuộc milestone RCA/Recovery:
+không sẵn sàng. Analyze chạy LangGraph tuần tự, lưu RCA versioned và không gọi lại LLM
+khi input/model/prompt không đổi. Các command endpoint dưới đây thuộc milestone Recovery:
 
 ```http
-POST /api/v1/incidents/{incident_id}/analyze
 POST /api/v1/incidents/{incident_id}/plans/{plan_id}/approve
 POST /api/v1/incidents/{incident_id}/plans/{plan_id}/reject
 POST /api/v1/incidents/{incident_id}/escalate
@@ -249,6 +261,8 @@ GET /api/v1/incidents/{incident_id}/audit
 ```
 
 Nếu không có evidence ID hoặc thiếu thông tin bắt buộc, report không được chuyển thẳng sang auto-recovery.
+M5 còn kiểm tra mọi citation thuộc đúng incident hiện tại, mọi knowledge ID thuộc kết quả
+retrieval và action thay đổi trạng thái phải yêu cầu human approval.
 
 ## 4.5 Idempotency và correlation
 

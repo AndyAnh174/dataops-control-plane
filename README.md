@@ -90,6 +90,7 @@ Push code
 - [MVP, đánh giá và lộ trình](docs/07-mvp-roadmap-and-evaluation.md)
 - [Triển khai và vận hành](docs/08-deployment-and-operations.md)
 - [Hybrid Retrieval M4](docs/09-hybrid-retrieval.md)
+- [Agentic RCA M5](docs/10-agentic-rca.md)
 
 ## Trạng thái
 
@@ -116,6 +117,10 @@ M4 bổ sung knowledge index riêng trên Elasticsearch và Hybrid Retriever. Ru
 incident summary, postmortem và code chunk chọn lọc được tìm song song bằng BM25 và
 vector `bge-m3:567m` 1024 chiều, sau đó hợp nhất bằng Reciprocal Rank Fusion (RRF).
 Raw log vẫn chỉ dùng keyword/filter và không bị embedding từng dòng.
+
+M5 bổ sung LangGraph RCA Agent. Agent kiểm tra evidence hiện tại, truy xuất knowledge,
+gọi `gemma4:e2b` đúng một lần với JSON Schema, xác minh citation/knowledge ID rồi lưu
+RCA report versioned vào PostgreSQL. Agent chỉ đề xuất; không thực thi recovery.
 
 Chạy local bằng Python:
 
@@ -261,6 +266,22 @@ Mọi nội dung được redact trước khi gửi tới Ollama. Elasticsearch 
 trong `knowledge-dataops-v1`, truy cập qua alias `knowledge-dataops`; embedding không
 được trả trong API. Chi tiết contract và cách kiểm thử ở
 [docs/09-hybrid-retrieval.md](docs/09-hybrid-retrieval.md).
+
+### Agentic RCA API
+
+Sau khi incident đã thu evidence, chạy và đọc RCA bằng cùng Bearer token:
+
+```http
+POST /api/v1/incidents/{incident_id}/analyze
+GET  /api/v1/incidents/{incident_id}/rca
+Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
+```
+
+Output gồm `incident_type`, `root_cause`, `confidence`, claim gắn citation,
+knowledge document IDs, recommended action, missing information, model/prompt version,
+token/latency metrics và graph trace. Retry với cùng evidence/model/prompt trả
+`duplicate: true` và không gọi LLM lần hai. Chi tiết ở
+[docs/10-agentic-rca.md](docs/10-agentic-rca.md).
 
 `DATAOPS_GITHUB_TOKEN` là tùy chọn với repository public và cần thiết với repository
 private hoặc khi cần rate limit cao hơn. Token chỉ cần quyền đọc Contents.

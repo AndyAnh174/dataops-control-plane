@@ -8,6 +8,7 @@ from sqlmodel import Session
 
 from dataops_control_plane.services.evidence import EvidenceSource
 from dataops_control_plane.services.pipeline_logs import PipelineLogStore
+from dataops_control_plane.services.rca_agent import RCAAgent
 from dataops_control_plane.services.retrieval import HybridRetriever
 
 
@@ -38,6 +39,13 @@ def get_hybrid_retriever(request: Request) -> HybridRetriever:
 
 
 HybridRetrieverDep = Annotated[HybridRetriever, Depends(get_hybrid_retriever)]
+
+
+def get_rca_agent(request: Request) -> RCAAgent:
+    return request.app.state.rca_agent
+
+
+RCAAgentDep = Annotated[RCAAgent, Depends(get_rca_agent)]
 
 _agent_bearer = HTTPBearer(auto_error=False)
 
