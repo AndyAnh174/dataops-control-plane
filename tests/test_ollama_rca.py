@@ -61,6 +61,7 @@ def test_ollama_rca_uses_one_non_streaming_structured_chat_request() -> None:
             {"role": "user", "content": "incident evidence"},
         ],
         "stream": False,
+        "think": False,
         "format": OUTPUT_SCHEMA,
         "options": {"temperature": 0, "num_ctx": 8_192, "num_predict": 1_200},
     }

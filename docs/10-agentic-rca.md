@@ -22,8 +22,9 @@ START
   log, Data Quality report hoặc commit diff. Thiếu thì dừng trước retrieval/LLM.
 - `retrieve`: tìm tối đa 5 runbook/incident cũ/postmortem/code chunk cùng project,
   provider và incident type; loại chính incident đang phân tích.
-- `generate`: đúng một `POST /api/chat`, `stream=false`, temperature 0,
-  `num_ctx=8192`, `num_predict=1200` và JSON Schema.
+- `generate`: đúng một `POST /api/chat`, `stream=false`, `think=false`, temperature 0,
+  `num_ctx=8192`, `num_predict=1200` và JSON Schema. Tắt thinking để ngân sách output
+  dành cho JSON cuối cùng thay vì reasoning trace không được lưu.
 - `validate`: Pydantic schema, citation allowlist, knowledge ID allowlist và human-approval
   rule. Chỉ report hợp lệ mới được commit.
 

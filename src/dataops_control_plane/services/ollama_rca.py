@@ -51,6 +51,7 @@ class OllamaRCAClient:
                         {"role": "user", "content": user_prompt},
                     ],
                     "stream": False,
+                    "think": False,
                     "format": dict(schema),
                     "options": {
                         "temperature": 0,
