@@ -13,6 +13,7 @@ from dataops_control_plane.services.pipeline_logs import redact_log_text, redact
 
 MAX_KNOWLEDGE_CONTENT_CHARS = 50_000
 MAX_INCIDENT_SUMMARY_CHARS = 20_000
+MAX_EMBEDDING_INPUT_CHARS = 8_000
 DEFAULT_RANK_CONSTANT = 60
 
 
@@ -200,7 +201,7 @@ class HybridRetriever:
             title_redactions + content_redactions + source_uri_redactions + metadata_redactions
         )
 
-        embedding_input = f"{safe_title}\n{safe_content}"
+        embedding_input = _bounded_embedding_input(safe_title, safe_content)
         embedding = self._embedder.embed([embedding_input])[0]
         now = datetime.now(UTC)
         identity = f"{document_type}\0{safe_source_uri}"
@@ -351,6 +352,19 @@ def _optional_metadata_string(evidence: Sequence[Evidence], key: str) -> str | N
 def _document_checksum(**values: object) -> str:
     canonical = json.dumps(values, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def _bounded_embedding_input(title: str, content: str) -> str:
+    prefix = f"{title}\n"
+    content_budget = MAX_EMBEDDING_INPUT_CHARS - len(prefix)
+    if len(content) <= content_budget:
+        return prefix + content
+
+    marker = "\n...[MIDDLE OMITTED FOR EMBEDDING]...\n"
+    excerpt_budget = content_budget - len(marker)
+    head_chars = excerpt_budget // 2
+    tail_chars = excerpt_budget - head_chars
+    return prefix + content[:head_chars] + marker + content[-tail_chars:]
 
 
 def _optional_int(value: object) -> int | None:

@@ -24,9 +24,13 @@ class DeterministicEmbeddingProvider:
     model_name = "test-bge-m3"
     dimensions = 3
 
+    def __init__(self) -> None:
+        self.embedded_texts: list[str] = []
+
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
         embeddings: list[list[float]] = []
         for text in texts:
+            self.embedded_texts.append(text)
             if "leaked-secret" in text:
                 raise AssertionError("Unredacted content reached the embedding provider")
             lowered = text.casefold()
@@ -175,6 +179,28 @@ def test_rrf_rewards_a_document_found_by_both_retrievers_and_keeps_diagnostics()
     assert results[0].vector_rank == 1
     assert results[0].vector_score == 0.95
     assert results[0].matched_by == ("keyword", "vector")
+
+
+def test_long_document_keeps_full_bm25_text_but_bounds_the_embedding_input() -> None:
+    """Catches a valid document exceeding BGE-M3 context when truncate is disabled."""
+    store = InMemoryKnowledgeStore()
+    embedder = DeterministicEmbeddingProvider()
+    retriever = HybridRetriever(store, embedder)
+    content = "amount range " + ("middle-evidence " * 1_500) + "schema drift at the end"
+
+    result = retriever.index_document(
+        document_type="INCIDENT_SUMMARY",
+        title="Long incident",
+        content=content,
+        source_uri="dataops://incidents/long-test",
+    )
+
+    assert result.document.content == content
+    assert store.documents[result.document.document_id].content == content
+    assert len(embedder.embedded_texts) == 1
+    assert len(embedder.embedded_texts[0]) <= 8_000
+    assert "amount range" in embedder.embedded_texts[0]
+    assert "schema drift at the end" in embedder.embedded_texts[0]
 
 
 @pytest.fixture

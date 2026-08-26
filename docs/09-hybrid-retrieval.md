@@ -15,6 +15,11 @@ upsert. Checksum phản ánh nội dung và metadata đã redact. Các filter hi
 `project_ref`, `document_types`, `provider`, `incident_type`, `environment` và
 `created_after`.
 
+Full text đã redact (tối đa 50.000 ký tự, riêng incident summary là 20.000) được giữ cho
+BM25. Đầu vào dense embedding dùng excerpt head+tail tối đa 8.000 ký tự để không vượt
+context của model trong khi `truncate=false`; marker cho biết phần giữa chỉ bị lược khỏi
+embedding, không bị xóa khỏi tài liệu lưu trữ.
+
 ## 9.2 Luồng request
 
 ```text
