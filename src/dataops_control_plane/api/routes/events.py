@@ -2,10 +2,8 @@ from fastapi import APIRouter, HTTPException, status
 
 from dataops_control_plane.api.dependencies import SessionDep
 from dataops_control_plane.api.schemas import PipelineEventCreate, PipelineEventReceipt
-from dataops_control_plane.services.pipeline_events import (
-    InvalidPipelineTransition,
-    ingest_pipeline_event as ingest_event,
-)
+from dataops_control_plane.services.pipeline_events import InvalidPipelineTransition
+from dataops_control_plane.services.pipeline_events import ingest_pipeline_event as ingest_event
 
 router = APIRouter(prefix="/api/v1/events", tags=["events"])
 

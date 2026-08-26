@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import cast
 
 from sqlmodel import Session, select
@@ -40,7 +40,7 @@ def create_pipeline_run(session: Session, event: PipelineEventCreate) -> Pipelin
         ProcessedEvent(
             event_id=event.event_id,
             pipeline_run_id=run.id,
-            received_at=datetime.now(timezone.utc),
+            received_at=datetime.now(UTC),
         )
     )
     session.commit()
@@ -76,7 +76,7 @@ def ingest_pipeline_event(
         ProcessedEvent(
             event_id=event.event_id,
             pipeline_run_id=run.id,
-            received_at=datetime.now(timezone.utc),
+            received_at=datetime.now(UTC),
         )
     )
     session.commit()
