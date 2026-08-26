@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 
 from dataops_control_plane.api.dependencies import (
     EvidenceSourcesDep,
+    HybridRetrieverDep,
     LogStoreDep,
     SessionDep,
     require_agent_token,
@@ -17,12 +18,17 @@ from dataops_control_plane.api.schemas import (
     EvidenceRead,
     IncidentListResponse,
     IncidentRead,
+    KnowledgeDocumentReceipt,
     PipelineRunRead,
 )
 from dataops_control_plane.domain.models import Evidence, Incident, PipelineRun
 from dataops_control_plane.services.evidence import (
     collect_incident_evidence,
     list_incident_evidence,
+)
+from dataops_control_plane.services.retrieval import (
+    EmbeddingUnavailable,
+    KnowledgeStoreUnavailable,
 )
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
@@ -135,4 +141,33 @@ def get_evidence(
             build_evidence_read(evidence)
             for evidence in list_incident_evidence(session, incident_id)
         ]
+    )
+
+
+@router.post(
+    "/{incident_id}/index-knowledge",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(require_agent_token)],
+)
+def index_incident_knowledge(
+    incident_id: Annotated[UUID, Path(description="Incident ID")],
+    session: SessionDep,
+    retriever: HybridRetrieverDep,
+) -> KnowledgeDocumentReceipt:
+    incident = session.get(Incident, incident_id)
+    if incident is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    try:
+        result = retriever.index_incident(session, incident)
+    except (EmbeddingUnavailable, KnowledgeStoreUnavailable) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+    return KnowledgeDocumentReceipt(
+        document_id=result.document.document_id,
+        document_type=result.document.document_type,
+        checksum=result.document.checksum,
+        result=result.result,
+        embedding_model=result.document.embedding_model,
+        redaction_count=result.redaction_count,
     )

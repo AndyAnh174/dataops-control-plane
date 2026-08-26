@@ -19,5 +19,9 @@ class Settings(BaseSettings):
     elasticsearch_ca_certs: str | None = None
     elasticsearch_verify_certs: bool = True
     elasticsearch_log_retention: str = "30d"
+    embedding_url: str = "http://localhost:11434"
+    embedding_model: str = "bge-m3:567m"
+    embedding_dimensions: int = 1024
+    embedding_timeout_seconds: float = 60.0
     github_api_url: str = "https://api.github.com"
     github_token: SecretStr | None = None

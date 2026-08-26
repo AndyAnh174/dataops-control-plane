@@ -89,6 +89,7 @@ Push code
 - [AI Agent, RAG và Policy Engine](docs/06-ai-agent-rag-policy.md)
 - [MVP, đánh giá và lộ trình](docs/07-mvp-roadmap-and-evaluation.md)
 - [Triển khai và vận hành](docs/08-deployment-and-operations.md)
+- [Hybrid Retrieval M4](docs/09-hybrid-retrieval.md)
 
 ## Trạng thái
 
@@ -110,6 +111,11 @@ Evidence Collector gom metadata run, failed-stage logs, GitHub commit diff và D
 thành citation có checksum. Agent có thể upload report trước khi stage thất bại; Control Plane lưu
 report theo run để gắn vào Incident sau đó. Log/report/evidence được redact secret, giới hạn kích
 thước và chống trùng bằng hash ổn định.
+
+M4 bổ sung knowledge index riêng trên Elasticsearch và Hybrid Retriever. Runbook,
+incident summary, postmortem và code chunk chọn lọc được tìm song song bằng BM25 và
+vector `bge-m3:567m` 1024 chiều, sau đó hợp nhất bằng Reciprocal Rank Fusion (RRF).
+Raw log vẫn chỉ dùng keyword/filter và không bị embedding từng dòng.
 
 Chạy local bằng Python:
 
@@ -200,6 +206,7 @@ Thu thập và đọc evidence yêu cầu cùng Bearer token của Agent:
 ```http
 POST /api/v1/incidents/{incident_id}/collect-evidence
 GET  /api/v1/incidents/{incident_id}/evidence
+POST /api/v1/incidents/{incident_id}/index-knowledge
 Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
 ```
 
@@ -210,6 +217,50 @@ Log/diff bị giới hạn 20.000 ký tự; retry cùng nội dung trả duplica
 mới. Elasticsearch hoặc GitHub tạm lỗi được trả dưới dạng warning, còn evidence cục bộ
 vẫn được giữ. Incident chỉ chuyển sang `ANALYZING` khi có log evidence; nếu thiếu log thì
 chuyển `ACTION_REQUIRED`.
+
+### Hybrid Retrieval API
+
+Nạp một runbook hoặc tài liệu đã kiểm duyệt:
+
+```http
+POST /api/v1/retrieval/documents
+Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
+Content-Type: application/json
+
+{
+  "document_type": "RUNBOOK",
+  "title": "Amount range violation",
+  "content": "Quarantine rows outside the accepted amount range.",
+  "source_uri": "https://github.com/example/project/blob/main/runbooks/amount-range.md",
+  "project_ref": "example/project",
+  "provider": "github",
+  "incident_type": "data-quality",
+  "environment": "production",
+  "version": "1.0"
+}
+```
+
+Tìm kiếm có filter, kết quả chứa hạng/điểm riêng của cả hai nhánh để đánh giá retrieval:
+
+```http
+POST /api/v1/retrieval/search
+Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
+Content-Type: application/json
+
+{
+  "query": "amount exceeds accepted range",
+  "top_k": 5,
+  "filters": {
+    "project_ref": "example/project",
+    "document_types": ["RUNBOOK", "INCIDENT_SUMMARY"]
+  }
+}
+```
+
+Mọi nội dung được redact trước khi gửi tới Ollama. Elasticsearch lưu tài liệu và vector
+trong `knowledge-dataops-v1`, truy cập qua alias `knowledge-dataops`; embedding không
+được trả trong API. Chi tiết contract và cách kiểm thử ở
+[docs/09-hybrid-retrieval.md](docs/09-hybrid-retrieval.md).
 
 `DATAOPS_GITHUB_TOKEN` là tùy chọn với repository public và cần thiết với repository
 private hoặc khi cần rate limit cao hơn. Token chỉ cần quyền đọc Contents.
@@ -267,7 +318,7 @@ Chạy integration test thật với Elasticsearch local:
 
 ```powershell
 $env:DATAOPS_TEST_ELASTICSEARCH_URL = "http://127.0.0.1:9201"
-uv run pytest tests/test_elasticsearch_logs.py
+uv run pytest tests/test_elasticsearch_logs.py tests/test_elasticsearch_knowledge.py
 ```
 
 ## Container image

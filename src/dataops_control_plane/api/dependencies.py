@@ -8,6 +8,7 @@ from sqlmodel import Session
 
 from dataops_control_plane.services.evidence import EvidenceSource
 from dataops_control_plane.services.pipeline_logs import PipelineLogStore
+from dataops_control_plane.services.retrieval import HybridRetriever
 
 
 def get_session(request: Request) -> Iterator[Session]:
@@ -30,6 +31,13 @@ def get_evidence_sources(request: Request) -> Sequence[EvidenceSource]:
 
 
 EvidenceSourcesDep = Annotated[Sequence[EvidenceSource], Depends(get_evidence_sources)]
+
+
+def get_hybrid_retriever(request: Request) -> HybridRetriever:
+    return request.app.state.hybrid_retriever
+
+
+HybridRetrieverDep = Annotated[HybridRetriever, Depends(get_hybrid_retriever)]
 
 _agent_bearer = HTTPBearer(auto_error=False)
 

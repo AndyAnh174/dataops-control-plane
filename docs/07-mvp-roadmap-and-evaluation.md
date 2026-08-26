@@ -52,7 +52,7 @@ Push một commit gây lỗi
 
 ### Giai đoạn 5 — Agentic Hybrid RAG
 
-- BM25 + vector retrieval + filter/RRF.
+- BM25 + vector retrieval + filter/RRF. ✅ M4
 - LangGraph workflow.
 - Structured RCA output.
 - Evidence validation.

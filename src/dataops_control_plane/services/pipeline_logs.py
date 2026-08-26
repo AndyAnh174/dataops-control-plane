@@ -24,6 +24,9 @@ _SECRET_PATTERNS = (
         r"(?P<password>[^@\s/]+)(?=@)"
     ),
 )
+_SECRET_FIELD_PATTERN = re.compile(
+    r"(?i)^(password|passwd|pwd|token|access_token|refresh_token|api[_-]?key|secret|authorization)$"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,8 +114,17 @@ def redact_log_value(value: object) -> tuple[object, int]:
         redacted_mapping: dict[str, object] = {}
         total_redactions = 0
         for key, item in value.items():
+            string_key = str(key)
+            if _SECRET_FIELD_PATTERN.fullmatch(string_key) and item is not None:
+                redacted_item, redaction_count = redact_log_value(item)
+                if redaction_count == 0:
+                    redacted_item = REDACTION_MARKER
+                    redaction_count = 1
+                redacted_mapping[string_key] = redacted_item
+                total_redactions += redaction_count
+                continue
             redacted_item, redaction_count = redact_log_value(item)
-            redacted_mapping[str(key)] = redacted_item
+            redacted_mapping[string_key] = redacted_item
             total_redactions += redaction_count
         return redacted_mapping, total_redactions
     return value, 0

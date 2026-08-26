@@ -43,6 +43,9 @@ Baseline đã chốt cho MVP:
 - Embedding: `bge-m3:567m`, dense vector 1024 chiều.
 - Raw log: BM25 + metadata/time filter; không embedding từng dòng.
 - Runbook, incident summary và code chunk chọn lọc: hybrid BM25 + dense vector.
+- Hai nhánh được xếp hạng độc lập rồi hợp nhất ở ứng dụng bằng RRF với
+  `rank_constant=60`; không cộng trực tiếp điểm BM25 và cosine.
+- Index vật lý: `knowledge-dataops-v1`; alias ổn định: `knowledge-dataops`.
 
 ### BM25 phù hợp với
 
@@ -146,4 +149,5 @@ LLM không được tự gọi provider credential hoặc Kubernetes credential.
 - Truy xuất top-k nhỏ rồi rerank.
 - Chỉ lấy file liên quan từ stack trace và commit diff.
 - Dùng timeout, token budget và max graph steps.
-- Chạy Evidence Collector và retrieval bất đồng bộ.
+- Mỗi request retrieval gọi embedding, BM25 rồi kNN có giới hạn; worker nền có thể
+  chạy Evidence Collector và retrieval song song ở giai đoạn Agent sau.

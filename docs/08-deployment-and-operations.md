@@ -72,9 +72,10 @@ Cấu hình LLM chỉ nằm trên DataOps server:
 ```env
 DATAOPS_LLM_BASE_URL=http://ollama:11434
 DATAOPS_LLM_MODEL=gemma4:e2b
-DATAOPS_EMBEDDING_BASE_URL=http://ollama:11434
+DATAOPS_EMBEDDING_URL=http://ollama:11434
 DATAOPS_EMBEDDING_MODEL=bge-m3:567m
 DATAOPS_EMBEDDING_DIMENSIONS=1024
+DATAOPS_EMBEDDING_TIMEOUT_SECONDS=60
 ```
 
 Ollama phải bật embedding API. Không public trực tiếp cổng `11434`; chỉ Control Plane
@@ -112,6 +113,11 @@ Triển khai hiện tại dùng:
 - `message` và `stack_trace`: `match_only_text`.
 - `metadata`: `flattened` để tránh mapping explosion.
 - Document ID: hash ổn định để callback retry không tạo log trùng.
+
+Knowledge index dùng mapping `dense_vector` 1024 chiều với cosine similarity. Alias
+`knowledge-dataops` trỏ tới index versioned `knowledge-dataops-v1`; `_source` loại trường
+embedding để API không tải/trả vector không cần thiết. Nếu đổi model hoặc số chiều, phải
+tạo index version mới và re-index, không sửa mapping hiện tại tại chỗ.
 
 Elasticsearch và Kibana không được public trực tiếp. Cấu hình tắt Elastic Security
 trong `compose.yaml` chỉ dành cho local development và được bind vào `127.0.0.1`.

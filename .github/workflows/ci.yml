@@ -78,7 +78,10 @@ jobs:
       - name: Test Elasticsearch adapter
         env:
           DATAOPS_TEST_ELASTICSEARCH_URL: http://127.0.0.1:9200
-        run: uv run pytest tests/test_elasticsearch_logs.py
+        run: >-
+          uv run pytest
+          tests/test_elasticsearch_logs.py
+          tests/test_elasticsearch_knowledge.py
 
   container:
     needs: [quality, elasticsearch-integration]

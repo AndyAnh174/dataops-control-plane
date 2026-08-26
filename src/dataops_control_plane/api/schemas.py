@@ -266,3 +266,91 @@ class PipelineLogRead(BaseModel):
 
 class PipelineLogSearchResponse(BaseModel):
     items: list[PipelineLogRead]
+
+
+class KnowledgeDocumentType(StrEnum):
+    RUNBOOK = "RUNBOOK"
+    INCIDENT_SUMMARY = "INCIDENT_SUMMARY"
+    POSTMORTEM = "POSTMORTEM"
+    CODE_CHUNK = "CODE_CHUNK"
+
+
+class KnowledgeDocumentCreate(BaseModel):
+    document_type: KnowledgeDocumentType
+    title: str = Field(min_length=1, max_length=500)
+    content: str = Field(min_length=1, max_length=50_000)
+    source_uri: str = Field(min_length=1, max_length=2048)
+    project_ref: str | None = Field(default=None, max_length=255)
+    provider: str | None = Field(default=None, max_length=64)
+    incident_type: str | None = Field(default=None, max_length=128)
+    environment: str | None = Field(default=None, max_length=128)
+    version: str | None = Field(default=None, max_length=128)
+    metadata: dict[str, JsonValue] = Field(default_factory=dict)
+
+
+class KnowledgeFilterRequest(BaseModel):
+    project_ref: str | None = Field(default=None, max_length=255)
+    document_types: list[KnowledgeDocumentType] = Field(default_factory=list, max_length=4)
+    provider: str | None = Field(default=None, max_length=64)
+    incident_type: str | None = Field(default=None, max_length=128)
+    environment: str | None = Field(default=None, max_length=128)
+    created_after: datetime | None = None
+
+    @field_validator("created_after")
+    @classmethod
+    def normalize_created_after(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+
+class HybridSearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=2_000)
+    top_k: int = Field(default=5, ge=1, le=25)
+    filters: KnowledgeFilterRequest = Field(default_factory=KnowledgeFilterRequest)
+
+
+class KnowledgeDocumentReceipt(BaseModel):
+    document_id: str
+    document_type: KnowledgeDocumentType
+    checksum: str
+    result: str
+    embedding_model: str
+    redaction_count: int
+
+
+class HybridSearchItemRead(BaseModel):
+    document_id: str
+    document_type: KnowledgeDocumentType
+    title: str
+    content: str
+    source_uri: str
+    project_ref: str | None
+    provider: str | None
+    incident_id: UUID | None
+    incident_type: str | None
+    environment: str | None
+    version: str | None
+    metadata: dict[str, JsonValue]
+    rrf_score: float
+    matched_by: list[str]
+    keyword_rank: int | None
+    keyword_score: float | None
+    vector_rank: int | None
+    vector_score: float | None
+
+
+class HybridSearchFusionRead(BaseModel):
+    method: str = "rrf"
+    rank_constant: int
+    candidate_limit: int
+
+
+class HybridSearchResponse(BaseModel):
+    query: str
+    embedding_model: str
+    fusion: HybridSearchFusionRead
+    redaction_count: int
+    items: list[HybridSearchItemRead]
