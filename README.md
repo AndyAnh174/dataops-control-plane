@@ -129,6 +129,22 @@ docker compose up --build
 
 API documentation được cung cấp tại `http://localhost:8000/docs`; health endpoint tại `http://localhost:8000/health`.
 
+## Container image
+
+Sau khi CI và Trivy scan thành công, image đa nền tảng `linux/amd64` và
+`linux/arm64` được publish lên GitHub Container Registry:
+
+```powershell
+docker pull ghcr.io/andyanh174/dataops-control-plane:latest
+docker run --rm --publish 8000:8000 ghcr.io/andyanh174/dataops-control-plane:latest
+```
+
+Mỗi bản build có tag bất biến `sha-<full-commit-sha>`. Production nên pin tag SHA,
+version hoặc image digest thay vì `latest`.
+
+Rollback bằng cách triển khai lại tag SHA/digest ổn định trước đó, sau đó xác minh
+`http://localhost:8000/health` trả về trạng thái `ok`.
+
 ## Giấy phép
 
 Dự án được phát hành theo [MIT License](LICENSE). Copyright (c) 2026 AndyAnh174.
