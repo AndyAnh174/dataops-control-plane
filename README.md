@@ -1,0 +1,134 @@
+# Nền tảng DataOps đa nền tảng tích hợp AI Agent
+
+> Tên đề tài dự kiến: **Xây dựng nền tảng DataOps đa nền tảng tích hợp AI Agent và Hybrid RAG để phân tích, phục hồi sự cố pipeline dữ liệu**.
+
+Đây là một **DataOps control plane** độc lập với công cụ CI/CD. Hệ thống kết nối với GitHub Actions, GitLab CI, Jenkins và Kubernetes thông qua các provider adapter; theo dõi vòng đời pipeline dữ liệu; thu thập log, Data Quality report và thông tin phiên bản; sau đó hỗ trợ phát hiện, phân tích nguyên nhân và phục hồi sự cố an toàn.
+
+GitHub Actions được chọn làm provider đầu tiên cho MVP. Kiến trúc lõi không phụ thuộc GitHub, vì vậy có thể bổ sung GitLab CI hoặc Jenkins mà không phải viết lại Agent, Policy Engine và quy trình xử lý incident.
+
+## Mục tiêu
+
+- Chuẩn hóa cách theo dõi pipeline giữa nhiều nền tảng CI/CD.
+- Tự động thu thập bằng chứng khi pipeline dữ liệu gặp lỗi.
+- Dùng Agentic Hybrid RAG để hỗ trợ phân tích nguyên nhân gốc (RCA).
+- Đề xuất hoặc thực hiện có kiểm soát các hành động `RETRY`, `QUARANTINE`, `ROLLBACK` và `CREATE_PR`.
+- Xác minh lại pipeline và chất lượng dữ liệu sau khi phục hồi.
+- Giảm MTTD, MTTR và thời gian kỹ sư phải đọc log thủ công.
+
+## Hệ thống không phải là gì?
+
+- Không thay thế GitHub Actions, GitLab CI hay Jenkins.
+- Không cho LLM tự do thao tác production.
+- Không tự merge code hoặc sửa trực tiếp dữ liệu production trong MVP.
+- Không chạy LLM trên mọi commit; Agent chỉ được kích hoạt khi có lỗi hoặc anomaly cần phân tích.
+
+## Kiến trúc tổng quan
+
+```mermaid
+flowchart LR
+    DEV[Developer] --> SCM[GitHub / GitLab]
+    SCM --> CI[GitHub Actions / GitLab CI / Jenkins]
+    CI -->|Webhook và REST event| API[DataOps Control Plane]
+    CI -->|Log và report| OBS[Elasticsearch / MinIO]
+    API --> DB[(PostgreSQL)]
+    API --> QUEUE[Celery + Redis]
+    QUEUE --> EVIDENCE[Evidence Collector]
+    EVIDENCE --> RAG[Hybrid RAG]
+    RAG --> AGENT[LangGraph + Ollama]
+    AGENT --> POLICY[Policy Engine]
+    POLICY --> EXECUTOR[Recovery Executor]
+    EXECUTOR --> ADAPTER[Provider Adapters]
+    ADAPTER --> CI
+    ADAPTER --> K8S[K3s / Kubernetes]
+    K8S --> VERIFY[Verification Job]
+    VERIFY --> API
+```
+
+## Luồng cốt lõi
+
+```text
+Push code
+→ CI kiểm thử và build image
+→ DataOps theo dõi trạng thái
+→ Pipeline thành công: verification và publish
+→ Pipeline thất bại: tạo incident
+→ thu thập bằng chứng
+→ Hybrid RAG + AI Agent tạo RCA
+→ Policy Engine kiểm tra hành động
+→ Recovery Executor retry/quarantine/rollback
+→ Verification Job chạy lại
+→ resolved hoặc chuyển cho con người
+```
+
+## Tech stack dự kiến
+
+| Nhóm | Công nghệ |
+|---|---|
+| Backend | Python 3.11+, FastAPI, Pydantic, SQLAlchemy |
+| Async processing | Celery, Redis |
+| Metadata database | PostgreSQL |
+| Artifact storage | MinIO |
+| Data pipeline | Pandas |
+| Data Quality | Great Expectations |
+| Anomaly detection | Scikit-learn, Isolation Forest |
+| Search và log | Elasticsearch, Logstash/Elastic Agent, Kibana |
+| Agent và LLM | LangGraph, Ollama |
+| Metrics | Prometheus, Grafana |
+| Container và runtime | Docker, K3s/Kubernetes |
+| CI/CD đầu tiên | GitHub Actions |
+| CI/CD mở rộng | GitLab CI, Jenkins |
+| GitOps | Argo CD, triển khai ở giai đoạn sau |
+
+## Tài liệu
+
+- [Tổng quan và phạm vi](docs/01-project-overview.md)
+- [Kiến trúc hệ thống](docs/02-system-architecture.md)
+- [Luồng hoạt động](docs/03-runtime-flows.md)
+- [Domain model và API](docs/04-domain-model-and-api.md)
+- [Provider adapters](docs/05-provider-adapters.md)
+- [AI Agent, RAG và Policy Engine](docs/06-ai-agent-rag-policy.md)
+- [MVP, đánh giá và lộ trình](docs/07-mvp-roadmap-and-evaluation.md)
+- [Triển khai và vận hành](docs/08-deployment-and-operations.md)
+
+## Trạng thái
+
+Dự án đang ở giai đoạn **thiết kế kiến trúc và xác định phạm vi MVP**. Quyết định hiện tại:
+
+1. Xây core platform theo hướng provider-neutral.
+2. Tích hợp GitHub Actions trước.
+3. Chỉ xử lý pipeline batch trong MVP.
+4. Chỉ kích hoạt RCA Agent khi có lỗi hoặc anomaly.
+5. Mọi hành động nguy hiểm phải yêu cầu phê duyệt.
+6. Sau MVP, thêm ít nhất một provider thứ hai để chứng minh khả năng đa nền tảng.
+
+## Khởi chạy phiên bản hiện tại
+
+Phiên bản đầu tiên đã có health API, normalized pipeline-event ingestion, idempotency theo `event_id`, cập nhật trạng thái run và API đọc run.
+
+Chạy local bằng Python:
+
+```powershell
+uv sync --group dev
+uv run fastapi dev
+```
+
+Chạy test và lint:
+
+```powershell
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+```
+
+Chạy bằng Docker Compose với PostgreSQL:
+
+```powershell
+$env:DATAOPS_POSTGRES_PASSWORD = "choose-a-local-development-secret"
+docker compose up --build
+```
+
+API documentation được cung cấp tại `http://localhost:8000/docs`; health endpoint tại `http://localhost:8000/health`.
+
+## Giấy phép
+
+Dự án được phát hành theo [MIT License](LICENSE). Copyright (c) 2026 AndyAnh174.

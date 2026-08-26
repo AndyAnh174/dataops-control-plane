@@ -1,0 +1,42 @@
+name: dataops-platform
+
+services:
+  api:
+    build:
+      context: .
+    environment:
+      DATAOPS_DATABASE_URL: postgresql+psycopg://dataops:${DATAOPS_POSTGRES_PASSWORD:?set DATAOPS_POSTGRES_PASSWORD}@postgres:5432/dataops
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: dataops
+      POSTGRES_USER: dataops
+      POSTGRES_PASSWORD: ${DATAOPS_POSTGRES_PASSWORD:?set DATAOPS_POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dataops -d dataops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

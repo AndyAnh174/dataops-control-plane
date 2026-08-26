@@ -1,0 +1,116 @@
+# 8. Triển khai và vận hành
+
+## 8.1 Môi trường phát triển
+
+Giai đoạn đầu nên dùng Docker Compose trên một máy:
+
+```text
+dataops-api
+dataops-worker
+redis
+postgresql
+minio
+elasticsearch
+kibana
+ollama
+```
+
+Pipeline mẫu và verification có thể chạy bằng Docker trước khi chuyển sang K3s.
+
+## 8.2 Môi trường demo ba server
+
+| Server | Thành phần | Vai trò |
+|---|---|---|
+| A — CI/CD | GitHub self-hosted runner hoặc Jenkins, Docker | Test, build, push image, callback |
+| B — Runtime | K3s, Pipeline Job, Verification Job, Prometheus | Chạy và xác minh pipeline |
+| C — DataOps | API, worker, DB, ELK, MinIO, Ollama, Agent | Control plane, RCA và recovery |
+
+## 8.3 Kết nối GitHub Actions
+
+### Lựa chọn A — self-hosted runner trong LAN
+
+Runner gọi được DataOps bằng IP nội bộ. Cách này phù hợp demo và không bắt buộc public DataOps API cho callback từ workflow.
+
+Hạn chế: webhook trực tiếp từ GitHub.com vẫn cần endpoint truy cập được từ Internet. Có thể dùng callback `if: always()` và polling GitHub API trong MVP, nhưng sẽ kém tin cậy nếu runner bị mất hoàn toàn.
+
+### Lựa chọn B — public HTTPS endpoint
+
+DataOps webhook receiver được đặt sau reverse proxy, TLS và authentication. Đây là hướng phù hợp hơn nếu muốn tích hợp GitHub/GitLab cloud một cách hoàn chỉnh.
+
+Chỉ public các endpoint ingestion cần thiết; database, Elasticsearch, MinIO, Redis và Ollama không được public.
+
+## 8.4 Cấu hình project
+
+Biến tối thiểu ở CI:
+
+```env
+DATAOPS_URL=http://dataops.internal:8000
+DATAOPS_PROJECT_ID=transaction-pipeline
+DATAOPS_TOKEN=<stored-in-ci-secret>
+DATAOPS_VERIFY_COMMAND=python -m src.verify
+IMAGE_NAME=andyanh/data-pipeline
+```
+
+Cấu hình LLM chỉ nằm trên DataOps server:
+
+```env
+LLM_PROVIDER=ollama
+LLM_BASE_URL=http://ollama:11434
+LLM_MODEL=<local-model>
+EMBEDDING_PROVIDER=ollama
+EMBEDDING_MODEL=<embedding-model>
+```
+
+Không commit file secret vào repository.
+
+## 8.5 Logging và correlation
+
+Mọi log ứng dụng cần có các field:
+
+```json
+{
+  "project_id": "transaction-pipeline",
+  "run_id": "RUN-2026-00125",
+  "external_run_id": "875421",
+  "commit_sha": "a51e092",
+  "job_name": "data-quality",
+  "level": "ERROR",
+  "message": "Schema validation failed"
+}
+```
+
+Log index và RAG index phải tách riêng. Thiết lập retention cho log và checksum cho artifact.
+
+## 8.6 Security checklist
+
+- Xác minh webhook signature.
+- Token của CI lưu trong secret store.
+- Provider credential có scope đọc log/diff và trigger đúng project.
+- Kubernetes service account giới hạn namespace và verb.
+- Không cấp cluster-admin.
+- Redact secret/PII trước khi gửi context cho Ollama.
+- Mã hóa kết nối giữa các server khi không ở mạng tin cậy.
+- Audit mọi approval và recovery action.
+- Giới hạn kích thước upload và loại file report.
+- Backup PostgreSQL, MinIO và cấu hình Elasticsearch.
+
+## 8.7 Metrics vận hành
+
+- `dataops_webhook_total`.
+- `dataops_webhook_duplicate_total`.
+- `dataops_run_duration_seconds`.
+- `dataops_incident_total`.
+- `dataops_rca_duration_seconds`.
+- `dataops_recovery_attempt_total`.
+- `dataops_recovery_success_total`.
+- `dataops_policy_denied_total`.
+- `dataops_happy_path_overhead_seconds`.
+
+## 8.8 Failure handling nội bộ
+
+- DataOps API mất tạm thời không được làm CI sai kết quả; callback cần retry có giới hạn.
+- Queue job dùng retry với exponential backoff và dead-letter handling.
+- Provider rate limit phải được theo dõi.
+- RCA timeout chuyển incident sang trạng thái cần xử lý, không retry vô hạn.
+- Elasticsearch hoặc Ollama lỗi không được làm mất incident metadata trong PostgreSQL.
+- Recovery Executor chỉ đánh dấu thành công khi provider trả reference và Verifier xác nhận.
