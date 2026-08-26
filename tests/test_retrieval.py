@@ -198,7 +198,7 @@ def test_long_document_keeps_full_bm25_text_but_bounds_the_embedding_input() -> 
     assert result.document.content == content
     assert store.documents[result.document.document_id].content == content
     assert len(embedder.embedded_texts) == 1
-    assert len(embedder.embedded_texts[0]) <= 8_000
+    assert len(embedder.embedded_texts[0]) <= 1_800
     assert "amount range" in embedder.embedded_texts[0]
     assert "schema drift at the end" in embedder.embedded_texts[0]
 

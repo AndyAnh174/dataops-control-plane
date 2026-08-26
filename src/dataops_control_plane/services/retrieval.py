@@ -13,7 +13,7 @@ from dataops_control_plane.services.pipeline_logs import redact_log_text, redact
 
 MAX_KNOWLEDGE_CONTENT_CHARS = 50_000
 MAX_INCIDENT_SUMMARY_CHARS = 20_000
-MAX_EMBEDDING_INPUT_CHARS = 8_000
+MAX_EMBEDDING_INPUT_CHARS = 1_800
 DEFAULT_RANK_CONSTANT = 60
 
 
