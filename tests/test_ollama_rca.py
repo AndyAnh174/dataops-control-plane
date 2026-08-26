@@ -62,7 +62,7 @@ def test_ollama_rca_uses_one_non_streaming_structured_chat_request() -> None:
         ],
         "stream": False,
         "format": OUTPUT_SCHEMA,
-        "options": {"temperature": 0, "num_predict": 1_200},
+        "options": {"temperature": 0, "num_ctx": 8_192, "num_predict": 1_200},
     }
 
 

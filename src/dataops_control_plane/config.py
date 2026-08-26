@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     llm_url: str = "http://localhost:11434"
     llm_model: str = "gemma4:e2b"
     llm_timeout_seconds: float = 300.0
+    llm_context_tokens: int = 8_192
     rca_prompt_version: str = "rca-v1"
     rca_context_max_chars: int = 16_000
     github_api_url: str = "https://api.github.com"

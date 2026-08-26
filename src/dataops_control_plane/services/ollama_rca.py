@@ -12,9 +12,16 @@ from dataops_control_plane.services.rca_agent import (
 
 
 class OllamaRCAClient:
-    def __init__(self, client: httpx.Client, *, model_name: str) -> None:
+    def __init__(
+        self,
+        client: httpx.Client,
+        *,
+        model_name: str,
+        context_tokens: int = 8_192,
+    ) -> None:
         self._client = client
         self.model_name = model_name
+        self._context_tokens = context_tokens
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "OllamaRCAClient":
@@ -24,6 +31,7 @@ class OllamaRCAClient:
                 timeout=settings.llm_timeout_seconds,
             ),
             model_name=settings.llm_model,
+            context_tokens=settings.llm_context_tokens,
         )
 
     def generate(
@@ -44,7 +52,11 @@ class OllamaRCAClient:
                     ],
                     "stream": False,
                     "format": dict(schema),
-                    "options": {"temperature": 0, "num_predict": 1_200},
+                    "options": {
+                        "temperature": 0,
+                        "num_ctx": self._context_tokens,
+                        "num_predict": 1_200,
+                    },
                 },
             )
             response.raise_for_status()

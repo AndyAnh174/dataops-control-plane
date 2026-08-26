@@ -23,7 +23,7 @@ START
 - `retrieve`: tìm tối đa 5 runbook/incident cũ/postmortem/code chunk cùng project,
   provider và incident type; loại chính incident đang phân tích.
 - `generate`: đúng một `POST /api/chat`, `stream=false`, temperature 0,
-  `num_predict=1200` và JSON Schema.
+  `num_ctx=8192`, `num_predict=1200` và JSON Schema.
 - `validate`: Pydantic schema, citation allowlist, knowledge ID allowlist và human-approval
   rule. Chỉ report hợp lệ mới được commit.
 
@@ -83,6 +83,7 @@ Failure contract:
 DATAOPS_LLM_URL=http://192.168.1.80:11434
 DATAOPS_LLM_MODEL=gemma4:e2b
 DATAOPS_LLM_TIMEOUT_SECONDS=300
+DATAOPS_LLM_CONTEXT_TOKENS=8192
 DATAOPS_RCA_PROMPT_VERSION=rca-v1
 DATAOPS_RCA_CONTEXT_MAX_CHARS=16000
 ```
