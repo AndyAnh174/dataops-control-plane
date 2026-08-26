@@ -38,30 +38,37 @@ Hạn chế: webhook trực tiếp từ GitHub.com vẫn cần endpoint truy c�
 DataOps webhook receiver được đặt sau reverse proxy, TLS và authentication. Đây là hướng phù hợp hơn nếu muốn tích hợp GitHub/GitLab cloud một cách hoàn chỉnh.
 
 Chỉ public các endpoint ingestion cần thiết; database, Elasticsearch, MinIO, Redis và Ollama không được public.
+Pipeline event và log endpoint phải xác thực Bearer token riêng cho agent; token được lưu
+trong CI secret store và so sánh constant-time tại Control Plane.
 
 ## 8.4 Cấu hình project
 
-Biến tối thiểu ở CI:
+Repository ứng dụng khai báo pipeline portable trong `dataops.yaml` và gọi
+`AndyAnh174/dataops-agent@v0`. Hai biến tối thiểu ở GitHub Actions:
 
 ```env
 DATAOPS_URL=http://dataops.internal:8000
-DATAOPS_PROJECT_ID=transaction-pipeline
 DATAOPS_TOKEN=<stored-in-ci-secret>
-DATAOPS_VERIFY_COMMAND=python -m src.verify
-IMAGE_NAME=andyanh/data-pipeline
 ```
+
+Agent tự đọc project, commit SHA, branch, run ID, attempt và job từ GitHub. Với CI provider
+khác, truyền bộ biến portable `DATAOPS_PROVIDER`, `DATAOPS_PROJECT_REF`,
+`DATAOPS_EXTERNAL_RUN_ID`, `DATAOPS_ATTEMPT`, `DATAOPS_COMMIT_SHA`, `DATAOPS_BRANCH` và
+`DATAOPS_JOB_NAME`.
 
 Cấu hình LLM chỉ nằm trên DataOps server:
 
 ```env
-LLM_PROVIDER=ollama
-LLM_BASE_URL=http://ollama:11434
-LLM_MODEL=<local-model>
-EMBEDDING_PROVIDER=ollama
-EMBEDDING_MODEL=<embedding-model>
+DATAOPS_LLM_BASE_URL=http://ollama:11434
+DATAOPS_LLM_MODEL=gemma4:e2b
+DATAOPS_EMBEDDING_BASE_URL=http://ollama:11434
+DATAOPS_EMBEDDING_MODEL=bge-m3:567m
+DATAOPS_EMBEDDING_DIMENSIONS=1024
 ```
 
-Không commit file secret vào repository.
+Ollama phải bật embedding API. Không public trực tiếp cổng `11434`; chỉ Control Plane
+được phép truy cập qua private network hoặc firewall allowlist. Không commit file secret
+vào repository.
 
 ## 8.5 Logging và correlation
 

@@ -1,7 +1,9 @@
+import secrets
 from collections.abc import Iterator
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlmodel import Session
 
 from dataops_control_plane.services.pipeline_logs import PipelineLogStore
@@ -20,3 +22,22 @@ def get_log_store(request: Request) -> PipelineLogStore:
 
 
 LogStoreDep = Annotated[PipelineLogStore, Depends(get_log_store)]
+
+_agent_bearer = HTTPBearer(auto_error=False)
+
+
+def require_agent_token(
+    request: Request,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_agent_bearer)],
+) -> None:
+    configured_token = request.app.state.settings.agent_token
+    if configured_token is None:
+        return
+
+    supplied_token = credentials.credentials if credentials is not None else ""
+    if not secrets.compare_digest(configured_token.get_secret_value(), supplied_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing agent token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "sqlite:///./dataops.db"
+    agent_token: SecretStr | None = None
     elasticsearch_url: str = "http://localhost:9201"
     elasticsearch_api_key: SecretStr | None = None
     elasticsearch_username: str | None = None

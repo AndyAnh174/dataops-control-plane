@@ -37,6 +37,13 @@ Vòng lấy thêm bằng chứng phải giới hạn số bước và thời gia
 
 ## 6.3 Hybrid RAG
 
+Baseline đã chốt cho MVP:
+
+- LLM: `gemma4:e2b`, context tối đa 128K nhưng evidence budget thực tế 16K–32K.
+- Embedding: `bge-m3:567m`, dense vector 1024 chiều.
+- Raw log: BM25 + metadata/time filter; không embedding từng dòng.
+- Runbook, incident summary và code chunk chọn lọc: hybrid BM25 + dense vector.
+
 ### BM25 phù hợp với
 
 - Error code.

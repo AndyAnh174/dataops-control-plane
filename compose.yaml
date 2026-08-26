@@ -6,6 +6,7 @@ services:
       context: .
     environment:
       DATAOPS_DATABASE_URL: postgresql+psycopg://dataops:${DATAOPS_POSTGRES_PASSWORD:?set DATAOPS_POSTGRES_PASSWORD}@postgres:5432/dataops
+      DATAOPS_AGENT_TOKEN: ${DATAOPS_AGENT_TOKEN:?set DATAOPS_AGENT_TOKEN}
       DATAOPS_ELASTICSEARCH_URL: http://elasticsearch:9200
       DATAOPS_ELASTICSEARCH_LOG_RETENTION: 30d
     ports:

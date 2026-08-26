@@ -1,11 +1,15 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from dataops_control_plane.api.dependencies import SessionDep
+from dataops_control_plane.api.dependencies import SessionDep, require_agent_token
 from dataops_control_plane.api.schemas import PipelineEventCreate, PipelineEventReceipt
 from dataops_control_plane.services.pipeline_events import InvalidPipelineTransition
 from dataops_control_plane.services.pipeline_events import ingest_pipeline_event as ingest_event
 
-router = APIRouter(prefix="/api/v1/events", tags=["events"])
+router = APIRouter(
+    prefix="/api/v1/events",
+    tags=["events"],
+    dependencies=[Depends(require_agent_token)],
+)
 
 
 @router.post("/pipeline", status_code=status.HTTP_202_ACCEPTED)

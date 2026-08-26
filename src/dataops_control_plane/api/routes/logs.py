@@ -1,9 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 
-from dataops_control_plane.api.dependencies import LogStoreDep, SessionDep
+from dataops_control_plane.api.dependencies import LogStoreDep, SessionDep, require_agent_token
 from dataops_control_plane.api.schemas import (
     PipelineLogBatchCreate,
     PipelineLogRead,
@@ -16,7 +16,11 @@ from dataops_control_plane.services.pipeline_logs import (
     build_log_documents,
 )
 
-router = APIRouter(prefix="/api/v1/runs", tags=["logs"])
+router = APIRouter(
+    prefix="/api/v1/runs",
+    tags=["logs"],
+    dependencies=[Depends(require_agent_token)],
+)
 
 
 @router.post("/{run_id}/logs", status_code=status.HTTP_202_ACCEPTED)

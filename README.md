@@ -126,6 +126,7 @@ Chạy bằng Docker Compose với PostgreSQL, Elasticsearch 9.4.4 và Kibana 9.
 
 ```powershell
 $env:DATAOPS_POSTGRES_PASSWORD = "choose-a-local-development-secret"
+$env:DATAOPS_AGENT_TOKEN = "choose-a-random-agent-bearer-token"
 docker compose up --build
 ```
 
@@ -139,6 +140,27 @@ Elasticsearch và Kibana chỉ bind vào loopback. Cấu hình Compose tắt Ela
 để phát triển local; production phải bật TLS/authentication và truyền API key bằng
 secret runtime.
 
+Pipeline event và log API yêu cầu `Authorization: Bearer <DATAOPS_AGENT_TOKEN>` khi
+`DATAOPS_AGENT_TOKEN` được cấu hình. Health check vẫn public để phục vụ readiness probe.
+
+### DataOps Agent cho GitHub Actions
+
+Agent đa nền tảng được phát hành tại
+[`AndyAnh174/dataops-agent`](https://github.com/AndyAnh174/dataops-agent). Repository ứng
+dụng khai báo các stage trong `dataops.yaml`, sau đó gọi action sau bước checkout:
+
+```yaml
+- uses: AndyAnh174/dataops-agent@v0
+  env:
+    DATAOPS_URL: https://dataops.example.com
+    DATAOPS_TOKEN: ${{ secrets.DATAOPS_TOKEN }}
+```
+
+Agent tự lấy repository, commit, branch, run ID và attempt từ GitHub; chạy tuần tự các
+stage; giữ nguyên exit code; đồng thời gửi event và log có correlation về Control Plane.
+Runtime Node 24 đã được GitHub cung cấp nên ứng dụng không cần cài thêm Python hoặc Docker
+chỉ để chạy agent. Các command trong `dataops.yaml` vẫn cần toolchain riêng của dự án.
+
 ### Pipeline log API
 
 Log chỉ được gắn vào một `run_id` đã tồn tại:
@@ -146,6 +168,7 @@ Log chỉ được gắn vào một `run_id` đã tồn tại:
 ```http
 POST /api/v1/runs/{run_id}/logs
 Content-Type: application/json
+Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
 
 {
   "entries": [

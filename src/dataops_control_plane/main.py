@@ -44,6 +44,7 @@ def create_app(
     )
     application.state.engine = database_engine
     application.state.log_store = pipeline_log_store
+    application.state.settings = settings
 
     @application.get("/health", tags=["system"])
     def health() -> HealthResponse:
