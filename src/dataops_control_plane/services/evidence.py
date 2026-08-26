@@ -9,7 +9,8 @@ from uuid import UUID, uuid4
 
 from sqlmodel import Session, select
 
-from dataops_control_plane.domain.models import Evidence, Incident, PipelineRun
+from dataops_control_plane.domain.models import Evidence, Incident, PipelineReport, PipelineRun
+from dataops_control_plane.services.data_quality_reports import DATA_QUALITY_REPORT_TYPE
 from dataops_control_plane.services.pipeline_logs import (
     LogStoreUnavailable,
     PipelineLogDocument,
@@ -76,6 +77,9 @@ def collect_incident_evidence(
     session.add(incident)
 
     candidates = [_pipeline_metadata_candidate(run)]
+    report_candidate = _data_quality_report_candidate(session, run)
+    if report_candidate is not None:
+        candidates.append(report_candidate)
     warnings: list[CollectionWarning] = []
 
     try:
@@ -190,6 +194,47 @@ def _pipeline_metadata_candidate(run: PipelineRun) -> EvidenceCandidate:
         source_uri=f"postgresql://pipeline-runs/{run.id}",
         excerpt=json.dumps(metadata, sort_keys=True, separators=(",", ":")),
         metadata=metadata,
+    )
+
+
+def _data_quality_report_candidate(
+    session: Session,
+    run: PipelineRun,
+) -> EvidenceCandidate | None:
+    report = session.exec(
+        select(PipelineReport)
+        .where(
+            PipelineReport.pipeline_run_id == run.id,
+            PipelineReport.report_type == DATA_QUALITY_REPORT_TYPE,
+        )
+        .order_by(PipelineReport.received_at.desc())
+    ).first()
+    if report is None:
+        return None
+
+    excerpt = json.dumps(report.payload, sort_keys=True, separators=(",", ":"))
+    truncated = False
+    if len(excerpt) > MAX_EVIDENCE_EXCERPT_CHARS:
+        suffix = "...[TRUNCATED]"
+        excerpt = excerpt[: MAX_EVIDENCE_EXCERPT_CHARS - len(suffix)] + suffix
+        truncated = True
+
+    return EvidenceCandidate(
+        evidence_type="DATA_QUALITY_REPORT",
+        source_uri=report.source_uri,
+        excerpt=excerpt,
+        metadata={
+            "report_id": str(report.id),
+            "run_id": str(run.id),
+            "report_type": report.report_type,
+            "checksum": report.checksum,
+            "contract": report.payload["contract"],
+            "scenario": report.payload["scenario"],
+            "success": report.payload["success"],
+            "summary": report.payload["summary"],
+            "redaction_count": report.redaction_count,
+            "truncated": truncated,
+        },
     )
 
 

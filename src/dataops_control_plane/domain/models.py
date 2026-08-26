@@ -37,6 +37,27 @@ class ProcessedEvent(SQLModel, table=True):
     received_at: datetime
 
 
+class PipelineReport(SQLModel, table=True):
+    __tablename__ = "pipeline_reports"
+    __table_args__ = (
+        UniqueConstraint(
+            "pipeline_run_id",
+            "report_type",
+            "checksum",
+            name="uq_pipeline_report_content",
+        ),
+    )
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    pipeline_run_id: UUID = Field(foreign_key="pipeline_runs.id", index=True)
+    report_type: str = Field(index=True, max_length=64)
+    source_uri: str = Field(max_length=2048)
+    checksum: str = Field(max_length=64)
+    payload: dict[str, object] = Field(sa_column=Column(JSON, nullable=False))
+    redaction_count: int = Field(default=0, ge=0)
+    received_at: datetime
+
+
 class Incident(SQLModel, table=True):
     __tablename__ = "incidents"
     __table_args__ = (

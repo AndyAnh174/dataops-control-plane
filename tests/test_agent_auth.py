@@ -89,3 +89,21 @@ def test_incident_evidence_requires_the_agent_token(
     assert wrong_collect.status_code == 401
     assert authorized_read.status_code == 404
     assert authorized_collect.status_code == 404
+
+
+def test_data_quality_report_upload_requires_the_agent_token(
+    protected_client: TestClient,
+) -> None:
+    """Catches structured pipeline reports bypassing the telemetry authentication boundary."""
+    run_id = "00000000-0000-0000-0000-000000000001"
+
+    missing = protected_client.post(f"/api/v1/runs/{run_id}/reports/data-quality", json={})
+    authorized = protected_client.post(
+        f"/api/v1/runs/{run_id}/reports/data-quality",
+        json={},
+        headers={"Authorization": "Bearer local-agent-test-token"},
+    )
+
+    assert missing.status_code == 401
+    assert missing.headers["www-authenticate"] == "Bearer"
+    assert authorized.status_code == 422

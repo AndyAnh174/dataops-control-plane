@@ -385,3 +385,63 @@ def test_collector_redacts_a_secret_even_if_the_log_source_returns_it() -> None:
     assert "collector-must-redact-this-secret" not in listed.text
     assert "api_key=[REDACTED]" in log_excerpt["excerpt"]
     assert log_excerpt["metadata"]["collector_redaction_count"] == 1
+
+
+def test_collect_evidence_includes_the_uploaded_data_quality_report(
+    client: TestClient,
+) -> None:
+    """Catches structured GX results being omitted from the incident evidence bundle."""
+    incident_id, run_id = create_failed_incident(client, "evidence-run-data-quality")
+    ingest_pipeline_logs(client, run_id)
+    uploaded = client.post(
+        f"/api/v1/runs/{run_id}/reports/data-quality",
+        json={
+            "schema_version": "1.0",
+            "contract": {"name": "customer-orders", "version": "1.0.0"},
+            "scenario": "range",
+            "success": False,
+            "summary": {"checks": 1, "passed": 0, "failed": 1},
+            "checks": [
+                {
+                    "id": "validity.amount_range",
+                    "dimension": "validity",
+                    "success": False,
+                    "expectation": "expect_column_values_to_be_between",
+                    "expected": {"min_value": 0, "max_value": 10000},
+                    "observed": {
+                        "unexpected_count": 2,
+                        "diagnostic": "api_key=must-not-reach-evidence",
+                    },
+                }
+            ],
+            "dataset": {
+                "row_count": 20,
+                "columns": ["customer_id", "age", "amount"],
+            },
+            "generated_at": "2026-08-26T14:09:59Z",
+        },
+    )
+
+    collected = client.post(f"/api/v1/incidents/{incident_id}/collect-evidence")
+    items = client.get(f"/api/v1/incidents/{incident_id}/evidence").json()["items"]
+
+    assert uploaded.status_code == 202
+    assert collected.status_code == 200
+    assert collected.json()["collected_count"] == 3
+    report = next(item for item in items if item["evidence_type"] == "DATA_QUALITY_REPORT")
+    assert report["source_uri"] == f"dataops://runs/{run_id}/reports/data-quality"
+    assert report["metadata"] == {
+        "report_id": uploaded.json()["report_id"],
+        "run_id": run_id,
+        "report_type": "data-quality",
+        "checksum": uploaded.json()["checksum"],
+        "contract": {"name": "customer-orders", "version": "1.0.0"},
+        "scenario": "range",
+        "success": False,
+        "summary": {"checks": 1, "passed": 0, "failed": 1},
+        "redaction_count": 1,
+        "collector_redaction_count": 1,
+        "truncated": False,
+    }
+    assert "must-not-reach-evidence" not in report["excerpt"]
+    assert "api_key=[REDACTED]" in report["excerpt"]

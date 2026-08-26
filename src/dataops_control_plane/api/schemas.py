@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 
 
 class PipelineStatus(StrEnum):
@@ -53,6 +53,87 @@ class PipelineRunRead(BaseModel):
         if value.tzinfo is None:
             return value.replace(tzinfo=UTC)
         return value.astimezone(UTC)
+
+
+class DataQualityDimension(StrEnum):
+    SCHEMA = "schema"
+    COMPLETENESS = "completeness"
+    UNIQUENESS = "uniqueness"
+    VALIDITY = "validity"
+    VOLUME = "volume"
+
+
+class DataContractRef(BaseModel):
+    name: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9._-]+$")
+    version: str = Field(min_length=1, max_length=64)
+
+
+class DataQualitySummary(BaseModel):
+    checks: int = Field(ge=1, le=50)
+    passed: int = Field(ge=0, le=50)
+    failed: int = Field(ge=0, le=50)
+
+
+class DataQualityCheck(BaseModel):
+    id: str = Field(min_length=1, max_length=128, pattern=r"^[a-z][a-z0-9._-]*$")
+    dimension: DataQualityDimension
+    success: bool
+    expectation: str = Field(min_length=1, max_length=255)
+    expected: JsonValue
+    observed: JsonValue
+
+
+class DataQualityDataset(BaseModel):
+    row_count: int = Field(ge=0)
+    columns: list[str] = Field(min_length=1, max_length=100)
+
+    @field_validator("columns")
+    @classmethod
+    def require_unique_columns(cls, value: list[str]) -> list[str]:
+        if len(value) != len(set(value)):
+            raise ValueError("dataset columns must be unique")
+        if any(not column or len(column) > 255 for column in value):
+            raise ValueError("dataset columns must contain names between 1 and 255 characters")
+        return value
+
+
+class DataQualityReportCreate(BaseModel):
+    schema_version: str = Field(pattern=r"^1\.[0-9]+$", max_length=16)
+    contract: DataContractRef
+    scenario: str = Field(min_length=1, max_length=64, pattern=r"^[a-z][a-z0-9_-]*$")
+    success: bool
+    summary: DataQualitySummary
+    checks: list[DataQualityCheck] = Field(min_length=1, max_length=50)
+    dataset: DataQualityDataset
+    generated_at: datetime
+
+    @field_validator("generated_at")
+    @classmethod
+    def normalize_generated_at(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+    @model_validator(mode="after")
+    def require_consistent_results(self) -> "DataQualityReportCreate":
+        passed = sum(check.success for check in self.checks)
+        failed = len(self.checks) - passed
+        if len({check.id for check in self.checks}) != len(self.checks):
+            raise ValueError("data quality check ids must be unique")
+        if self.summary.checks != len(self.checks):
+            raise ValueError("summary checks must equal the number of checks")
+        if self.summary.passed != passed or self.summary.failed != failed:
+            raise ValueError("summary pass/fail counts must match check results")
+        if self.success != (failed == 0):
+            raise ValueError("report success must match check results")
+        return self
+
+
+class DataQualityReportReceipt(BaseModel):
+    report_id: UUID
+    run_id: UUID
+    checksum: str
+    duplicate: bool
 
 
 class IncidentStatus(StrEnum):

@@ -106,9 +106,10 @@ Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện t�
 Phiên bản hiện tại đã có health API, normalized pipeline-event ingestion, idempotency
 theo `event_id`, cập nhật trạng thái run, API đọc run, tự tạo một Incident `OPEN` khi
 run thất bại, API đọc Incident và pipeline-log ingestion/search trên Elasticsearch.
-Evidence Collector gom metadata run, failed-stage logs và GitHub commit diff thành citation
-có checksum. Log/evidence được redact secret, giới hạn kích thước và chống trùng bằng hash
-ổn định.
+Evidence Collector gom metadata run, failed-stage logs, GitHub commit diff và Data Quality report
+thành citation có checksum. Agent có thể upload report trước khi stage thất bại; Control Plane lưu
+report theo run để gắn vào Incident sau đó. Log/report/evidence được redact secret, giới hạn kích
+thước và chống trùng bằng hash ổn định.
 
 Chạy local bằng Python:
 
@@ -161,9 +162,24 @@ dụng khai báo các stage trong `dataops.yaml`, sau đó gọi action sau bư�
 ```
 
 Agent tự lấy repository, commit, branch, run ID và attempt từ GitHub; chạy tuần tự các
-stage; giữ nguyên exit code; đồng thời gửi event và log có correlation về Control Plane.
+stage; giữ nguyên exit code; đồng thời gửi event, log và report có correlation về Control Plane.
 Runtime Node 24 đã được GitHub cung cấp nên ứng dụng không cần cài thêm Python hoặc Docker
 chỉ để chạy agent. Các command trong `dataops.yaml` vẫn cần toolchain riêng của dự án.
+
+Khai báo report do Pandas/Great Expectations sinh trong cùng file cấu hình:
+
+```yaml
+version: 1
+reports:
+  data_quality: artifacts/data-quality-report.json
+pipeline:
+  stages:
+    - name: data-quality
+      run: python -m my_pipeline --output artifacts/data-quality-report.json
+```
+
+Agent kiểm tra file sau mỗi stage nên report vẫn được upload trước event `FAILED` khi chính
+stage `data-quality` trả exit code khác 0.
 
 ### Incident API
 
@@ -187,8 +203,9 @@ GET  /api/v1/incidents/{incident_id}/evidence
 Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
 ```
 
-Collector ghi `PIPELINE_METADATA`, tối đa 100 log của failed stage và `COMMIT_DIFF` cho
-GitHub. Mỗi record có `citation_id`, SHA-256 checksum, source URI, excerpt và metadata.
+Collector ghi `PIPELINE_METADATA`, tối đa 100 log của failed stage, `COMMIT_DIFF` cho
+GitHub và `DATA_QUALITY_REPORT` nếu run đã upload report. Mỗi record có `citation_id`,
+SHA-256 checksum, source URI, excerpt và metadata.
 Log/diff bị giới hạn 20.000 ký tự; retry cùng nội dung trả duplicate thay vì tạo citation
 mới. Elasticsearch hoặc GitHub tạm lỗi được trả dưới dạng warning, còn evidence cục bộ
 vẫn được giữ. Incident chỉ chuyển sang `ANALYZING` khi có log evidence; nếu thiếu log thì
@@ -196,6 +213,19 @@ chuyển `ACTION_REQUIRED`.
 
 `DATAOPS_GITHUB_TOKEN` là tùy chọn với repository public và cần thiết với repository
 private hoặc khi cần rate limit cao hơn. Token chỉ cần quyền đọc Contents.
+
+### Data Quality report API
+
+```http
+POST /api/v1/runs/{run_id}/reports/data-quality
+Content-Type: application/json
+Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
+```
+
+Contract version `1.x` chứa `contract`, `scenario`, kết quả tổng, từng check và metadata
+dataset. Tối đa 50 check và 100.000 byte sau canonicalization. Server kiểm tra số
+passed/failed phải khớp với từng check, redact secret trước khi lưu và trả `duplicate: true`
+khi Agent retry cùng nội dung.
 
 ### Pipeline log API
 

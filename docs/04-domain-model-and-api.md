@@ -76,6 +76,16 @@ Evidence
 ├── excerpt
 ├── details                    # JSON metadata/provenance
 └── collected_at
+
+PipelineReport
+├── id
+├── pipeline_run_id
+├── report_type
+├── source_uri
+├── checksum
+├── payload                     # JSON đã validate và redact
+├── redaction_count
+└── received_at
 ```
 
 Các trạng thái Incident chuẩn: `OPEN`, `COLLECTING_EVIDENCE`, `ANALYZING`,
@@ -84,8 +94,9 @@ Các trạng thái Incident chuẩn: `OPEN`, `COLLECTING_EVIDENCE`, `ANALYZING`,
 cùng ngoài kiểm tra idempotency trong service.
 
 Evidence là immutable theo bộ `(incident_id, evidence_type, source_uri, checksum)`. M2
-hiện thu `PIPELINE_METADATA`, `LOG_EXCERPT` và `COMMIT_DIFF`; schema đã dành type cho
-`DATA_QUALITY_REPORT` và `ARTIFACT_MANIFEST` ở M3. Excerpt tối đa 20.000 ký tự, log query
+thu `PIPELINE_METADATA`, `LOG_EXCERPT` và `COMMIT_DIFF`; M3 bổ sung
+`DATA_QUALITY_REPORT`. `PipelineReport` được lưu theo run trước khi event `FAILED` tạo
+Incident và idempotent theo `(pipeline_run_id, report_type, checksum)`. Excerpt tối đa 20.000 ký tự, log query
 tối đa 100 document và GitHub diff tối đa 20 file/750 ký tự patch mỗi file. Collector
 redact lại evidence trước khi commit dù log ingestion đã redact trước đó.
 
@@ -174,6 +185,10 @@ POST /api/v1/runs/{run_id}/complete
 ```
 
 Callback API bổ sung dữ liệu domain-specific mà webhook provider không có, ví dụ Data Quality report và verification output.
+
+Endpoint Data Quality report đã được triển khai ở M3, nhận contract `1.x`, tối đa 50 check
+và payload canonical tối đa 100.000 byte. Summary và trạng thái tổng phải khớp kết quả từng
+check; report được redact trước khi lưu và retry cùng checksum trả `duplicate: true`.
 
 ### Incident endpoints
 

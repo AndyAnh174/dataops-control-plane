@@ -36,8 +36,9 @@ Push một commit gây lỗi
 
 ### Giai đoạn 3 — Pipeline mẫu
 
-- Batch ETL bằng Pandas.
-- Great Expectations suite.
+- Batch dữ liệu mẫu bằng Pandas. ✅ M3
+- Great Expectations checks cho schema drift, null, duplicate, range và volume. ✅ M3
+- Report JSON versioned được Agent upload và Evidence Collector gắn citation. ✅ M3
 - Isolation Forest cho anomaly scenario.
 - Docker image version theo commit SHA.
 - Raw → staging → verification → publish.
