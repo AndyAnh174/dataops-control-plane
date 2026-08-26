@@ -154,6 +154,7 @@ Mỗi endpoint phải:
 ```http
 POST /api/v1/runs
 POST /api/v1/runs/{run_id}/stages
+POST /api/v1/runs/{run_id}/logs
 POST /api/v1/runs/{run_id}/reports/data-quality
 POST /api/v1/runs/{run_id}/reports/anomaly
 POST /api/v1/runs/{run_id}/artifacts
@@ -179,6 +180,7 @@ POST /api/v1/incidents/{incident_id}/escalate
 GET /api/v1/projects/{project_id}/runs
 GET /api/v1/runs/{run_id}
 GET /api/v1/runs/{run_id}/timeline
+GET /api/v1/runs/{run_id}/logs
 GET /api/v1/incidents/{incident_id}/evidence
 GET /api/v1/incidents/{incident_id}/audit
 ```

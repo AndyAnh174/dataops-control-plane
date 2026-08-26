@@ -71,7 +71,7 @@ Push code
 | Data pipeline | Pandas |
 | Data Quality | Great Expectations |
 | Anomaly detection | Scikit-learn, Isolation Forest |
-| Search và log | Elasticsearch, Logstash/Elastic Agent, Kibana |
+| Search và log | Elasticsearch Data Stream, Kibana; Logstash/Elastic Agent tùy chọn |
 | Agent và LLM | LangGraph, Ollama |
 | Metrics | Prometheus, Grafana |
 | Container và runtime | Docker, K3s/Kubernetes |
@@ -92,7 +92,7 @@ Push code
 
 ## Trạng thái
 
-Dự án đang ở giai đoạn **thiết kế kiến trúc và xác định phạm vi MVP**. Quyết định hiện tại:
+Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện tại:
 
 1. Xây core platform theo hướng provider-neutral.
 2. Tích hợp GitHub Actions trước.
@@ -103,7 +103,9 @@ Dự án đang ở giai đoạn **thiết kế kiến trúc và xác định ph�
 
 ## Khởi chạy phiên bản hiện tại
 
-Phiên bản đầu tiên đã có health API, normalized pipeline-event ingestion, idempotency theo `event_id`, cập nhật trạng thái run và API đọc run.
+Phiên bản hiện tại đã có health API, normalized pipeline-event ingestion, idempotency
+theo `event_id`, cập nhật trạng thái run, API đọc run và pipeline-log ingestion/search
+trên Elasticsearch. Log được redact secret trước khi lưu và chống trùng bằng hash ổn định.
 
 Chạy local bằng Python:
 
@@ -120,14 +122,64 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
-Chạy bằng Docker Compose với PostgreSQL:
+Chạy bằng Docker Compose với PostgreSQL, Elasticsearch 9.4.4 và Kibana 9.4.4:
 
 ```powershell
 $env:DATAOPS_POSTGRES_PASSWORD = "choose-a-local-development-secret"
 docker compose up --build
 ```
 
-API documentation được cung cấp tại `http://localhost:8000/docs`; health endpoint tại `http://localhost:8000/health`.
+Các cổng local:
+
+- FastAPI: `http://localhost:8000/docs`.
+- Elasticsearch: `http://localhost:9201`.
+- Kibana: `http://localhost:5602`.
+
+Elasticsearch và Kibana chỉ bind vào loopback. Cấu hình Compose tắt Elastic Security
+để phát triển local; production phải bật TLS/authentication và truyền API key bằng
+secret runtime.
+
+### Pipeline log API
+
+Log chỉ được gắn vào một `run_id` đã tồn tại:
+
+```http
+POST /api/v1/runs/{run_id}/logs
+Content-Type: application/json
+
+{
+  "entries": [
+    {
+      "occurred_at": "2026-08-26T14:09:58Z",
+      "job_name": "quality",
+      "stage": "data-quality",
+      "level": "ERROR",
+      "stream": "stderr",
+      "sequence": 7,
+      "message": "Schema validation failed",
+      "tags": ["ci", "quality"],
+      "metadata": {"table": "customers"}
+    }
+  ]
+}
+```
+
+Tìm log theo run, full-text và lọc theo stage/level:
+
+```http
+GET /api/v1/runs/{run_id}/logs?query=Schema%20validation&stage=data-quality&level=ERROR
+```
+
+Log được ghi qua alias `logs-dataops.pipeline` vào Data Stream versioned
+`logs-dataops.pipeline-v1`, retention mặc định 30 ngày. Trong Kibana Discover, tạo
+data view `logs-dataops.pipeline*` với timestamp field `@timestamp`.
+
+Chạy integration test thật với Elasticsearch local:
+
+```powershell
+$env:DATAOPS_TEST_ELASTICSEARCH_URL = "http://127.0.0.1:9201"
+uv run pytest tests/test_elasticsearch_logs.py
+```
 
 ## Container image
 

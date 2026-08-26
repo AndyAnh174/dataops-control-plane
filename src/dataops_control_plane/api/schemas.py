@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 
 
 class PipelineStatus(StrEnum):
@@ -53,3 +53,59 @@ class PipelineRunRead(BaseModel):
         if value.tzinfo is None:
             return value.replace(tzinfo=UTC)
         return value.astimezone(UTC)
+
+
+class PipelineLogEntryCreate(BaseModel):
+    occurred_at: datetime
+    job_name: str = Field(min_length=1, max_length=255)
+    stage: str = Field(min_length=1, max_length=255)
+    level: str = Field(pattern=r"^(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL|CRITICAL)$")
+    stream: str = Field(pattern=r"^(stdout|stderr)$")
+    sequence: int = Field(ge=0)
+    message: str = Field(min_length=1, max_length=100_000)
+    stack_trace: str | None = Field(default=None, max_length=200_000)
+    tags: list[str] = Field(default_factory=list, max_length=32)
+    metadata: dict[str, JsonValue] = Field(default_factory=dict)
+
+    @field_validator("occurred_at")
+    @classmethod
+    def normalize_occurred_at(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+    @field_validator("level", mode="before")
+    @classmethod
+    def normalize_level(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.upper()
+        return value
+
+
+class PipelineLogBatchCreate(BaseModel):
+    entries: list[PipelineLogEntryCreate] = Field(min_length=1, max_length=500)
+
+
+class PipelineLogReceipt(BaseModel):
+    run_id: UUID
+    accepted_count: int
+    duplicate_count: int
+    redaction_count: int
+
+
+class PipelineLogRead(BaseModel):
+    occurred_at: datetime
+    job_name: str
+    stage: str
+    level: str
+    stream: str
+    sequence: int
+    message: str
+    stack_trace: str | None = None
+    tags: list[str]
+    metadata: dict[str, JsonValue]
+    redaction_count: int
+
+
+class PipelineLogSearchResponse(BaseModel):
+    items: list[PipelineLogRead]

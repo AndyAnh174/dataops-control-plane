@@ -65,6 +65,11 @@ Không commit file secret vào repository.
 
 ## 8.5 Logging và correlation
 
+MVP nhận log JSON qua FastAPI rồi ghi trực tiếp vào Elasticsearch bằng Bulk API.
+Logstash chưa bắt buộc trong luồng này vì Control Plane đã validate, chuẩn hóa và
+redact dữ liệu. Có thể thêm Elastic Agent hoặc Logstash sau cho log hệ điều hành,
+container hoặc nguồn cần parsing/routing phức tạp.
+
 Mọi log ứng dụng cần có các field:
 
 ```json
@@ -80,6 +85,20 @@ Mọi log ứng dụng cần có các field:
 ```
 
 Log index và RAG index phải tách riêng. Thiết lập retention cho log và checksum cho artifact.
+
+Triển khai hiện tại dùng:
+
+- Data Stream versioned: `logs-dataops.pipeline-v1`.
+- Alias đọc/ghi: `logs-dataops.pipeline`.
+- Data Stream Lifecycle: retention mặc định `30d`.
+- `message` và `stack_trace`: `match_only_text`.
+- `metadata`: `flattened` để tránh mapping explosion.
+- Document ID: hash ổn định để callback retry không tạo log trùng.
+
+Elasticsearch và Kibana không được public trực tiếp. Cấu hình tắt Elastic Security
+trong `compose.yaml` chỉ dành cho local development và được bind vào `127.0.0.1`.
+Production phải bật TLS, xác minh CA và dùng API key hoặc basic authentication từ
+secret runtime.
 
 ## 8.6 Security checklist
 

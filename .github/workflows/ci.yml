@@ -42,8 +42,46 @@ jobs:
       - name: Test
         run: uv run pytest --cov --cov-report=term-missing
 
-  container:
+  elasticsearch-integration:
     needs: quality
+    runs-on: ubuntu-latest
+    services:
+      elasticsearch:
+        image: elasticsearch:9.4.4
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+        ports:
+          - 9200:9200
+        options: >-
+          --health-cmd "curl --fail --silent http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=5s"
+          --health-interval 10s
+          --health-timeout 6s
+          --health-retries 12
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.11.33"
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Test Elasticsearch adapter
+        env:
+          DATAOPS_TEST_ELASTICSEARCH_URL: http://127.0.0.1:9200
+        run: uv run pytest tests/test_elasticsearch_logs.py
+
+  container:
+    needs: [quality, elasticsearch-integration]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
