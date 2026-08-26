@@ -98,8 +98,9 @@ stateDiagram-v2
 ```
 
 M1 đã triển khai việc tạo idempotent Incident ở trạng thái `OPEN`. Các transition còn
-lại được worker Evidence/RCA/Recovery bổ sung ở các milestone tiếp theo; không client nào
-được tự ý ghi trực tiếp trạng thái Incident.
+lại do Evidence/RCA/Recovery service điều khiển; không client nào được tự ý ghi trực tiếp
+trạng thái Incident. M2 đã triển khai `OPEN → COLLECTING_EVIDENCE → ANALYZING` khi có
+failed-stage logs, hoặc `ACTION_REQUIRED` khi log storage lỗi/không có log phù hợp.
 
 ## 3.6 Ví dụ schema drift
 

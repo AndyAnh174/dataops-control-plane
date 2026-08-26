@@ -19,3 +19,5 @@ class Settings(BaseSettings):
     elasticsearch_ca_certs: str | None = None
     elasticsearch_verify_certs: bool = True
     elasticsearch_log_retention: str = "30d"
+    github_api_url: str = "https://api.github.com"
+    github_token: SecretStr | None = None

@@ -62,3 +62,30 @@ def test_pipeline_logs_are_not_readable_without_the_agent_token(
 
     assert response.status_code == 401
     assert response.headers["www-authenticate"] == "Bearer"
+
+
+def test_incident_evidence_requires_the_agent_token(
+    protected_client: TestClient,
+) -> None:
+    """Catches operational evidence or collection commands being exposed publicly."""
+    incident_id = "00000000-0000-0000-0000-000000000001"
+
+    missing_read = protected_client.get(f"/api/v1/incidents/{incident_id}/evidence")
+    wrong_collect = protected_client.post(
+        f"/api/v1/incidents/{incident_id}/collect-evidence",
+        headers={"Authorization": "Bearer wrong-token"},
+    )
+    authorized_read = protected_client.get(
+        f"/api/v1/incidents/{incident_id}/evidence",
+        headers={"Authorization": "Bearer local-agent-test-token"},
+    )
+    authorized_collect = protected_client.post(
+        f"/api/v1/incidents/{incident_id}/collect-evidence",
+        headers={"Authorization": "Bearer local-agent-test-token"},
+    )
+
+    assert missing_read.status_code == 401
+    assert missing_read.headers["www-authenticate"] == "Bearer"
+    assert wrong_collect.status_code == 401
+    assert authorized_read.status_code == 404
+    assert authorized_collect.status_code == 404

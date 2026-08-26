@@ -197,6 +197,7 @@ source = { editable = "." }
 dependencies = [
     { name = "elasticsearch" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "httpx" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
     { name = "sqlmodel" },
@@ -215,6 +216,7 @@ dev = [
 requires-dist = [
     { name = "elasticsearch", specifier = ">=9.4.1,<9.5" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115,<1" },
+    { name = "httpx", specifier = ">=0.28,<1" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
     { name = "pydantic-settings", specifier = ">=2.7,<3" },
     { name = "sqlmodel", specifier = ">=0.0.22,<0.1" },

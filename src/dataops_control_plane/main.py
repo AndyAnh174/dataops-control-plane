@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -12,6 +12,8 @@ from dataops_control_plane.api.routes.logs import router as logs_router
 from dataops_control_plane.api.routes.runs import router as runs_router
 from dataops_control_plane.config import Settings
 from dataops_control_plane.services.elasticsearch_logs import ElasticsearchPipelineLogStore
+from dataops_control_plane.services.evidence import EvidenceSource
+from dataops_control_plane.services.github_evidence import GitHubCommitEvidenceSource
 from dataops_control_plane.services.pipeline_logs import PipelineLogStore
 
 
@@ -23,10 +25,16 @@ class HealthResponse(BaseModel):
 def create_app(
     engine: Engine | None = None,
     log_store: PipelineLogStore | None = None,
+    evidence_sources: Sequence[EvidenceSource] | None = None,
 ) -> FastAPI:
     settings = Settings()
     database_engine = engine or create_engine(settings.database_url, pool_pre_ping=True)
     pipeline_log_store = log_store or ElasticsearchPipelineLogStore.from_settings(settings)
+    provider_evidence_sources = (
+        list(evidence_sources)
+        if evidence_sources is not None
+        else [GitHubCommitEvidenceSource.from_settings(settings)]
+    )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -37,6 +45,8 @@ def create_app(
             close = getattr(pipeline_log_store, "close", None)
             if close is not None:
                 close()
+            for evidence_source in provider_evidence_sources:
+                evidence_source.close()
 
     application = FastAPI(
         title="DataOps Control Plane",
@@ -45,6 +55,7 @@ def create_app(
     )
     application.state.engine = database_engine
     application.state.log_store = pipeline_log_store
+    application.state.evidence_sources = provider_evidence_sources
     application.state.settings = settings
 
     @application.get("/health", tags=["system"])

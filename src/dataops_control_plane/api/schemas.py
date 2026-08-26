@@ -85,6 +85,52 @@ class IncidentListResponse(BaseModel):
     items: list[IncidentRead]
 
 
+class EvidenceType(StrEnum):
+    PIPELINE_METADATA = "PIPELINE_METADATA"
+    LOG_EXCERPT = "LOG_EXCERPT"
+    COMMIT_DIFF = "COMMIT_DIFF"
+    DATA_QUALITY_REPORT = "DATA_QUALITY_REPORT"
+    ARTIFACT_MANIFEST = "ARTIFACT_MANIFEST"
+
+
+class EvidenceRead(BaseModel):
+    id: UUID
+    incident_id: UUID
+    citation_id: str
+    evidence_type: EvidenceType
+    source_uri: str
+    checksum: str
+    excerpt: str
+    metadata: dict[str, JsonValue]
+    collected_at: datetime
+
+    @field_validator("collected_at", mode="before")
+    @classmethod
+    def normalize_collected_at(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+
+class EvidenceListResponse(BaseModel):
+    items: list[EvidenceRead]
+
+
+class EvidenceCollectionWarning(BaseModel):
+    source: str
+    code: str
+    message: str
+
+
+class EvidenceCollectionReceipt(BaseModel):
+    incident_id: UUID
+    incident_status: IncidentStatus
+    collected_count: int
+    duplicate_count: int
+    evidence_count: int
+    warnings: list[EvidenceCollectionWarning]
+
+
 class PipelineLogEntryCreate(BaseModel):
     occurred_at: datetime
     job_name: str = Field(min_length=1, max_length=255)

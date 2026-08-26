@@ -68,11 +68,13 @@ Incident
 
 Evidence
 ├── id
+├── citation_id                # EVD-<UUID>, dùng cho RCA citation
 ├── incident_id
 ├── evidence_type
 ├── source_uri
 ├── checksum
 ├── excerpt
+├── details                    # JSON metadata/provenance
 └── collected_at
 ```
 
@@ -80,6 +82,12 @@ Các trạng thái Incident chuẩn: `OPEN`, `COLLECTING_EVIDENCE`, `ANALYZING`,
 `ACTION_REQUIRED` và `RESOLVED`. M1 tự tạo `OPEN` khi nhận event `FAILED`; `SUCCESS` và
 `CANCELED` không tạo Incident. Unique constraint trên `pipeline_run_id` là lớp bảo vệ cuối
 cùng ngoài kiểm tra idempotency trong service.
+
+Evidence là immutable theo bộ `(incident_id, evidence_type, source_uri, checksum)`. M2
+hiện thu `PIPELINE_METADATA`, `LOG_EXCERPT` và `COMMIT_DIFF`; schema đã dành type cho
+`DATA_QUALITY_REPORT` và `ARTIFACT_MANIFEST` ở M3. Excerpt tối đa 20.000 ký tự, log query
+tối đa 100 document và GitHub diff tối đa 20 file/750 ký tự patch mỗi file. Collector
+redact lại evidence trước khi commit dù log ingestion đã redact trước đó.
 
 ### RCA và recovery
 
@@ -172,11 +180,14 @@ Callback API bổ sung dữ liệu domain-specific mà webhook provider không c
 ```http
 GET  /api/v1/incidents
 GET  /api/v1/incidents/{incident_id}
+POST /api/v1/incidents/{incident_id}/collect-evidence
+GET  /api/v1/incidents/{incident_id}/evidence
 ```
 
-Hai read endpoint trên đã được triển khai. Response chứa `pipeline_run` lồng bên trong để
-client nhận provider, project, run/attempt, commit, branch, failed stage và timestamp trong
-một lần đọc. Các command endpoint dưới đây thuộc milestone RCA/Recovery:
+Bốn endpoint trên đã được triển khai. Response Incident chứa `pipeline_run` lồng bên trong;
+Evidence response chứa citation/checksum/provenance. Collect/read Evidence yêu cầu Bearer
+token. Collector giữ partial bundle và trả warning có cấu trúc khi Elasticsearch/GitHub
+không sẵn sàng. Các command endpoint dưới đây thuộc milestone RCA/Recovery:
 
 ```http
 POST /api/v1/incidents/{incident_id}/analyze
@@ -192,7 +203,6 @@ GET /api/v1/projects/{project_id}/runs
 GET /api/v1/runs/{run_id}
 GET /api/v1/runs/{run_id}/timeline
 GET /api/v1/runs/{run_id}/logs
-GET /api/v1/incidents/{incident_id}/evidence
 GET /api/v1/incidents/{incident_id}/audit
 ```
 

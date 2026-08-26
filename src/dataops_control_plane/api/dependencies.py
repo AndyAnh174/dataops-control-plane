@@ -1,11 +1,12 @@
 import secrets
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlmodel import Session
 
+from dataops_control_plane.services.evidence import EvidenceSource
 from dataops_control_plane.services.pipeline_logs import PipelineLogStore
 
 
@@ -22,6 +23,13 @@ def get_log_store(request: Request) -> PipelineLogStore:
 
 
 LogStoreDep = Annotated[PipelineLogStore, Depends(get_log_store)]
+
+
+def get_evidence_sources(request: Request) -> Sequence[EvidenceSource]:
+    return request.app.state.evidence_sources
+
+
+EvidenceSourcesDep = Annotated[Sequence[EvidenceSource], Depends(get_evidence_sources)]
 
 _agent_bearer = HTTPBearer(auto_error=False)
 

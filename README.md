@@ -106,7 +106,9 @@ Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện t�
 Phiên bản hiện tại đã có health API, normalized pipeline-event ingestion, idempotency
 theo `event_id`, cập nhật trạng thái run, API đọc run, tự tạo một Incident `OPEN` khi
 run thất bại, API đọc Incident và pipeline-log ingestion/search trên Elasticsearch.
-Log được redact secret trước khi lưu và chống trùng bằng hash ổn định.
+Evidence Collector gom metadata run, failed-stage logs và GitHub commit diff thành citation
+có checksum. Log/evidence được redact secret, giới hạn kích thước và chống trùng bằng hash
+ổn định.
 
 Chạy local bằng Python:
 
@@ -141,8 +143,9 @@ Elasticsearch và Kibana chỉ bind vào loopback. Cấu hình Compose tắt Ela
 để phát triển local; production phải bật TLS/authentication và truyền API key bằng
 secret runtime.
 
-Pipeline event và log API yêu cầu `Authorization: Bearer <DATAOPS_AGENT_TOKEN>` khi
-`DATAOPS_AGENT_TOKEN` được cấu hình. Health check vẫn public để phục vụ readiness probe.
+Pipeline event, log và evidence API yêu cầu
+`Authorization: Bearer <DATAOPS_AGENT_TOKEN>` khi `DATAOPS_AGENT_TOKEN` được cấu hình.
+Health check vẫn public để phục vụ readiness probe.
 
 ### DataOps Agent cho GitHub Actions
 
@@ -175,6 +178,24 @@ GET /api/v1/incidents/{incident_id}
 
 Response Incident chứa event kích hoạt, timestamp và toàn bộ metadata của `PipelineRun`
 liên kết để UI hoặc Evidence Collector tiếp tục xử lý.
+
+Thu thập và đọc evidence yêu cầu cùng Bearer token của Agent:
+
+```http
+POST /api/v1/incidents/{incident_id}/collect-evidence
+GET  /api/v1/incidents/{incident_id}/evidence
+Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
+```
+
+Collector ghi `PIPELINE_METADATA`, tối đa 100 log của failed stage và `COMMIT_DIFF` cho
+GitHub. Mỗi record có `citation_id`, SHA-256 checksum, source URI, excerpt và metadata.
+Log/diff bị giới hạn 20.000 ký tự; retry cùng nội dung trả duplicate thay vì tạo citation
+mới. Elasticsearch hoặc GitHub tạm lỗi được trả dưới dạng warning, còn evidence cục bộ
+vẫn được giữ. Incident chỉ chuyển sang `ANALYZING` khi có log evidence; nếu thiếu log thì
+chuyển `ACTION_REQUIRED`.
+
+`DATAOPS_GITHUB_TOKEN` là tùy chọn với repository public và cần thiết với repository
+private hoặc khi cần rate limit cao hơn. Token chỉ cần quyền đọc Contents.
 
 ### Pipeline log API
 

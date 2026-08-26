@@ -56,6 +56,17 @@ khác, truyền bộ biến portable `DATAOPS_PROVIDER`, `DATAOPS_PROJECT_REF`,
 `DATAOPS_EXTERNAL_RUN_ID`, `DATAOPS_ATTEMPT`, `DATAOPS_COMMIT_SHA`, `DATAOPS_BRANCH` và
 `DATAOPS_JOB_NAME`.
 
+Evidence Collector dùng GitHub Commit API để lấy diff. Repository public có thể chạy
+không token; production/private repository nên cấu hình credential chỉ đọc:
+
+```env
+DATAOPS_GITHUB_API_URL=https://api.github.com
+DATAOPS_GITHUB_TOKEN=<read-only-contents-token>
+```
+
+Không dùng token có quyền ghi repository, workflow hoặc package. Provider lỗi không được
+làm mất metadata/log evidence; collector ghi warning và tiếp tục với partial bundle.
+
 Cấu hình LLM chỉ nằm trên DataOps server:
 
 ```env
