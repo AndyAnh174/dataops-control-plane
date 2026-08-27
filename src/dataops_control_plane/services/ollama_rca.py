@@ -68,11 +68,9 @@ class OllamaRCAClient:
             response_payload = response.json()
             message = response_payload["message"]
             content = message["content"]
-            output_payload = json.loads(content)
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            output_payload = _structured_json_object(content)
+        except (KeyError, TypeError, ValueError) as exc:
             raise LLMResponseInvalid("LLM did not return valid structured JSON") from exc
-        if not isinstance(output_payload, dict):
-            raise LLMResponseInvalid("LLM did not return valid structured JSON")
 
         return RCACompletion(
             payload=output_payload,
@@ -83,6 +81,21 @@ class OllamaRCAClient:
 
     def close(self) -> None:
         self._client.close()
+
+
+def _structured_json_object(value: object) -> dict[str, object]:
+    if not isinstance(value, str):
+        raise TypeError("Structured output must be a string")
+    try:
+        payload = json.loads(value)
+    except json.JSONDecodeError:
+        lines = value.strip().splitlines()
+        if len(lines) < 3 or lines[0].strip().lower() != "```json" or lines[-1].strip() != "```":
+            raise
+        payload = json.loads("\n".join(lines[1:-1]))
+    if not isinstance(payload, dict):
+        raise TypeError("Structured output must be a JSON object")
+    return dict(payload)
 
 
 def _non_negative_int(value: object) -> int:

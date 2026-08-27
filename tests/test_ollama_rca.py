@@ -98,3 +98,34 @@ def test_ollama_rca_distinguishes_invalid_model_output_from_an_outage() -> None:
 
     assert str(error.value) == "LLM service is temporarily unavailable"
     assert "/secret/model" not in str(error.value)
+
+
+def test_ollama_rca_accepts_one_json_fence_but_not_surrounding_prose() -> None:
+    """Catches a small local model wrapping an otherwise valid structured response."""
+
+    def client_for(content: str) -> OllamaRCAClient:
+        return OllamaRCAClient(
+            httpx.Client(
+                transport=httpx.MockTransport(
+                    lambda _: httpx.Response(
+                        200,
+                        json={"message": {"role": "assistant", "content": content}},
+                    )
+                ),
+                base_url="http://ollama.test",
+            ),
+            model_name="gemma4:e2b",
+        )
+
+    fenced = client_for('```json\n{"root_cause":"amount range violation"}\n```')
+    prose = client_for('Result:\n```json\n{"root_cause":"amount range violation"}\n```')
+
+    result = fenced.generate(
+        system_prompt="system",
+        user_prompt="incident",
+        schema=OUTPUT_SCHEMA,
+    )
+
+    assert result.payload == {"root_cause": "amount range violation"}
+    with pytest.raises(LLMResponseInvalid, match="valid structured JSON"):
+        prose.generate(system_prompt="system", user_prompt="incident", schema=OUTPUT_SCHEMA)

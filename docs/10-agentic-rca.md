@@ -28,6 +28,10 @@ START
 - `validate`: Pydantic schema, citation allowlist, knowledge ID allowlist và human-approval
   rule. Chỉ report hợp lệ mới được commit.
 
+Client ưu tiên JSON thuần. Để tương thích model local nhỏ, nó cũng chấp nhận đúng một
+fenced block `json` chiếm toàn bộ response; prose bao quanh hoặc payload không phải object
+vẫn bị từ chối trước bước validate/persist.
+
 ## 10.2 Output contract
 
 RCA report gồm:
