@@ -1,107 +1,193 @@
-# 8. Triển khai và vận hành
+# 8. Triển khai, đóng gói và vận hành
 
-## 8.1 Môi trường phát triển
+## 8.1 Mục tiêu phân phối
 
-Giai đoạn đầu nên dùng Docker Compose trên một máy:
+DataOps Platform được cung cấp như một sản phẩm self-hosted, nhưng không ép mọi process
+vào một container:
 
 ```text
-dataops-api
-dataops-worker
-redis
-postgresql
-minio
-elasticsearch
-kibana
-ollama
+Một bộ cài Docker Compose
+├── andyanh174/dataops-platform:<version>
+│   ├── FastAPI JSON API
+│   └── Web UI HTML/CSS/JavaScript
+├── postgres:<pinned-version>
+├── elasticsearch:<pinned-version>
+└── kibana:<pinned-version>       # optional/operator only
 ```
 
-Pipeline mẫu và verification có thể chạy bằng Docker trước khi chuyển sang K3s.
+Image của dự án chứa code Python, templates, static assets và migration tooling. PostgreSQL,
+Elasticsearch và Kibana dùng image chính thức riêng để có healthcheck, volume, resource
+limit và vòng đời nâng cấp độc lập. Ollama có thể chạy ở máy khác và chỉ được cấu hình bằng
+endpoint; không đóng model hàng GB vào image Platform.
 
-## 8.2 Môi trường demo ba server
+DataOps Agent không chạy thường trực trong stack này. Agent được provider tải theo version
+và chạy trong GitHub Actions/GitLab/Jenkins runner.
 
-| Server | Thành phần | Vai trò |
-|---|---|---|
-| A — CI/CD | GitHub self-hosted runner hoặc Jenkins, Docker | Test, build, push image, callback |
-| B — Runtime | K3s, Pipeline Job, Verification Job, Prometheus | Chạy và xác minh pipeline |
-| C — DataOps | API, worker, DB, ELK, MinIO, Ollama, Agent | Control plane, RCA và recovery |
+## 8.2 Trạng thái hiện tại và kiến trúc đích
 
-## 8.3 Kết nối GitHub Actions
+Hiện tại repository đã có:
 
-### Lựa chọn A — self-hosted runner trong LAN
+- image backend FastAPI multi-architecture được build/scan và publish lên GHCR;
+- Compose cho FastAPI, PostgreSQL, Elasticsearch và Kibana;
+- healthcheck, volume và loopback binding cho API/Elastic/Kibana;
+- Agent repository riêng cho GitHub Actions;
+- M1–M6: ingestion, evidence, retrieval, RCA, policy, recovery và verification.
 
-Runner gọi được DataOps bằng IP nội bộ. Cách này phù hợp demo và không bắt buộc public DataOps API cho callback từ workflow.
+Chưa được xem là hoàn thành:
 
-Hạn chế: webhook trực tiếp từ GitHub.com vẫn cần endpoint truy cập được từ Internet. Có thể dùng callback `if: always()` và polling GitHub API trong MVP, nhưng sẽ kém tin cậy nếu runner bị mất hoàn toàn.
+- Web UI, session auth, workspace/project và RBAC;
+- integration token theo project thay cho token dùng chung;
+- migration/backup/upgrade workflow hoàn chỉnh;
+- image `dataops-platform` chứa Web UI trên Docker Hub;
+- production Compose bật TLS/authentication cho Elasticsearch.
 
-### Lựa chọn B — public HTTPS endpoint
+Việc ghi rõ hai trạng thái tránh nhầm thiết kế trong tài liệu với tính năng đã chạy.
 
-DataOps webhook receiver được đặt sau reverse proxy, TLS và authentication. Đây là hướng phù hợp hơn nếu muốn tích hợp GitHub/GitLab cloud một cách hoàn chỉnh.
+## 8.3 Golden path cho người dùng self-hosted
 
-Chỉ public các endpoint ingestion cần thiết; database, Elasticsearch, MinIO, Redis và Ollama không được public.
-Pipeline event và log endpoint phải xác thực Bearer token riêng cho agent; token được lưu
-trong CI secret store và so sánh constant-time tại Control Plane.
+Trải nghiệm cài đặt đích:
 
-## 8.4 Cấu hình project
+```text
+Tải compose.yaml và .env.example của một release
+→ cấu hình public URL, database secret, instance key và Ollama endpoint
+→ docker compose pull
+→ docker compose up -d
+→ chờ healthcheck
+→ mở Web UI
+→ bootstrap owner
+→ tạo workspace/project/token
+→ tích hợp repository
+```
+
+Người dùng không cần clone source hoặc cài Python. `docker compose up -d` kéo Platform từ
+Docker Hub cùng các dependency image đã pin.
+
+Production không dùng `latest`; pin SemVer, commit SHA hoặc digest. `latest` chỉ để trải
+nghiệm nhanh và không được tự động cập nhật một deployment đang chạy.
+
+## 8.4 Phát triển local hiện tại
+
+Backend hiện tại có thể chạy trực tiếp:
+
+```powershell
+uv sync --group dev
+uv run fastapi dev
+```
+
+Hoặc chạy Compose từ source:
+
+```powershell
+$env:DATAOPS_POSTGRES_PASSWORD = "choose-a-local-development-secret"
+$env:DATAOPS_AGENT_TOKEN = "choose-a-random-agent-bearer-token"
+docker compose up --build
+```
+
+Các port hiện tại:
+
+- FastAPI: `127.0.0.1:8000`;
+- Elasticsearch: `127.0.0.1:9201`;
+- Kibana: `127.0.0.1:5602`.
+
+Elasticsearch và Kibana tắt security trong Compose hiện tại nên chỉ dành cho local/demo và
+được bind loopback. Không copy cấu hình đó sang production public.
+
+## 8.5 Kết nối GitHub Actions
 
 Repository ứng dụng khai báo pipeline portable trong `dataops.yaml` và gọi
-`AndyAnh174/dataops-agent@v0`. Hai biến tối thiểu ở GitHub Actions:
+`AndyAnh174/dataops-agent@v0`. Hai biến tối thiểu:
 
 ```env
-DATAOPS_URL=http://dataops.internal:8000
-DATAOPS_TOKEN=<stored-in-ci-secret>
+DATAOPS_URL=https://dataops.example.com
+DATAOPS_TOKEN=<stored-in-github-secret>
 ```
 
-Agent tự đọc project, commit SHA, branch, run ID, attempt và job từ GitHub. Với CI provider
-khác, truyền bộ biến portable `DATAOPS_PROVIDER`, `DATAOPS_PROJECT_REF`,
-`DATAOPS_EXTERNAL_RUN_ID`, `DATAOPS_ATTEMPT`, `DATAOPS_COMMIT_SHA`, `DATAOPS_BRANCH` và
-`DATAOPS_JOB_NAME`.
+Agent tự đọc repository, commit SHA, branch, run ID, attempt và job từ GitHub. Với provider
+khác, truyền bộ metadata portable tương ứng. Agent giữ nguyên exit code stage; lỗi gửi
+telemetry mặc định không biến một pipeline thành công thành thất bại.
 
-Evidence Collector dùng GitHub Commit API để lấy diff. Repository public có thể chạy
-không token; production/private repository nên cấu hình credential chỉ đọc:
+MVP hiện dùng `DATAOPS_AGENT_TOKEN` cấp instance. Trước multi-workspace, Web Platform phải
+sinh token theo project/integration, chỉ lưu hash, hỗ trợ expiry/rotate/revoke và derive
+project context từ token sau xác thực.
 
-```env
-DATAOPS_GITHUB_API_URL=https://api.github.com
-DATAOPS_GITHUB_TOKEN=<read-only-contents-token>
+Evidence Collector dùng GitHub API để đọc commit diff. Credential đọc và credential
+recovery phải tách scope:
+
+```text
+DATAOPS_GITHUB_TOKEN             # Contents: read
+DATAOPS_GITHUB_RECOVERY_TOKEN    # Actions: write trên repo được phép
 ```
 
-Không dùng token có quyền ghi repository, workflow hoặc package. Provider lỗi không được
-làm mất metadata/log evidence; collector ghi warning và tiếp tục với partial bundle.
+Về lâu dài ưu tiên GitHub App installation thay PAT. Credential không được commit, trả về
+browser hoặc đưa vào context LLM.
 
-Cấu hình LLM chỉ nằm trên DataOps server:
+## 8.6 Public và private network
+
+```text
+Internet
+   │ HTTPS :443
+   ▼
+Reverse proxy
+   ├── /                 → FastAPI Web UI
+   ├── /api/v1/*         → JSON/Agent API
+   └── /webhooks/*       → provider webhook
+
+Docker/private network
+   ├── PostgreSQL :5432
+   ├── Elasticsearch :9200
+   ├── Kibana :5601      # optional, operator access only
+   └── Ollama :11434     # private/external allowlist only
+```
+
+Chỉ port 80/443 của reverse proxy được public. Database, search engine, Kibana và Ollama
+không được NAT trực tiếp ra Internet. Health endpoint có thể dùng cho readiness nhưng không
+trả dependency detail hoặc secret.
+
+## 8.7 Cấu hình Platform
+
+Cấu hình LLM hiện tại:
 
 ```env
-DATAOPS_LLM_URL=http://ollama:11434
+DATAOPS_LLM_URL=http://192.168.1.80:11434
 DATAOPS_LLM_MODEL=gemma4:e2b
 DATAOPS_LLM_TIMEOUT_SECONDS=300
 DATAOPS_LLM_CONTEXT_TOKENS=8192
 DATAOPS_RCA_PROMPT_VERSION=rca-v1
 DATAOPS_RCA_CONTEXT_MAX_CHARS=16000
-DATAOPS_EMBEDDING_URL=http://ollama:11434
+DATAOPS_EMBEDDING_URL=http://192.168.1.80:11434
 DATAOPS_EMBEDDING_MODEL=bge-m3:567m
 DATAOPS_EMBEDDING_DIMENSIONS=1024
 DATAOPS_EMBEDDING_TIMEOUT_SECONDS=60
 ```
 
-Ollama phải bật embedding API. Không public trực tiếp cổng `11434`; chỉ Control Plane
-được phép truy cập qua private network hoặc firewall allowlist. Không commit file secret
-vào repository.
+Model công bố context lớn hơn không có nghĩa phải gửi toàn bộ log. Evidence budget mặc định
+8K–16K giúp giảm độ trễ và tải VPS. RCA hiện gọi tuần tự một embedding query và một
+structured LLM request; concurrency với model server nhỏ phải giới hạn, không bắn nhiều
+incident cùng lúc.
 
-RCA request được xử lý tuần tự: một embedding query cho retrieval rồi một `/api/chat`
-structured-output request. Không chạy nhiều incident đồng thời trên model server nhỏ nếu
-chưa có queue/concurrency limit. Timeout không làm mất incident/evidence; report chỉ được
-commit sau khi schema và citation validation hoàn tất.
+Web Platform sẽ bổ sung các secret runtime:
 
-## 8.5 Logging và correlation
+```text
+DATAOPS_PUBLIC_URL
+DATAOPS_SESSION_SECRET
+DATAOPS_ENCRYPTION_KEY
+DATAOPS_BOOTSTRAP_ADMIN_*        # chỉ dùng bootstrap một lần
+```
 
-MVP nhận log JSON qua FastAPI rồi ghi trực tiếp vào Elasticsearch bằng Bulk API.
-Logstash chưa bắt buộc trong luồng này vì Control Plane đã validate, chuẩn hóa và
-redact dữ liệu. Có thể thêm Elastic Agent hoặc Logstash sau cho log hệ điều hành,
-container hoặc nguồn cần parsing/routing phức tạp.
+`.env` chỉ phù hợp local/demo. Production dùng Docker secrets hoặc secret manager của môi
+trường triển khai; image và Git không chứa giá trị thật. Bootstrap credential phải được vô
+hiệu hóa sau khi owner đầu tiên được tạo.
 
-Mọi log ứng dụng cần có các field:
+## 8.8 Logging, Elasticsearch và correlation
+
+MVP nhận log JSON qua FastAPI rồi ghi trực tiếp vào Elasticsearch Bulk API. Logstash không
+bắt buộc vì Agent/Control Plane đã validate, chuẩn hóa và redact; có thể thêm Elastic Agent
+hoặc Logstash cho host/container log cần parsing phức tạp.
+
+Mọi log phải được correlation bằng:
 
 ```json
 {
+  "workspace_id": "workspace-id",
   "project_id": "transaction-pipeline",
   "run_id": "RUN-2026-00125",
   "external_run_id": "875421",
@@ -112,57 +198,95 @@ Mọi log ứng dụng cần có các field:
 }
 ```
 
-Log index và RAG index phải tách riêng. Thiết lập retention cho log và checksum cho artifact.
+Log index và RAG index tách riêng:
 
-Triển khai hiện tại dùng:
+- `logs-dataops.pipeline-v1` với alias `logs-dataops.pipeline`, retention mặc định `30d`;
+- `knowledge-dataops-v1` với alias `knowledge-dataops`, dense vector 1024 chiều;
+- raw log chỉ keyword/filter, không embedding từng dòng;
+- document ID/checksum ổn định để retry không tạo bản sao.
 
-- Data Stream versioned: `logs-dataops.pipeline-v1`.
-- Alias đọc/ghi: `logs-dataops.pipeline`.
-- Data Stream Lifecycle: retention mặc định `30d`.
-- `message` và `stack_trace`: `match_only_text`.
-- `metadata`: `flattened` để tránh mapping explosion.
-- Document ID: hash ổn định để callback retry không tạo log trùng.
+Kibana phục vụ operator/debug, còn user xem run/log/incident qua Web UI để giữ đúng tenant
+boundary và không cần quyền truy cập Elasticsearch trực tiếp.
 
-Knowledge index dùng mapping `dense_vector` 1024 chiều với cosine similarity. Alias
-`knowledge-dataops` trỏ tới index versioned `knowledge-dataops-v1`; `_source` loại trường
-embedding để API không tải/trả vector không cần thiết. Nếu đổi model hoặc số chiều, phải
-tạo index version mới và re-index, không sửa mapping hiện tại tại chỗ.
+## 8.9 Health, restart và resource limits
 
-Elasticsearch và Kibana không được public trực tiếp. Cấu hình tắt Elastic Security
-trong `compose.yaml` chỉ dành cho local development và được bind vào `127.0.0.1`.
-Production phải bật TLS, xác minh CA và dùng API key hoặc basic authentication từ
-secret runtime.
+Mỗi service phải có healthcheck và `restart: unless-stopped`. Platform chỉ nhận traffic sau
+khi PostgreSQL/Elasticsearch cần thiết đã healthy. Container chạy non-root và filesystem
+runtime chỉ ghi vào volume/thư mục được cấp.
 
-## 8.6 Security checklist
+Elasticsearch và Ollama tiêu thụ nhiều RAM nhất. Compose cần memory limit phù hợp; với VPS
+nhỏ, không khởi động Kibana khi không dùng và giữ RCA concurrency bằng 1. OOM/restart của
+Ollama hoặc Elasticsearch không được làm mất incident metadata trong PostgreSQL.
 
-- Xác minh webhook signature.
-- Token của CI lưu trong secret store.
-- Provider credential có scope đọc log/diff và trigger đúng project.
-- Kubernetes service account giới hạn namespace và verb.
-- Không cấp cluster-admin.
-- Redact secret/PII trước khi gửi context cho Ollama.
-- Mã hóa kết nối giữa các server khi không ở mạng tin cậy.
-- Audit mọi approval và recovery action.
-- Giới hạn kích thước upload và loại file report.
-- Backup PostgreSQL, MinIO và cấu hình Elasticsearch.
+## 8.10 Release lên Docker Hub
 
-## 8.7 Metrics vận hành
+Pipeline release đích:
 
-- `dataops_webhook_total`.
-- `dataops_webhook_duplicate_total`.
-- `dataops_run_duration_seconds`.
-- `dataops_incident_total`.
-- `dataops_rca_duration_seconds`.
-- `dataops_recovery_attempt_total`.
-- `dataops_recovery_success_total`.
-- `dataops_policy_denied_total`.
-- `dataops_happy_path_overhead_seconds`.
+```text
+lint + unit/integration tests
+→ build multi-stage/non-root image
+→ vulnerability scan
+→ build linux/amd64 + linux/arm64
+→ generate SBOM/provenance
+→ push immutable tags to Docker Hub
+→ deploy staging with exact digest
+→ smoke test health, login, ingest and run detail
+→ publish release notes + compose + rollback instructions
+```
 
-## 8.8 Failure handling nội bộ
+Tag dự kiến:
 
-- DataOps API mất tạm thời không được làm CI sai kết quả; callback cần retry có giới hạn.
-- Queue job dùng retry với exponential backoff và dead-letter handling.
-- Provider rate limit phải được theo dõi.
-- RCA timeout chuyển incident sang trạng thái cần xử lý, không retry vô hạn.
-- Elasticsearch hoặc Ollama lỗi không được làm mất incident metadata trong PostgreSQL.
-- Recovery Executor chỉ đánh dấu thành công khi provider trả reference và Verifier xác nhận.
+```text
+andyanh174/dataops-platform:1.0.0
+andyanh174/dataops-platform:1.0
+andyanh174/dataops-platform:sha-<full-commit-sha>
+```
+
+Không dùng chung Docker Hub credential cá nhân ở runtime. CI push bằng repository token có
+quyền tối thiểu và secret của GitHub Actions.
+
+## 8.11 Backup, upgrade và rollback
+
+Trước upgrade:
+
+1. Pin image version/digest mới và đọc migration note.
+2. Backup PostgreSQL; snapshot Elasticsearch khi log/knowledge cần giữ.
+3. Kiểm tra dung lượng volume và health hiện tại.
+4. Triển khai staging/demo trước production.
+
+Rollback application:
+
+```text
+đổi DATAOPS_IMAGE_TAG/digest về bản ổn định trước
+→ docker compose pull
+→ docker compose up -d
+→ xác minh /health, login, ingest và đọc run
+```
+
+Nếu release có migration không tương thích ngược, rollback app chưa đủ; phải dùng kế hoạch
+restore database đã ghi trong release note. Không xóa volume để rollback.
+
+## 8.12 Security checklist
+
+- TLS ở reverse proxy và secure session cookie cho Web UI.
+- CSRF protection cho request browser thay đổi trạng thái.
+- Rate limit/brute-force protection cho login, callback và webhook.
+- Provider webhook signature và replay protection.
+- Integration token theo project, lưu hash, rotate/revoke và audit.
+- Provider credential mã hóa, scope tối thiểu và tách read/write.
+- Redact secret/PII trước lưu evidence hoặc gửi Ollama.
+- Elasticsearch/PostgreSQL/Ollama không public.
+- Container non-root, dependency/image scan và version pin.
+- Backup được kiểm thử restore; approval/recovery luôn có audit trail.
+
+## 8.13 Failure handling nội bộ
+
+- Platform mất tạm thời không làm sai kết quả stage; Agent retry có giới hạn.
+- Event và recovery request idempotent; không dispatch lặp khi client retry.
+- Provider rate limit được ghi nhận và backoff.
+- RCA timeout chuyển incident sang action required, không retry vô hạn.
+- Elasticsearch/Ollama lỗi không làm mất incident metadata trong PostgreSQL.
+- Recovery chỉ thành công sau verification callback hợp lệ, không phải sau dispatch.
+
+Chi tiết onboarding và mô hình UI xem
+[Web Platform, onboarding và phân phối self-hosted](12-web-platform-and-onboarding.md).

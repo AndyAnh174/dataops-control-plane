@@ -3,16 +3,23 @@
 ## 2.1 Nguyên tắc kiến trúc
 
 1. **Provider-neutral core:** GitHub, GitLab và Jenkins chỉ xuất hiện trong adapter.
-2. **Event-driven:** webhook/callback được chuẩn hóa thành internal event và đưa vào queue.
-3. **Async by default:** CI không phải chờ LLM phân tích.
+2. **Event-driven:** webhook/callback được chuẩn hóa thành internal event chung.
+3. **Async by default:** CI không phải chờ LLM phân tích; queue ngoài chỉ thêm khi cần
+   tải/concurrency, không là dependency kiến trúc bắt buộc.
 4. **Capability-based:** mỗi provider khai báo khả năng thay vì bị ép có cùng tính năng.
 5. **Safety boundary:** AI Agent lập kế hoạch; Policy Engine quyết định hành động có được phép; Executor mới thực thi.
 6. **Verification required:** recovery chưa được xem là thành công nếu chưa chạy verification.
+7. **Modular monolith trước:** FastAPI phục vụ Web UI và API trong một deployable; module
+   vẫn tách theo domain để có thể tách service khi có nhu cầu đo được.
+8. **Self-service:** onboarding project, token và provider phải thực hiện được trên Web UI,
+   không yêu cầu sửa core hoặc thao tác database thủ công.
 
 ## 2.2 Các tầng hệ thống
 
 ```mermaid
 flowchart TB
+    USER[User / Operator]
+
     subgraph External[External systems]
         GH[GitHub Actions]
         GL[GitLab CI]
@@ -20,13 +27,14 @@ flowchart TB
         KR[Kubernetes]
     end
 
-    subgraph Ingestion[Integration layer]
+    subgraph Platform[DataOps Platform - one FastAPI deployable]
+      subgraph Presentation[Presentation and integration]
+        WEB[Web UI + session/RBAC]
         WH[Webhook Receiver]
-        API[CI Callback API]
+        API[Agent Callback API]
         PA[Provider Adapter Registry]
-    end
-
-    subgraph Core[DataOps control plane]
+      end
+      subgraph Core[Application core]
         RUN[Run Manager]
         INC[Incident Manager]
         EV[Evidence Collector]
@@ -35,6 +43,7 @@ flowchart TB
         REC[Recovery Executor]
         VER[Verification Manager]
         AUD[Audit Service]
+      end
     end
 
     subgraph Intelligence[Intelligence layer]
@@ -46,13 +55,15 @@ flowchart TB
     subgraph Storage[Storage and observability]
         PG[(PostgreSQL)]
         ES[(Elasticsearch)]
-        MI[(MinIO)]
-        RD[(Redis)]
-        PM[Prometheus]
+        PM[Prometheus - optional]
     end
 
-    External --> Ingestion
-    Ingestion --> Core
+    USER --> WEB
+    External --> WH
+    External --> API
+    WEB --> Core
+    WH --> Core
+    API --> Core
     Core --> Intelligence
     Core --> Storage
     Intelligence --> Storage
@@ -62,12 +73,22 @@ flowchart TB
 
 ## 2.3 Thành phần
 
+### Web UI và Identity
+
+- FastAPI render HTML và phục vụ static CSS/JavaScript trong MVP.
+- Session cookie và RBAC tách biệt với Bearer token của CI/CD Agent.
+- Quản lý user, workspace, project, provider integration và integration token.
+- Dùng cùng application service với JSON API; UI không truy cập database trực tiếp.
+
+Web UI là phần của image `dataops-platform`, nhưng đang là milestone kế tiếp chứ chưa có
+trong backend M1–M6 hiện tại.
+
 ### Webhook Receiver
 
 - Xác minh chữ ký webhook.
 - Chống replay và ghi nhận `delivery_id`.
 - Chuyển payload riêng của provider thành `NormalizedPipelineEvent`.
-- Trả phản hồi nhanh rồi đẩy xử lý vào queue.
+- Persist event và trả phản hồi nhanh; không chạy RCA dài trong request của provider.
 
 ### Run Manager
 
@@ -127,16 +148,41 @@ Thực hiện hành động thông qua provider adapter, không gọi trực ti�
 
 | Loại dữ liệu | Nơi lưu | Ghi chú |
 |---|---|---|
+| User, workspace, project, token metadata | PostgreSQL | Token chỉ lưu hash/prefix, credential mã hóa |
 | Run, incident, plan, audit | PostgreSQL | Dữ liệu quan hệ và trạng thái |
 | Log tìm kiếm | Elasticsearch | Có retention riêng |
 | Runbook, incident summary, code chunk vector | Elasticsearch | Index tách biệt với log |
-| Report/file/artifact | MinIO | Tham chiếu bằng URI và checksum |
-| Queue/cache/lock | Redis | Không phải nguồn dữ liệu lâu dài |
 | Metrics | Prometheus | MTTD, MTTR, latency, resource |
 
 Không vector hóa từng dòng log. Chỉ tạo embedding cho incident summary, runbook và code chunk đã được chọn lọc.
 
-## 2.5 Topology ba server
+Object storage và Redis/Celery là khả năng mở rộng, không là dependency bắt buộc của bản
+self-hosted đầu tiên. Chỉ thêm khi artifact lớn hoặc workload nền/concurrency chứng minh cần
+queue bền vững; PostgreSQL vẫn là nguồn dữ liệu trạng thái chính.
+
+## 2.5 Topology triển khai
+
+### Self-hosted MVP
+
+```text
+Server DataOps
+├── reverse proxy/TLS
+├── dataops-platform (FastAPI API + Web UI)
+├── PostgreSQL
+├── Elasticsearch
+└── Kibana tùy chọn cho operator
+
+External/private endpoint
+└── Ollama: gemma4:e2b + bge-m3:567m
+
+CI execution host
+└── GitHub-hosted hoặc self-hosted runner + DataOps Agent
+```
+
+`docker compose up -d` là golden path cài đặt. Chỉ reverse proxy public Web UI, callback
+API và webhook cần thiết; database/search/model không public.
+
+### Topology mở rộng ba server
 
 ```text
 Server A — CI/CD
@@ -152,20 +198,21 @@ Server B — Runtime
 └── Elastic Agent
 
 Server C — DataOps
-├── FastAPI
-├── Celery Worker + Redis
+├── FastAPI API + Web UI
 ├── PostgreSQL
-├── MinIO
 ├── Elasticsearch/Kibana
 ├── Ollama + LangGraph
 └── Policy/Recovery services
 ```
 
-Trong môi trường phát triển, có thể chạy phần lớn service bằng Docker Compose trước khi chuyển sang topology ba server.
+Celery/Redis, MinIO và worker riêng chỉ xuất hiện ở topology mở rộng khi có yêu cầu tải,
+artifact hoặc isolation cụ thể; chúng không phải điều kiện để dùng Platform.
 
 ## 2.6 Ranh giới tin cậy
 
 - Payload bên ngoài luôn phải được xác thực và validate schema.
+- Browser dùng session cookie/CSRF; Agent dùng token theo project/integration; provider
+  webhook dùng signature. Không dùng một credential cho ba trust boundary này.
 - Log có thể chứa secret hoặc dữ liệu cá nhân; phải redact trước khi đưa vào LLM.
 - LLM không được nhận token CI/CD, Kubernetes credential hoặc database password.
 - Recovery Executor dùng credential tách riêng và quyền tối thiểu.

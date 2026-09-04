@@ -14,6 +14,21 @@ Provider Registry
     └── Kubernetes Adapter
 ```
 
+Provider Adapter Registry nằm trong `dataops-platform`. Nó khác với `dataops-agent` chạy
+trong runner:
+
+| Thành phần | Chạy ở đâu | Trách nhiệm |
+|---|---|---|
+| DataOps Agent | CI/CD runner | Chạy `dataops.yaml`, giữ exit code, gửi event/log/report |
+| Provider Adapter | DataOps Platform | Đọc provider API, normalize webhook, trigger/retry/recovery |
+
+Flow có hai chiều độc lập:
+
+```text
+Agent --integration token--> Platform
+Platform --provider credential--> GitHub/GitLab/Jenkins API
+```
+
 ## 5.2 Capability model
 
 Không giả định provider nào cũng hỗ trợ mọi thao tác. Adapter khai báo capability:
@@ -52,8 +67,8 @@ class CiProviderAdapter(Protocol):
 
 ### Kênh tích hợp
 
-1. **GitHub webhook/GitHub App:** nhận workflow/job status và metadata.
-2. **Reusable workflow hoặc composite action:** gửi Data Quality, anomaly và verification report.
+1. **DataOps Agent action:** chạy stage và gửi status, log, Data Quality/anomaly/verification report.
+2. **GitHub webhook/GitHub App:** bổ sung workflow/job status và metadata ngoài runner.
 3. **GitHub API:** lấy job log, commit diff và trigger rerun.
 
 Kết hợp webhook và CI callback giúp hệ thống vừa nhận được trạng thái tin cậy, vừa nhận dữ liệu đặc thù của pipeline.
@@ -72,22 +87,25 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - name: Run tests and quality checks
-        run: ./scripts/ci.sh
-      - name: Build image
-        run: docker build -t "$IMAGE_NAME:${GITHUB_SHA}" .
-      - name: Notify DataOps
-        if: always()
-        run: ./scripts/notify-dataops.sh
+      - uses: AndyAnh174/dataops-agent@v0
+        env:
+          DATAOPS_URL: ${{ secrets.DATAOPS_URL }}
+          DATAOPS_TOKEN: ${{ secrets.DATAOPS_TOKEN }}
 ```
 
-Workflow thật nên dùng reusable workflow/action có version thay vì sao chép script vào từng repository.
+Các stage test/build/deploy nằm trong `dataops.yaml`. Workflow thật phải pin version/release
+hoặc commit SHA của Agent thay vì tải script tùy ý trong từng repository.
 
-### Vì sao dùng cả webhook và `if: always()`?
+### Vì sao Agent và webhook bổ sung nhau?
 
 - Webhook phát hiện trạng thái workflow kể cả khi một job thất bại sớm.
 - Callback gửi được Data Quality report và metadata riêng.
-- Nếu DataOps endpoint tạm lỗi, callback có thể retry mà không làm sai trạng thái chính.
+- Nếu DataOps endpoint tạm lỗi, Agent callback có thể retry mà không làm sai trạng thái
+  test/build chính.
+
+Agent là kênh bắt buộc của MVP hiện tại; webhook là bổ sung để tăng độ tin cậy và hỗ trợ
+event không đi qua runner. Provider integration trên Web UI phải thể hiện rõ capability nào
+đã khả dụng thay vì ngầm giả định kết nối GitHub có đủ mọi quyền.
 
 ## 5.5 GitLab CI
 

@@ -50,7 +50,9 @@ Audit trail ghi `PLAN_CREATED`, `PLAN_APPROVED`/`PLAN_REJECTED`,
 
 ## 4. API
 
-Tất cả endpoint dưới đây yêu cầu `Authorization: Bearer ${DATAOPS_AGENT_TOKEN}`.
+Trong M6 hiện tại, tất cả endpoint dưới đây yêu cầu
+`Authorization: Bearer ${DATAOPS_AGENT_TOKEN}`. Đây là giới hạn tạm thời, không phải mô hình
+quyền của Web Platform cuối cùng.
 
 ```http
 POST /api/v1/incidents/{incident_id}/recovery-plans
@@ -141,3 +143,8 @@ khai báo trong workflow, và credential gọi API cần quyền Actions write.
   GitLab CI, Jenkins hoặc Kubernetes adapter sau.
 - Production deployment cần backup metadata, image SHA được pin, health check và rollback plan;
   không tự cập nhật chỉ vì source code đã merge.
+
+Khi Web Platform được triển khai, approve/reject/execute từ browser phải yêu cầu session của
+`OWNER` hoặc `OPERATOR`, CSRF protection và lấy actor từ identity đã xác thực thay vì tin
+trường `actor` trong payload. Verification callback dùng integration token có scope riêng;
+Agent gửi log không mặc nhiên có quyền duyệt recovery.

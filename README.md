@@ -6,6 +6,14 @@
 
 GitHub Actions được chọn làm provider đầu tiên cho MVP. Kiến trúc lõi không phụ thuộc GitHub, vì vậy có thể bổ sung GitLab CI hoặc Jenkins mà không phải viết lại Agent, Policy Engine và quy trình xử lý incident.
 
+Sản phẩm gồm hai phần độc lập:
+
+- [`dataops-agent`](https://github.com/AndyAnh174/dataops-agent) chạy trong CI/CD để thực
+  thi pipeline portable và gửi event/log/report.
+- `dataops-platform` là bộ self-hosted gồm FastAPI API, Web UI, PostgreSQL và
+  Elasticsearch. FastAPI phục vụ cả API lẫn HTML/CSS/JavaScript; dự án không thêm một
+  Express backend trung gian trong MVP.
+
 ## Mục tiêu
 
 - Chuẩn hóa cách theo dõi pipeline giữa nhiều nền tảng CI/CD.
@@ -28,19 +36,20 @@ GitHub Actions được chọn làm provider đầu tiên cho MVP. Kiến trúc 
 flowchart LR
     DEV[Developer] --> SCM[GitHub / GitLab]
     SCM --> CI[GitHub Actions / GitLab CI / Jenkins]
-    CI -->|Webhook và REST event| API[DataOps Control Plane]
-    CI -->|Log và report| OBS[Elasticsearch / MinIO]
-    API --> DB[(PostgreSQL)]
-    API --> QUEUE[Celery + Redis]
-    QUEUE --> EVIDENCE[Evidence Collector]
+    USER[Operator] -->|HTTPS + session| UI[FastAPI Web UI]
+    CI -->|Agent event, log và report| API[FastAPI API]
+    UI --> CORE[DataOps Core]
+    API --> CORE
+    CORE --> DB[(PostgreSQL)]
+    CORE --> OBS[(Elasticsearch)]
+    CORE --> EVIDENCE[Evidence Collector]
     EVIDENCE --> RAG[Hybrid RAG]
     RAG --> AGENT[LangGraph + Ollama]
     AGENT --> POLICY[Policy Engine]
     POLICY --> EXECUTOR[Recovery Executor]
     EXECUTOR --> ADAPTER[Provider Adapters]
     ADAPTER --> CI
-    ADAPTER --> K8S[K3s / Kubernetes]
-    K8S --> VERIFY[Verification Job]
+    CI --> VERIFY[Verification callback]
     VERIFY --> API
 ```
 
@@ -64,20 +73,22 @@ Push code
 
 | Nhóm | Công nghệ |
 |---|---|
-| Backend | Python 3.11+, FastAPI, Pydantic, SQLAlchemy |
-| Async processing | Celery, Redis |
+| Backend và Web UI | Python 3.11+, FastAPI, Jinja2, HTML/CSS/JavaScript |
+| Validation và persistence | Pydantic, SQLModel/SQLAlchemy, PostgreSQL |
 | Metadata database | PostgreSQL |
-| Artifact storage | MinIO |
 | Data pipeline | Pandas |
 | Data Quality | Great Expectations |
 | Anomaly detection | Scikit-learn, Isolation Forest |
 | Search và log | Elasticsearch Data Stream, Kibana; Logstash/Elastic Agent tùy chọn |
 | Agent và LLM | LangGraph, Ollama |
 | Metrics | Prometheus, Grafana |
-| Container và runtime | Docker, K3s/Kubernetes |
+| Container và runtime | Docker Compose; K3s/Kubernetes là hướng mở rộng |
 | CI/CD đầu tiên | GitHub Actions |
 | CI/CD mở rộng | GitLab CI, Jenkins |
 | GitOps | Argo CD, triển khai ở giai đoạn sau |
+
+Celery/Redis và object storage có thể được thêm khi tải nền thực tế yêu cầu, nhưng không là
+dependency bắt buộc của bản self-hosted đầu tiên.
 
 ## Tài liệu
 
@@ -92,6 +103,7 @@ Push code
 - [Hybrid Retrieval M4](docs/09-hybrid-retrieval.md)
 - [Agentic RCA M5](docs/10-agentic-rca.md)
 - [Policy Engine và Recovery M6](docs/11-policy-and-recovery.md)
+- [Web Platform, onboarding và phân phối self-hosted](docs/12-web-platform-and-onboarding.md)
 
 ## Trạng thái
 
@@ -103,6 +115,20 @@ Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện t�
 4. Chỉ kích hoạt RCA Agent khi có lỗi hoặc anomaly.
 5. Mọi hành động nguy hiểm phải yêu cầu phê duyệt.
 6. Sau MVP, thêm ít nhất một provider thứ hai để chứng minh khả năng đa nền tảng.
+7. Web UI và JSON API dùng chung FastAPI application; không thêm Express trong MVP.
+8. Phân phối Platform bằng một image của dự án trên Docker Hub và một bộ Docker Compose.
+
+### Hiện tại và bước tiếp theo
+
+| Phần | Trạng thái |
+|---|---|
+| GitHub DataOps Agent và `dataops.yaml` | Đã có |
+| Event/log/report ingestion, incident và evidence | Đã có |
+| Hybrid Retrieval và Agentic RCA qua Ollama | Đã có |
+| Policy, approval, recovery và verification callback | Đã có |
+| User, session, workspace, project và token theo integration | Thiết kế tiếp theo |
+| Web UI FastAPI + HTML/CSS/JavaScript | Thiết kế tiếp theo |
+| Docker Hub release của `dataops-platform` | Thiết kế tiếp theo; GHCR hiện đã có |
 
 ## Khởi chạy phiên bản hiện tại
 
@@ -142,7 +168,8 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
-Chạy bằng Docker Compose với PostgreSQL, Elasticsearch 9.4.4 và Kibana 9.4.4:
+Chạy backend hiện tại bằng Docker Compose với PostgreSQL, Elasticsearch 9.4.4 và Kibana
+9.4.4. Web UI/auth/workspace chưa được triển khai ở phiên bản này:
 
 ```powershell
 $env:DATAOPS_POSTGRES_PASSWORD = "choose-a-local-development-secret"
@@ -376,6 +403,11 @@ docker run --rm --publish 8000:8000 ghcr.io/andyanh174/dataops-control-plane:lat
 
 Mỗi bản build có tag bất biến `sha-<full-commit-sha>`. Production nên pin tag SHA,
 version hoặc image digest thay vì `latest`.
+
+Mục tiêu phát hành kế tiếp là image `andyanh174/dataops-platform:<version>` trên Docker
+Hub, chứa FastAPI cùng templates/static assets của Web UI. PostgreSQL và Elasticsearch vẫn
+dùng image chính thức riêng và được khởi động cùng Platform bằng `compose.yaml`; không nhúng
+nhiều database/process vào một container.
 
 Rollback bằng cách triển khai lại tag SHA/digest ổn định trước đó, sau đó xác minh
 `http://localhost:8000/health` trả về trạng thái `ok`.

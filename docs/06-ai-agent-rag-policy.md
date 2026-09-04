@@ -26,7 +26,7 @@ flowchart TD
     RETRIEVE --> RCA[One structured Gemma call]
     RCA --> VALIDATE[Schema, citation, knowledge and approval validation]
     VALIDATE --> STORE[Persist versioned RCA]
-    STORE --> HUMAN[Action required for M6 policy]
+    STORE --> HUMAN[Action required for policy/recovery workflow]
 ```
 
 M5 dùng graph tuần tự có giới hạn, không có tool loop. Evidence/retrieval là node
@@ -103,6 +103,10 @@ Ví dụ policy:
 | Sửa/xóa dữ liệu | Bất kỳ | Denied hoặc human approval |
 | Không đủ bằng chứng | Bất kỳ recovery | Escalate |
 
+Bảng trên là chính sách đích có thể cấu hình. Policy `recovery-v1` đã triển khai ở M6 thận
+trọng hơn: mọi action làm thay đổi hệ thống đều yêu cầu operator approval; chưa bật
+auto-approval trong production.
+
 Policy input gồm:
 
 - Incident type và severity.
@@ -132,8 +136,9 @@ Verifier
 LLM không được tự gọi provider credential hoặc Kubernetes credential.
 
 Trong M5, mọi action thay đổi trạng thái (`RETRY`, `QUARANTINE`, `ROLLBACK_IMAGE`,
-`CREATE_PR`) bắt buộc có `requires_human_approval=true`. Policy Engine và Recovery
-Executor chỉ được nối vào graph ở M6.
+`CREATE_PR`) bắt buộc có `requires_human_approval=true`. M6 đã bổ sung Policy Engine,
+approval gate, Recovery Executor và verification callback nhưng vẫn giữ LLM ngoài trust
+boundary thực thi.
 
 ## 6.7 Bảo vệ dữ liệu và prompt
 

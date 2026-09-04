@@ -19,6 +19,19 @@ Push một commit gây lỗi
 
 ## 7.2 Các giai đoạn triển khai
 
+Trạng thái tại thời điểm cập nhật:
+
+| Năng lực | Trạng thái |
+|---|---|
+| Run/event/log/report ingestion và incident | Đã có |
+| Evidence, GitHub diff và Data Quality report | Đã có |
+| Hybrid Retrieval M4 | Đã có |
+| Agentic RCA M5 | Đã có |
+| Policy, recovery và verification M6 | Đã có |
+| Auth/workspace/project/integration token và Web UI | Kế tiếp |
+| Docker Hub release hoàn chỉnh | Kế tiếp; image backend hiện publish GHCR |
+| Provider thứ hai | Sau Web Platform/MVP demo |
+
 ### Giai đoạn 1 — Control plane cơ bản
 
 - FastAPI project.
@@ -45,10 +58,10 @@ Push một commit gây lỗi
 
 ### Giai đoạn 4 — Observability và evidence
 
-- Elasticsearch log index.
-- MinIO artifact/report.
-- Evidence Collector.
-- Runbook và incident knowledge base.
+- Elasticsearch log index. ✅
+- Evidence Collector và report được giới hạn/checksum. ✅
+- Runbook và incident knowledge base. ✅
+- Object storage cho artifact lớn chỉ bổ sung khi cần.
 
 ### Giai đoạn 5 — Agentic Hybrid RAG
 
@@ -59,12 +72,21 @@ Push một commit gây lỗi
 
 ### Giai đoạn 6 — Recovery và verification
 
-- Policy Engine.
-- Retry, quarantine và rollback.
-- Recovery attempt/idempotency.
-- Verification Job và incident closure.
+- Policy Engine deterministic. ✅ M6
+- Retry, quarantine và rollback qua GitHub adapter. ✅ M6
+- Recovery attempt/idempotency/audit. ✅ M6
+- Verification callback và incident closure. ✅ M6
 
-### Giai đoạn 7 — Chứng minh đa nền tảng
+### Giai đoạn 7 — Web Platform và self-hosted distribution
+
+- FastAPI session auth và bootstrap owner.
+- Workspace, member role, project và provider integration.
+- Token theo project/integration, rotate/revoke/audit.
+- Jinja2/HTML/CSS/JavaScript UI cho run, log, incident và recovery approval.
+- Image `dataops-platform` gồm API + UI, phát hành Docker Hub.
+- Docker Compose, volume, healthcheck, upgrade/backup/rollback guide.
+
+### Giai đoạn 8 — Chứng minh đa nền tảng
 
 - Thêm GitLab CI hoặc Jenkins adapter tối thiểu.
 - Chạy cùng một incident flow.
@@ -140,3 +162,6 @@ So sánh giúp chứng minh giá trị của retrieval, tool use và evidence wo
 - Demo được ít nhất retry, quarantine và rollback.
 - Có bảng kết quả baseline/metrics.
 - Tài liệu cài đặt và sequence flow khớp với hệ thống thực tế.
+- User mới có thể onboarding repository qua Web UI mà không sửa source Platform.
+- Token không truy cập chéo project/workspace và revoke có hiệu lực ngay.
+- Docker Compose restart không làm mất metadata/log index.
