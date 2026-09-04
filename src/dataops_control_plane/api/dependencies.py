@@ -9,6 +9,7 @@ from sqlmodel import Session
 from dataops_control_plane.services.evidence import EvidenceSource
 from dataops_control_plane.services.pipeline_logs import PipelineLogStore
 from dataops_control_plane.services.rca_agent import RCAAgent
+from dataops_control_plane.services.recovery_execution import RecoveryExecutor
 from dataops_control_plane.services.retrieval import HybridRetriever
 
 
@@ -46,6 +47,13 @@ def get_rca_agent(request: Request) -> RCAAgent:
 
 
 RCAAgentDep = Annotated[RCAAgent, Depends(get_rca_agent)]
+
+
+def get_recovery_executor(request: Request) -> RecoveryExecutor:
+    return request.app.state.recovery_executor
+
+
+RecoveryExecutorDep = Annotated[RecoveryExecutor, Depends(get_recovery_executor)]
 
 _agent_bearer = HTTPBearer(auto_error=False)
 

@@ -31,3 +31,6 @@ class Settings(BaseSettings):
     rca_context_max_chars: int = 16_000
     github_api_url: str = "https://api.github.com"
     github_token: SecretStr | None = None
+    github_recovery_token: SecretStr | None = None
+    github_recovery_workflow: str = "dataops-recovery.yml"
+    github_recovery_timeout_seconds: float = 15.0

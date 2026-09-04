@@ -376,6 +376,133 @@ class RecoveryActionType(StrEnum):
     NO_ACTION = "NO_ACTION"
 
 
+class RecoveryRiskLevel(StrEnum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class RecoveryPolicyDecision(StrEnum):
+    AUTO_APPROVED = "AUTO_APPROVED"
+    REQUIRE_APPROVAL = "REQUIRE_APPROVAL"
+    DENIED = "DENIED"
+
+
+class RecoveryApprovalStatus(StrEnum):
+    NOT_REQUIRED = "NOT_REQUIRED"
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class RecoveryPlanRead(BaseModel):
+    id: UUID
+    incident_id: UUID
+    rca_report_id: UUID
+    action_type: RecoveryActionType
+    parameters: dict[str, JsonValue]
+    risk_level: RecoveryRiskLevel
+    policy_decision: RecoveryPolicyDecision
+    approval_status: RecoveryApprovalStatus
+    decision_reasons: list[str]
+    policy_version: str
+    approved_by: str | None
+    decided_at: datetime | None
+    created_at: datetime
+
+    @field_validator("decided_at", "created_at", mode="before")
+    @classmethod
+    def normalize_recovery_timestamps(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+
+class RecoveryPlanReceipt(RecoveryPlanRead):
+    duplicate: bool
+
+
+class RecoveryApprovalRequest(BaseModel):
+    actor: str = Field(min_length=1, max_length=255)
+
+
+class RecoveryRejectionRequest(RecoveryApprovalRequest):
+    reason: str = Field(min_length=1, max_length=2_000)
+
+
+class RecoveryAttemptStatus(StrEnum):
+    PENDING = "PENDING"
+    DISPATCHED = "DISPATCHED"
+    VERIFIED = "VERIFIED"
+    FAILED = "FAILED"
+
+
+class RecoveryAttemptRead(BaseModel):
+    id: UUID
+    incident_id: UUID
+    plan_id: UUID
+    provider: str
+    action_type: RecoveryActionType
+    attempt_number: int
+    status: RecoveryAttemptStatus
+    idempotency_key: str
+    external_reference: str | None
+    result_details: dict[str, JsonValue]
+    verification_status: str | None
+    verification_details: dict[str, JsonValue]
+    started_at: datetime
+    finished_at: datetime | None
+
+    @field_validator("started_at", "finished_at", mode="before")
+    @classmethod
+    def normalize_attempt_timestamps(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+
+class RecoveryAttemptReceipt(RecoveryAttemptRead):
+    duplicate: bool
+
+
+class RecoveryVerificationStatus(StrEnum):
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+
+
+class RecoveryVerificationCreate(BaseModel):
+    idempotency_key: str = Field(min_length=64, max_length=64, pattern=r"^[a-f0-9]{64}$")
+    status: RecoveryVerificationStatus
+    external_reference: str = Field(min_length=1, max_length=2_048)
+    details: dict[str, JsonValue] = Field(default_factory=dict)
+
+
+class RecoveryAuditEventRead(BaseModel):
+    id: UUID
+    incident_id: UUID
+    plan_id: UUID | None
+    attempt_id: UUID | None
+    event_type: str
+    actor: str
+    details: dict[str, JsonValue]
+    created_at: datetime
+
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def normalize_audit_timestamp(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
+
+class RecoveryAuditListResponse(BaseModel):
+    items: list[RecoveryAuditEventRead]
+
+
 class RCAEvidenceClaim(BaseModel):
     citation_id: str = Field(min_length=5, max_length=64, pattern=r"^EVD-[A-Za-z0-9-]+$")
     claim: str = Field(min_length=1, max_length=1_000)

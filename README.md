@@ -91,6 +91,7 @@ Push code
 - [Triển khai và vận hành](docs/08-deployment-and-operations.md)
 - [Hybrid Retrieval M4](docs/09-hybrid-retrieval.md)
 - [Agentic RCA M5](docs/10-agentic-rca.md)
+- [Policy Engine và Recovery M6](docs/11-policy-and-recovery.md)
 
 ## Trạng thái
 
@@ -120,7 +121,11 @@ Raw log vẫn chỉ dùng keyword/filter và không bị embedding từng dòng.
 
 M5 bổ sung LangGraph RCA Agent. Agent kiểm tra evidence hiện tại, truy xuất knowledge,
 gọi `gemma4:e2b` đúng một lần với JSON Schema, xác minh citation/knowledge ID rồi lưu
-RCA report versioned vào PostgreSQL. Agent chỉ đề xuất; không thực thi recovery.
+RCA report versioned vào PostgreSQL. Agent chỉ đề xuất; không tự thực thi recovery.
+
+M6 bổ sung Policy Engine deterministic, approval gate, provider-neutral Recovery Executor,
+GitHub Actions write adapter, recovery attempt idempotency, audit trail và verification callback.
+Incident chỉ `RESOLVED` sau verification `PASSED`; dispatch workflow chưa được xem là thành công.
 
 Chạy local bằng Python:
 
@@ -282,6 +287,23 @@ knowledge document IDs, recommended action, missing information, model/prompt ve
 token/latency metrics và graph trace. Retry với cùng evidence/model/prompt trả
 `duplicate: true` và không gọi LLM lần hai. Chi tiết ở
 [docs/10-agentic-rca.md](docs/10-agentic-rca.md).
+
+### Recovery API
+
+Sau RCA đã xác thực, tạo plan, duyệt và dispatch recovery:
+
+```http
+POST /api/v1/incidents/{incident_id}/recovery-plans
+POST /api/v1/incidents/{incident_id}/recovery-plans/{plan_id}/approve
+POST /api/v1/incidents/{incident_id}/recovery-plans/{plan_id}/execute
+GET  /api/v1/incidents/{incident_id}/recovery-audit
+Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
+```
+
+GitHub executor dùng `DATAOPS_GITHUB_RECOVERY_TOKEN` riêng với quyền Actions write và workflow
+`dataops-recovery.yml`. Cùng một plan chỉ dispatch một lần; callback hợp lệ mới đóng incident.
+Chi tiết policy, API, cấu hình và kịch bản demo ở
+[docs/11-policy-and-recovery.md](docs/11-policy-and-recovery.md).
 
 `DATAOPS_GITHUB_TOKEN` là tùy chọn với repository public và cần thiết với repository
 private hoặc khi cần rate limit cao hơn. Token chỉ cần quyền đọc Contents.

@@ -137,3 +137,76 @@ class RCAReport(SQLModel, table=True):
     duration_ms: int = Field(default=0, ge=0)
     graph_trace: list[str] = Field(sa_column=Column(JSON, nullable=False))
     created_at: datetime
+
+
+class RecoveryPlan(SQLModel, table=True):
+    __tablename__ = "recovery_plans"
+    __table_args__ = (
+        UniqueConstraint(
+            "rca_report_id",
+            "policy_version",
+            name="uq_recovery_plan_policy_input",
+        ),
+    )
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    incident_id: UUID = Field(foreign_key="incidents.id", index=True)
+    rca_report_id: UUID = Field(foreign_key="rca_reports.id", index=True)
+    action_type: str = Field(index=True, max_length=64)
+    parameters: dict[str, object] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+    )
+    risk_level: str = Field(index=True, max_length=32)
+    policy_decision: str = Field(index=True, max_length=32)
+    approval_status: str = Field(index=True, max_length=32)
+    decision_reasons: list[str] = Field(sa_column=Column(JSON, nullable=False))
+    policy_version: str = Field(max_length=64)
+    approved_by: str | None = Field(default=None, max_length=255)
+    decided_at: datetime | None = None
+    created_at: datetime
+
+
+class RecoveryAttempt(SQLModel, table=True):
+    __tablename__ = "recovery_attempts"
+    __table_args__ = (
+        UniqueConstraint("plan_id", name="uq_recovery_attempt_plan"),
+        UniqueConstraint("idempotency_key", name="uq_recovery_attempt_idempotency_key"),
+    )
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    incident_id: UUID = Field(foreign_key="incidents.id", index=True)
+    plan_id: UUID = Field(foreign_key="recovery_plans.id", index=True)
+    provider: str = Field(index=True, max_length=64)
+    action_type: str = Field(index=True, max_length=64)
+    attempt_number: int = Field(default=1, ge=1)
+    status: str = Field(index=True, max_length=32)
+    idempotency_key: str = Field(index=True, max_length=64)
+    external_reference: str | None = Field(default=None, max_length=2048)
+    result_details: dict[str, object] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+    )
+    verification_status: str | None = Field(default=None, index=True, max_length=32)
+    verification_details: dict[str, object] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+    )
+    started_at: datetime
+    finished_at: datetime | None = None
+
+
+class RecoveryAuditEvent(SQLModel, table=True):
+    __tablename__ = "recovery_audit_events"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    incident_id: UUID = Field(foreign_key="incidents.id", index=True)
+    plan_id: UUID | None = Field(default=None, foreign_key="recovery_plans.id", index=True)
+    attempt_id: UUID | None = Field(default=None, foreign_key="recovery_attempts.id", index=True)
+    event_type: str = Field(index=True, max_length=64)
+    actor: str = Field(max_length=255)
+    details: dict[str, object] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+    )
+    created_at: datetime
