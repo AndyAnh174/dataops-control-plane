@@ -4,6 +4,7 @@ from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -48,12 +49,20 @@ class FailingRecoveryExecutor(FakeRecoveryExecutor):
         raise RecoveryExecutorError("GitHub recovery dispatch failed (HTTP 503)")
 
 
-def _engine():
+def _engine(*, enforce_foreign_keys: bool = False):
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    if enforce_foreign_keys:
+
+        @event.listens_for(engine, "connect")
+        def _enable_foreign_keys(dbapi_connection, _connection_record) -> None:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+
     SQLModel.metadata.create_all(engine)
     return engine
 
@@ -124,8 +133,11 @@ def _seed_validated_rca(
     )
     with Session(engine) as session:
         session.add(run)
+        session.flush()
         session.add(event)
+        session.flush()
         session.add(incident)
+        session.flush()
         session.add(report)
         session.commit()
 
@@ -141,6 +153,22 @@ def recovery_client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
             log_store=EmptyLogStore(),
             evidence_sources=[],
         )
+    ) as client:
+        yield client
+
+
+@pytest.fixture
+def foreign_key_recovery_client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
+    monkeypatch.setenv("DATAOPS_AGENT_TOKEN", "recovery-test-token")
+    engine = _engine(enforce_foreign_keys=True)
+    _seed_validated_rca(engine)
+    with TestClient(
+        create_app(
+            engine=engine,
+            log_store=EmptyLogStore(),
+            evidence_sources=[],
+        ),
+        raise_server_exceptions=False,
     ) as client:
         yield client
 
@@ -195,6 +223,23 @@ def test_create_recovery_plan_is_policy_driven_authenticated_and_idempotent(
     assert repeated.status_code == 201
     assert repeated.json()["id"] == first.json()["id"]
     assert repeated.json()["duplicate"] is True
+
+
+def test_create_recovery_plan_persists_plan_before_audit_foreign_key(
+    foreign_key_recovery_client: TestClient,
+) -> None:
+    """Catches an audit insert racing ahead of its recovery plan foreign key."""
+    created = foreign_key_recovery_client.post(
+        f"/api/v1/incidents/{INCIDENT_ID}/recovery-plans",
+        headers=_auth(),
+    )
+
+    assert created.status_code == 201
+    audit = foreign_key_recovery_client.get(
+        f"/api/v1/incidents/{INCIDENT_ID}/recovery-audit",
+        headers=_auth(),
+    )
+    assert [item["event_type"] for item in audit.json()["items"]] == ["PLAN_CREATED"]
 
 
 def test_approved_plan_cannot_be_rejected_after_the_decision(
