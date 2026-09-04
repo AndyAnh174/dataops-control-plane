@@ -60,6 +60,7 @@ def create_recovery_plan(session: Session, incident: Incident) -> RecoveryPlanRe
         created_at=datetime.now(UTC),
     )
     session.add(plan)
+    session.flush()
     record_recovery_event(
         session,
         incident_id=incident.id,
