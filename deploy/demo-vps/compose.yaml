@@ -1,0 +1,106 @@
+name: dataops-control-plane-demo
+
+services:
+  api:
+    image: ghcr.io/andyanh174/dataops-control-plane:sha-2bb7b21c4fddefb6d469a5b69fac9718ca43de2b
+    environment:
+      DATAOPS_DATABASE_URL: postgresql+psycopg://dataops:${DATAOPS_POSTGRES_PASSWORD:?set DATAOPS_POSTGRES_PASSWORD}@postgres:5432/dataops
+      DATAOPS_AGENT_TOKEN: ${DATAOPS_AGENT_TOKEN:?set DATAOPS_AGENT_TOKEN}
+      DATAOPS_PUBLIC_URL: https://dataops-console.andyanh.id.vn
+      DATAOPS_WEB_SESSION_COOKIE_SECURE: "true"
+      DATAOPS_WEB_SESSION_TTL_HOURS: "12"
+      DATAOPS_ELASTICSEARCH_URL: http://elasticsearch:9200
+      DATAOPS_ELASTICSEARCH_LOG_RETENTION: 30d
+      DATAOPS_EMBEDDING_URL: ${DATAOPS_EMBEDDING_URL:-http://192.168.1.80:11434}
+      DATAOPS_EMBEDDING_MODEL: ${DATAOPS_EMBEDDING_MODEL:-bge-m3:567m}
+      DATAOPS_EMBEDDING_DIMENSIONS: ${DATAOPS_EMBEDDING_DIMENSIONS:-1024}
+      DATAOPS_EMBEDDING_TIMEOUT_SECONDS: ${DATAOPS_EMBEDDING_TIMEOUT_SECONDS:-60}
+      DATAOPS_LLM_URL: ${DATAOPS_LLM_URL:-http://192.168.1.80:11434}
+      DATAOPS_LLM_MODEL: ${DATAOPS_LLM_MODEL:-gemma4:e2b}
+      DATAOPS_LLM_TIMEOUT_SECONDS: ${DATAOPS_LLM_TIMEOUT_SECONDS:-300}
+      DATAOPS_LLM_CONTEXT_TOKENS: ${DATAOPS_LLM_CONTEXT_TOKENS:-8192}
+      DATAOPS_RCA_PROMPT_VERSION: ${DATAOPS_RCA_PROMPT_VERSION:-rca-v1}
+      DATAOPS_RCA_CONTEXT_MAX_CHARS: ${DATAOPS_RCA_CONTEXT_MAX_CHARS:-16000}
+      DATAOPS_GITHUB_API_URL: ${DATAOPS_GITHUB_API_URL:-https://api.github.com}
+      DATAOPS_GITHUB_TOKEN: ${DATAOPS_GITHUB_TOKEN:-}
+      DATAOPS_GITHUB_RECOVERY_TOKEN: ${DATAOPS_GITHUB_RECOVERY_TOKEN:-}
+      DATAOPS_GITHUB_RECOVERY_WORKFLOW: ${DATAOPS_GITHUB_RECOVERY_WORKFLOW:-dataops-recovery.yml}
+      DATAOPS_GITHUB_RECOVERY_TIMEOUT_SECONDS: ${DATAOPS_GITHUB_RECOVERY_TIMEOUT_SECONDS:-15}
+    ports:
+      - "127.0.0.1:18080:8000"
+      - "192.168.1.53:18080:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    mem_limit: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: dataops
+      POSTGRES_USER: dataops
+      POSTGRES_PASSWORD: ${DATAOPS_POSTGRES_PASSWORD:?set DATAOPS_POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    mem_limit: 1024m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dataops -d dataops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  elasticsearch:
+    image: elasticsearch:9.4.4
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms768m -Xmx768m
+    ports:
+      - "127.0.0.1:9201:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    mem_limit: 1536m
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl --fail --silent 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=5s' > /dev/null
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  kibana:
+    image: kibana:9.4.4
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: ${DATAOPS_KIBANA_ENCRYPTION_KEY:?set DATAOPS_KIBANA_ENCRYPTION_KEY}
+    ports:
+      - "127.0.0.1:5602:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    mem_limit: 1024m
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl --fail --silent http://127.0.0.1:5601/api/status > /dev/null
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 45s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  elasticsearch_data:
