@@ -126,8 +126,8 @@ Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện t�
 | Event/log/report ingestion, incident và evidence | Đã có |
 | Hybrid Retrieval và Agentic RCA qua Ollama | Đã có |
 | Policy, approval, recovery và verification callback | Đã có |
-| User, session, workspace, project và token theo integration | Thiết kế tiếp theo |
-| Web UI FastAPI + HTML/CSS/JavaScript | Thiết kế tiếp theo |
+| User, session, workspace, project và token theo integration | Đã có nền tảng M7 |
+| Web UI FastAPI + HTML/CSS/JavaScript | Đã có setup, dashboard, project và run detail |
 | Docker Hub release của `dataops-platform` | Thiết kế tiếp theo; GHCR hiện đã có |
 
 ## Khởi chạy phiên bản hiện tại
@@ -153,6 +153,11 @@ M6 bổ sung Policy Engine deterministic, approval gate, provider-neutral Recove
 GitHub Actions write adapter, recovery attempt idempotency, audit trail và verification callback.
 Incident chỉ `RESOLVED` sau verification `PASSED`; dispatch workflow chưa được xem là thành công.
 
+M7 hiện có bootstrap owner một lần, session cookie phía server, workspace/project, role cơ bản
+và integration token theo project. Token chỉ lưu hash, trả secret đúng một lần, có scope và có
+thể revoke. Web UI đầu tiên cung cấp setup, login, dashboard, project detail và run detail với
+log/incident; API cũ vẫn tương thích với instance token trong giai đoạn chuyển đổi.
+
 Chạy local bằng Python:
 
 ```powershell
@@ -168,20 +173,25 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
-Chạy backend hiện tại bằng Docker Compose với PostgreSQL, Elasticsearch 9.4.4 và Kibana
-9.4.4. Web UI/auth/workspace chưa được triển khai ở phiên bản này:
+Chạy Platform bằng Docker Compose với PostgreSQL, Elasticsearch 9.4.4 và Kibana 9.4.4:
 
 ```powershell
 $env:DATAOPS_POSTGRES_PASSWORD = "choose-a-local-development-secret"
 $env:DATAOPS_AGENT_TOKEN = "choose-a-random-agent-bearer-token"
+$env:DATAOPS_WEB_SESSION_COOKIE_SECURE = "false"
 docker compose up --build
 ```
 
 Các cổng local:
 
-- FastAPI: `http://localhost:8000/docs`.
+- Web UI: `http://localhost:8000/setup` ở lần chạy đầu, sau đó dùng `/login`.
+- FastAPI API docs: `http://localhost:8000/docs`.
 - Elasticsearch: `http://localhost:9201`.
 - Kibana: `http://localhost:5602`.
+
+Sau khi đăng nhập, tạo project trên dashboard rồi tạo integration token. Đưa endpoint Platform
+và token vừa sinh vào GitHub Secrets dưới tên `DATAOPS_URL` và `DATAOPS_TOKEN`; raw token sẽ
+không được hiển thị lại sau khi rời trang.
 
 Elasticsearch và Kibana chỉ bind vào loopback. Cấu hình Compose tắt Elastic Security
 để phát triển local; production phải bật TLS/authentication và truyền API key bằng

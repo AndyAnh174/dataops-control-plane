@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
-from dataops_control_plane.api.dependencies import HybridRetrieverDep, require_agent_token
+from dataops_control_plane.api.dependencies import HybridRetrieverDep, OperatorPrincipalDep
 from dataops_control_plane.api.schemas import (
     HybridSearchFusionRead,
     HybridSearchItemRead,
@@ -20,7 +20,6 @@ from dataops_control_plane.services.retrieval import (
 router = APIRouter(
     prefix="/api/v1/retrieval",
     tags=["retrieval"],
-    dependencies=[Depends(require_agent_token)],
 )
 
 
@@ -30,6 +29,7 @@ router = APIRouter(
 )
 def index_knowledge_document(
     request: KnowledgeDocumentCreate,
+    principal: OperatorPrincipalDep,
     retriever: HybridRetrieverDep,
 ) -> KnowledgeDocumentReceipt:
     try:
@@ -55,6 +55,7 @@ def index_knowledge_document(
 @router.post("/search")
 def search_knowledge(
     request: HybridSearchRequest,
+    principal: OperatorPrincipalDep,
     retriever: HybridRetrieverDep,
 ) -> HybridSearchResponse:
     filters = KnowledgeFilter(

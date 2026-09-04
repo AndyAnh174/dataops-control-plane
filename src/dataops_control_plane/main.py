@@ -1,10 +1,12 @@
 from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from sqlalchemy.engine import Engine
 from sqlmodel import SQLModel, create_engine
+from starlette.staticfiles import StaticFiles
 
 from dataops_control_plane.api.routes.events import router as events_router
 from dataops_control_plane.api.routes.incidents import router as incidents_router
@@ -12,6 +14,10 @@ from dataops_control_plane.api.routes.logs import router as logs_router
 from dataops_control_plane.api.routes.recovery import router as recovery_router
 from dataops_control_plane.api.routes.retrieval import router as retrieval_router
 from dataops_control_plane.api.routes.runs import router as runs_router
+from dataops_control_plane.api.routes.web_auth import router as web_auth_router
+from dataops_control_plane.api.routes.web_projects import router as web_projects_router
+from dataops_control_plane.api.routes.web_tokens import router as web_tokens_router
+from dataops_control_plane.api.routes.web_ui import router as web_ui_router
 from dataops_control_plane.config import Settings
 from dataops_control_plane.services.elasticsearch_knowledge import ElasticsearchKnowledgeStore
 from dataops_control_plane.services.elasticsearch_logs import ElasticsearchPipelineLogStore
@@ -98,6 +104,21 @@ def create_app(
     application.state.recovery_executor = incident_recovery_executor
     application.state.settings = settings
 
+    @application.middleware("http")
+    async def add_browser_security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; "
+            "form-action 'self'; object-src 'none'"
+        )
+        return response
+
+    web_root = Path(__file__).resolve().parent / "web"
+    application.mount("/static", StaticFiles(directory=web_root / "static"), name="static")
+
     @application.get("/health", tags=["system"])
     def health() -> HealthResponse:
         return HealthResponse(status="ok", service="dataops-control-plane")
@@ -108,6 +129,10 @@ def create_app(
     application.include_router(recovery_router)
     application.include_router(retrieval_router)
     application.include_router(runs_router)
+    application.include_router(web_auth_router)
+    application.include_router(web_projects_router)
+    application.include_router(web_tokens_router)
+    application.include_router(web_ui_router)
     return application
 
 

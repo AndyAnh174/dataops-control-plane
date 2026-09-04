@@ -5,6 +5,101 @@ from sqlalchemy import JSON, Column, Text, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
+class PlatformState(SQLModel, table=True):
+    __tablename__ = "platform_state"
+
+    id: int = Field(default=1, primary_key=True)
+    bootstrap_completed_at: datetime
+
+
+class AppUser(SQLModel, table=True):
+    __tablename__ = "app_users"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    email: str = Field(unique=True, index=True, max_length=320)
+    password_hash: str = Field(max_length=512)
+    status: str = Field(default="ACTIVE", index=True, max_length=32)
+    created_at: datetime
+
+
+class Workspace(SQLModel, table=True):
+    __tablename__ = "workspaces"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    name: str = Field(max_length=120)
+    created_by: UUID = Field(foreign_key="app_users.id", index=True)
+    created_at: datetime
+
+
+class WorkspaceMember(SQLModel, table=True):
+    __tablename__ = "workspace_members"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id",
+            "user_id",
+            name="uq_workspace_member_identity",
+        ),
+    )
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    workspace_id: UUID = Field(foreign_key="workspaces.id", index=True)
+    user_id: UUID = Field(foreign_key="app_users.id", index=True)
+    role: str = Field(index=True, max_length=32)
+    created_at: datetime
+
+
+class Project(SQLModel, table=True):
+    __tablename__ = "projects"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id",
+            "provider",
+            "project_ref",
+            name="uq_project_provider_reference",
+        ),
+    )
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    workspace_id: UUID = Field(foreign_key="workspaces.id", index=True)
+    name: str = Field(max_length=120)
+    provider: str = Field(index=True, max_length=64)
+    project_ref: str = Field(index=True, max_length=255)
+    default_branch: str = Field(default="main", max_length=255)
+    created_at: datetime
+
+
+class IntegrationToken(SQLModel, table=True):
+    __tablename__ = "integration_tokens"
+    __table_args__ = (
+        UniqueConstraint(
+            "project_id",
+            "name",
+            name="uq_integration_token_project_name",
+        ),
+    )
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    project_id: UUID = Field(foreign_key="projects.id", index=True)
+    name: str = Field(max_length=120)
+    token_prefix: str = Field(index=True, max_length=16)
+    secret_hash: str = Field(unique=True, index=True, max_length=64)
+    scopes: list[str] = Field(sa_column=Column(JSON, nullable=False))
+    expires_at: datetime
+    last_used_at: datetime | None = None
+    revoked_at: datetime | None = Field(default=None, index=True)
+    created_by: UUID = Field(foreign_key="app_users.id", index=True)
+    created_at: datetime
+
+
+class WebSession(SQLModel, table=True):
+    __tablename__ = "web_sessions"
+
+    token_hash: str = Field(primary_key=True, max_length=64)
+    user_id: UUID = Field(foreign_key="app_users.id", index=True)
+    created_at: datetime
+    expires_at: datetime = Field(index=True)
+
+
 class PipelineRun(SQLModel, table=True):
     __tablename__ = "pipeline_runs"
     __table_args__ = (

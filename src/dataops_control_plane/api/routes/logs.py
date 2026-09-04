@@ -1,9 +1,14 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, HTTPException, Path, Query, status
 
-from dataops_control_plane.api.dependencies import LogStoreDep, SessionDep, require_agent_token
+from dataops_control_plane.api.dependencies import (
+    AgentPrincipalDep,
+    LogStoreDep,
+    SessionDep,
+    require_agent_run_access,
+)
 from dataops_control_plane.api.schemas import (
     PipelineLogBatchCreate,
     PipelineLogRead,
@@ -19,7 +24,6 @@ from dataops_control_plane.services.pipeline_logs import (
 router = APIRouter(
     prefix="/api/v1/runs",
     tags=["logs"],
-    dependencies=[Depends(require_agent_token)],
 )
 
 
@@ -27,12 +31,14 @@ router = APIRouter(
 def ingest_pipeline_logs(
     run_id: Annotated[UUID, Path(description="Internal pipeline run ID")],
     batch: PipelineLogBatchCreate,
+    principal: AgentPrincipalDep,
     session: SessionDep,
     log_store: LogStoreDep,
 ) -> PipelineLogReceipt:
     run = session.get(PipelineRun, run_id)
     if run is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pipeline run not found")
+    require_agent_run_access(principal, run, scope="logs:write")
 
     documents, redaction_count = build_log_documents(run, batch.entries)
     try:
@@ -54,6 +60,7 @@ def ingest_pipeline_logs(
 @router.get("/{run_id}/logs", response_model_exclude_none=True)
 def search_pipeline_logs(
     run_id: Annotated[UUID, Path(description="Internal pipeline run ID")],
+    principal: AgentPrincipalDep,
     session: SessionDep,
     log_store: LogStoreDep,
     query: Annotated[str | None, Query(min_length=1, max_length=500)] = None,
@@ -64,8 +71,10 @@ def search_pipeline_logs(
     ] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 200,
 ) -> PipelineLogSearchResponse:
-    if session.get(PipelineRun, run_id) is None:
+    run = session.get(PipelineRun, run_id)
+    if run is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pipeline run not found")
+    require_agent_run_access(principal, run, scope="logs:write")
 
     try:
         documents = log_store.search(

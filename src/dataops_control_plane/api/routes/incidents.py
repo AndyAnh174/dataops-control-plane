@@ -1,16 +1,18 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import APIRouter, HTTPException, Path, status
 from sqlmodel import Session, select
 
 from dataops_control_plane.api.dependencies import (
     EvidenceSourcesDep,
     HybridRetrieverDep,
     LogStoreDep,
+    OperatorPrincipalDep,
     RCAAgentDep,
     SessionDep,
-    require_agent_token,
+    WebReadUserDep,
+    require_operator_run_access,
 )
 from dataops_control_plane.api.schemas import (
     EvidenceCollectionReceipt,
@@ -41,6 +43,7 @@ from dataops_control_plane.services.retrieval import (
     EmbeddingUnavailable,
     KnowledgeStoreUnavailable,
 )
+from dataops_control_plane.services.web_projects import ProjectNotFound, require_pipeline_run_access
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
 
@@ -63,9 +66,21 @@ def build_incident_read(
 
 
 @router.get("")
-def list_incidents(session: SessionDep) -> IncidentListResponse:
+def list_incidents(user: WebReadUserDep, session: SessionDep) -> IncidentListResponse:
     statement = select(Incident).order_by(Incident.created_at.desc())
     incidents = session.exec(statement).all()
+    if user is not None:
+        visible_incidents = []
+        for incident in incidents:
+            pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
+            if pipeline_run is None:
+                continue
+            try:
+                require_pipeline_run_access(session, run=pipeline_run, user_id=user.id)
+            except ProjectNotFound:
+                continue
+            visible_incidents.append(incident)
+        incidents = visible_incidents
     return IncidentListResponse(
         items=[build_incident_read(session, incident) for incident in incidents]
     )
@@ -74,11 +89,22 @@ def list_incidents(session: SessionDep) -> IncidentListResponse:
 @router.get("/{incident_id}")
 def get_incident(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
+    user: WebReadUserDep,
     session: SessionDep,
 ) -> IncidentRead:
     incident = session.get(Incident, incident_id)
     if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    if user is not None:
+        pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
+        if pipeline_run is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+        try:
+            require_pipeline_run_access(session, run=pipeline_run, user_id=user.id)
+        except ProjectNotFound as exc:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found"
+            ) from exc
     return build_incident_read(session, incident)
 
 
@@ -98,10 +124,10 @@ def build_evidence_read(evidence: Evidence) -> EvidenceRead:
 
 @router.post(
     "/{incident_id}/collect-evidence",
-    dependencies=[Depends(require_agent_token)],
 )
 def collect_evidence(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
     log_store: LogStoreDep,
     evidence_sources: EvidenceSourcesDep,
@@ -112,6 +138,7 @@ def collect_evidence(
     pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
     if pipeline_run is None:
         raise RuntimeError(f"Incident {incident.id} references an unknown pipeline run")
+    require_operator_run_access(principal, session, pipeline_run)
 
     result = collect_incident_evidence(
         session,
@@ -139,14 +166,19 @@ def collect_evidence(
 
 @router.get(
     "/{incident_id}/evidence",
-    dependencies=[Depends(require_agent_token)],
 )
 def get_evidence(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
 ) -> EvidenceListResponse:
-    if session.get(Incident, incident_id) is None:
+    incident = session.get(Incident, incident_id)
+    if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
+    if pipeline_run is None:
+        raise RuntimeError(f"Incident {incident.id} references an unknown pipeline run")
+    require_operator_run_access(principal, session, pipeline_run)
     return EvidenceListResponse(
         items=[
             build_evidence_read(evidence)
@@ -158,16 +190,20 @@ def get_evidence(
 @router.post(
     "/{incident_id}/index-knowledge",
     status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[Depends(require_agent_token)],
 )
 def index_incident_knowledge(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
     retriever: HybridRetrieverDep,
 ) -> KnowledgeDocumentReceipt:
     incident = session.get(Incident, incident_id)
     if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
+    if pipeline_run is None:
+        raise RuntimeError(f"Incident {incident.id} references an unknown pipeline run")
+    require_operator_run_access(principal, session, pipeline_run)
     try:
         result = retriever.index_incident(session, incident)
     except (EmbeddingUnavailable, KnowledgeStoreUnavailable) as exc:
@@ -187,16 +223,20 @@ def index_incident_knowledge(
 @router.post(
     "/{incident_id}/analyze",
     status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[Depends(require_agent_token)],
 )
 def analyze_incident(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
     rca_agent: RCAAgentDep,
 ) -> RCAAnalysisReceipt:
     incident = session.get(Incident, incident_id)
     if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
+    if pipeline_run is None:
+        raise RuntimeError(f"Incident {incident.id} references an unknown pipeline run")
+    require_operator_run_access(principal, session, pipeline_run)
     try:
         result = rca_agent.analyze(session, incident)
     except InsufficientEvidence as exc:
@@ -226,14 +266,19 @@ def analyze_incident(
 
 @router.get(
     "/{incident_id}/rca",
-    dependencies=[Depends(require_agent_token)],
 )
 def get_incident_rca(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
 ) -> RCAReportRead:
-    if session.get(Incident, incident_id) is None:
+    incident = session.get(Incident, incident_id)
+    if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
+    if pipeline_run is None:
+        raise RuntimeError(f"Incident {incident.id} references an unknown pipeline run")
+    require_operator_run_access(principal, session, pipeline_run)
     report = session.exec(
         select(RCAReport)
         .where(RCAReport.incident_id == incident_id)

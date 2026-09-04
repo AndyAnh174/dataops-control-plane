@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "sqlite:///./dataops.db"
+    public_url: str | None = None
+    web_session_cookie_name: str = "dataops_session"
+    web_session_ttl_hours: int = 12
+    web_session_cookie_secure: bool = True
     agent_token: SecretStr | None = None
     elasticsearch_url: str = "http://localhost:9201"
     elasticsearch_api_key: SecretStr | None = None

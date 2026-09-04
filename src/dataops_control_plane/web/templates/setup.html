@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-copy">
+    <p class="eyebrow">First-run setup</p>
+    <h1>Create your DataOps owner</h1>
+    <p>Start a private workspace, then connect the first CI/CD repository.</p>
+  </div>
+  <form class="panel form-stack" data-api-form="bootstrap">
+    <label>Email<input name="email" type="email" autocomplete="email" required></label>
+    <label>Password<input name="password" type="password" minlength="12" autocomplete="new-password" required></label>
+    <label>Workspace name<input name="workspace_name" value="My workspace" required></label>
+    <p class="form-error" role="alert" hidden></p>
+    <button class="button button-primary" type="submit">Create owner</button>
+  </form>
+</section>
+{% endblock %}

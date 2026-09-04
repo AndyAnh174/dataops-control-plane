@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<a class="back-link" href="/app/projects/{{ project.id }}">← {{ project.name }}</a>
+<section class="project-hero">
+  <div>
+    <p class="eyebrow">Pipeline run · attempt {{ run.attempt }}</p>
+    <h1>{{ run.external_run_id }}</h1>
+    <p><code>{{ run.commit_sha }}</code> on {{ run.branch }}</p>
+  </div>
+  <span class="run-status run-{{ run.status|lower }}">{{ run.status }}</span>
+</section>
+
+<section class="summary-grid">
+  <article class="panel metric-card"><p>Provider</p><strong>{{ run.provider }}</strong></article>
+  <article class="panel metric-card"><p>Failed stage</p><strong>{{ run.failed_stage or "—" }}</strong></article>
+  <article class="panel metric-card"><p>Incident</p><strong>{{ incident.status if incident else "None" }}</strong></article>
+  <article class="panel metric-card"><p>Last event</p><strong>{{ run.last_event_at }}</strong></article>
+</section>
+
+<section class="workspace-section">
+  <div class="section-heading"><div><p class="eyebrow">Correlated evidence</p><h2>Pipeline logs</h2></div></div>
+  {% if log_warning %}<p class="form-error">{{ log_warning }}</p>{% endif %}
+  <div class="log-viewer">
+    {% for log in logs %}
+    <div class="log-line"><time>{{ log.occurred_at }}</time><span class="log-level log-{{ log.level|lower }}">{{ log.level }}</span><span>{{ log.stage }}</span><pre>{{ log.message }}</pre></div>
+    {% else %}<p>No log entries available for this run.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

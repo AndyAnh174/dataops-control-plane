@@ -5,6 +5,138 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 
 
+class BootstrapCreate(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=12, max_length=128)
+    workspace_name: str = Field(min_length=1, max_length=120)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        local, separator, domain = normalized.partition("@")
+        if not separator or not local or "." not in domain:
+            raise ValueError("email must be a valid address")
+        return normalized
+
+    @field_validator("workspace_name")
+    @classmethod
+    def normalize_workspace_name(cls, value: str) -> str:
+        normalized = " ".join(value.split())
+        if not normalized:
+            raise ValueError("workspace name must not be blank")
+        return normalized
+
+
+class LoginCreate(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=1, max_length=128)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class AuthUserRead(BaseModel):
+    id: UUID
+    email: str
+
+
+class AuthWorkspaceRead(BaseModel):
+    id: UUID
+    name: str
+    role: str
+
+
+class AuthContextRead(BaseModel):
+    user: AuthUserRead
+    workspaces: list[AuthWorkspaceRead]
+
+
+class ProjectCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    provider: str = Field(pattern=r"^[a-z][a-z0-9_-]*$", max_length=64)
+    project_ref: str = Field(min_length=3, max_length=255)
+    default_branch: str = Field(default="main", min_length=1, max_length=255)
+
+    @field_validator("name", "project_ref", "default_branch")
+    @classmethod
+    def strip_project_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("value must not be blank")
+        return normalized
+
+
+class ProjectRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    workspace_id: UUID
+    name: str
+    provider: str
+    project_ref: str
+    default_branch: str
+
+
+class ProjectListResponse(BaseModel):
+    items: list[ProjectRead]
+
+
+class IntegrationTokenScope(StrEnum):
+    RUNS_WRITE = "runs:write"
+    LOGS_WRITE = "logs:write"
+    REPORTS_WRITE = "reports:write"
+    VERIFICATION_WRITE = "verification:write"
+
+
+class IntegrationTokenCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    scopes: list[IntegrationTokenScope] = Field(min_length=1, max_length=4)
+    expires_in_days: int = Field(default=90, ge=1, le=365)
+
+    @field_validator("name")
+    @classmethod
+    def normalize_token_name(cls, value: str) -> str:
+        normalized = " ".join(value.split())
+        if not normalized:
+            raise ValueError("token name must not be blank")
+        return normalized
+
+    @field_validator("scopes")
+    @classmethod
+    def require_unique_scopes(
+        cls,
+        value: list[IntegrationTokenScope],
+    ) -> list[IntegrationTokenScope]:
+        if len(value) != len(set(value)):
+            raise ValueError("token scopes must be unique")
+        return value
+
+
+class IntegrationTokenRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    project_id: UUID
+    name: str
+    token_prefix: str
+    scopes: list[IntegrationTokenScope]
+    expires_at: datetime
+    last_used_at: datetime | None
+    revoked_at: datetime | None
+    created_at: datetime
+
+
+class IntegrationTokenCreated(IntegrationTokenRead):
+    token: str
+
+
+class IntegrationTokenListResponse(BaseModel):
+    items: list[IntegrationTokenRead]
+
+
 class PipelineStatus(StrEnum):
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"

@@ -12,3 +12,13 @@ htmlcov
 dataops.db
 docs
 tests
+.codex-deploy
+.npm-cache-dataops-demo
+.trivy-cache-dataops-demo
+.sftp-resume-dataops.txt
+*-cache.tar
+*-cache.tar.gz
+api-runtime-image.tar
+api-runtime-image.tar.gz
+dist
+build

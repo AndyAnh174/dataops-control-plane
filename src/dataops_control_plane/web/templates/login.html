@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-copy">
+    <p class="eyebrow">Self-hosted operations</p>
+    <h1>Sign in to DataOps</h1>
+    <p>Inspect pipeline runs, evidence, RCA and controlled recovery from one place.</p>
+  </div>
+  <form class="panel form-stack" data-api-form="login">
+    <label>Email<input name="email" type="email" autocomplete="email" required></label>
+    <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+    <p class="form-error" role="alert" hidden></p>
+    <button class="button button-primary" type="submit">Sign in</button>
+  </form>
+</section>
+{% endblock %}

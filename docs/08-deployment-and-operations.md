@@ -31,12 +31,13 @@ Hiện tại repository đã có:
 - Compose cho FastAPI, PostgreSQL, Elasticsearch và Kibana;
 - healthcheck, volume và loopback binding cho API/Elastic/Kibana;
 - Agent repository riêng cho GitHub Actions;
-- M1–M6: ingestion, evidence, retrieval, RCA, policy, recovery và verification.
+- M1–M6: ingestion, evidence, retrieval, RCA, policy, recovery và verification;
+- nền tảng M7: bootstrap owner, session auth, workspace/project, project token và Web UI đầu tiên.
 
 Chưa được xem là hoàn thành:
 
-- Web UI, session auth, workspace/project và RBAC;
-- integration token theo project thay cho token dùng chung;
+- member invitation và quản trị RBAC đầy đủ;
+- provider integration record, token rotation và authentication audit đầy đủ;
 - migration/backup/upgrade workflow hoàn chỉnh;
 - image `dataops-platform` chứa Web UI trên Docker Hub;
 - production Compose bật TLS/authentication cho Elasticsearch.
@@ -79,6 +80,7 @@ Hoặc chạy Compose từ source:
 ```powershell
 $env:DATAOPS_POSTGRES_PASSWORD = "choose-a-local-development-secret"
 $env:DATAOPS_AGENT_TOKEN = "choose-a-random-agent-bearer-token"
+$env:DATAOPS_WEB_SESSION_COOKIE_SECURE = "false"
 docker compose up --build
 ```
 
@@ -90,6 +92,9 @@ Các port hiện tại:
 
 Elasticsearch và Kibana tắt security trong Compose hiện tại nên chỉ dành cho local/demo và
 được bind loopback. Không copy cấu hình đó sang production public.
+
+Lần chạy đầu mở `http://127.0.0.1:8000/setup` để tạo owner và workspace. Với HTTPS production,
+giữ `DATAOPS_WEB_SESSION_COOKIE_SECURE=true`; chỉ đặt `false` khi phát triển bằng HTTP local.
 
 ## 8.5 Kết nối GitHub Actions
 
@@ -105,9 +110,9 @@ Agent tự đọc repository, commit SHA, branch, run ID, attempt và job từ G
 khác, truyền bộ metadata portable tương ứng. Agent giữ nguyên exit code stage; lỗi gửi
 telemetry mặc định không biến một pipeline thành công thành thất bại.
 
-MVP hiện dùng `DATAOPS_AGENT_TOKEN` cấp instance. Trước multi-workspace, Web Platform phải
-sinh token theo project/integration, chỉ lưu hash, hỗ trợ expiry/rotate/revoke và derive
-project context từ token sau xác thực.
+M7 đã hỗ trợ token theo project, chỉ lưu hash, có scope, revoke và derive project context sau
+xác thực. `DATAOPS_AGENT_TOKEN` cấp instance vẫn được giữ để tương thích trong giai đoạn chuyển
+đổi. Expiry/rotate và provider integration credential là phần tiếp theo.
 
 Evidence Collector dùng GitHub API để đọc commit diff. Credential đọc và credential
 recovery phải tách scope:

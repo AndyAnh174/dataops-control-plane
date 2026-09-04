@@ -28,7 +28,7 @@ Trạng thái tại thời điểm cập nhật:
 | Hybrid Retrieval M4 | Đã có |
 | Agentic RCA M5 | Đã có |
 | Policy, recovery và verification M6 | Đã có |
-| Auth/workspace/project/integration token và Web UI | Kế tiếp |
+| Auth/workspace/project/integration token và Web UI | Nền tảng M7 đã có |
 | Docker Hub release hoàn chỉnh | Kế tiếp; image backend hiện publish GHCR |
 | Provider thứ hai | Sau Web Platform/MVP demo |
 
@@ -79,10 +79,11 @@ Trạng thái tại thời điểm cập nhật:
 
 ### Giai đoạn 7 — Web Platform và self-hosted distribution
 
-- FastAPI session auth và bootstrap owner.
-- Workspace, member role, project và provider integration.
-- Token theo project/integration, rotate/revoke/audit.
-- Jinja2/HTML/CSS/JavaScript UI cho run, log, incident và recovery approval.
+- FastAPI session auth và bootstrap owner. ✅ M7 foundation
+- Workspace, member role và project. ✅ M7 foundation
+- Token theo project, scope và revoke. ✅ M7 foundation
+- Jinja2/HTML/CSS/JavaScript UI cho setup, dashboard, project, run, log và incident. ✅ M7 foundation
+- Provider integration record, member invitation, token rotation/audit và recovery approval UI.
 - Image `dataops-platform` gồm API + UI, phát hành Docker Hub.
 - Docker Compose, volume, healthcheck, upgrade/backup/rollback guide.
 

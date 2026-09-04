@@ -1,6 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
-from dataops_control_plane.api.dependencies import SessionDep, require_agent_token
+from dataops_control_plane.api.dependencies import (
+    AgentPrincipalDep,
+    SessionDep,
+    require_agent_scope,
+)
 from dataops_control_plane.api.schemas import PipelineEventCreate, PipelineEventReceipt
 from dataops_control_plane.services.pipeline_events import InvalidPipelineTransition
 from dataops_control_plane.services.pipeline_events import ingest_pipeline_event as ingest_event
@@ -8,15 +12,23 @@ from dataops_control_plane.services.pipeline_events import ingest_pipeline_event
 router = APIRouter(
     prefix="/api/v1/events",
     tags=["events"],
-    dependencies=[Depends(require_agent_token)],
 )
 
 
 @router.post("/pipeline", status_code=status.HTTP_202_ACCEPTED)
 def ingest_pipeline_event(
     event: PipelineEventCreate,
+    principal: AgentPrincipalDep,
     session: SessionDep,
 ) -> PipelineEventReceipt:
+    require_agent_scope(principal, "runs:write")
+    if principal.authentication_type == "project-token" and (
+        principal.project_ref != event.project_ref or principal.provider != event.provider
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Token does not belong to this pipeline project",
+        )
     try:
         run, duplicate = ingest_event(session, event)
     except InvalidPipelineTransition as exc:

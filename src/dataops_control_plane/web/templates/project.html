@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<a class="back-link" href="/app">← All projects</a>
+<section class="project-hero">
+  <div>
+    <p class="eyebrow">{{ project.provider }} · {{ project.default_branch }}</p>
+    <h1>{{ project.name }}</h1>
+    <code>{{ project.project_ref }}</code>
+  </div>
+  <button class="button button-primary" type="button" data-create-token="{{ project.id }}">Create Agent token</button>
+</section>
+
+<section class="workspace-section">
+  <div class="section-heading">
+    <div><p class="eyebrow">Provider setup</p><h2>Agent connection</h2></div>
+  </div>
+  <div class="setup-grid">
+    <article class="panel setup-card">
+      <p>GitHub Secrets</p>
+      <pre>DATAOPS_URL=https://your-dataops-domain
+DATAOPS_TOKEN=&lt;generated token&gt;</pre>
+    </article>
+    <article class="panel setup-card">
+      <p>Active tokens</p>
+      {% for token in tokens %}
+      <div class="token-row">
+        <span><strong>{{ token.name }}</strong><br><code>{{ token.token_prefix }}…</code></span>
+        <span class="token-state">{% if token.revoked_at %}Revoked{% else %}Active{% endif %}</span>
+      </div>
+      {% else %}<p>No tokens created.</p>{% endfor %}
+    </article>
+  </div>
+</section>
+
+<section class="workspace-section">
+  <div class="section-heading"><div><p class="eyebrow">Recent activity</p><h2>Pipeline runs</h2></div></div>
+  <div class="table-wrap panel">
+    <table>
+      <thead><tr><th>Run</th><th>Commit</th><th>Branch</th><th>Status</th><th>Incident</th><th>Updated</th></tr></thead>
+      <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><a href="/app/runs/{{ run.id }}">{{ run.external_run_id }}</a></td>
+        <td><code>{{ run.commit_sha[:10] }}</code></td>
+        <td>{{ run.branch }}</td>
+        <td><span class="run-status run-{{ run.status|lower }}">{{ run.status }}</span></td>
+        <td>{% if incident_by_run.get(run.id) %}{{ incident_by_run.get(run.id).status }}{% else %}—{% endif %}</td>
+        <td>{{ run.last_event_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No runs received yet. Commit the Agent workflow to begin.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<dialog id="token-dialog">
+  <div class="dialog-content">
+    <p class="eyebrow">Shown once</p><h2>Copy your Agent token</h2>
+    <p>Store it as <code>DATAOPS_TOKEN</code> in GitHub Secrets.</p>
+    <pre id="token-secret"></pre>
+    <p class="form-error" role="alert" hidden></p>
+    <button class="button button-primary" type="button" data-action="close-token">Done</button>
+  </div>
+</dialog>
+{% endblock %}

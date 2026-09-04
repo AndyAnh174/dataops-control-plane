@@ -1,13 +1,16 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import APIRouter, HTTPException, Path, status
 from sqlmodel import select
 
 from dataops_control_plane.api.dependencies import (
+    AgentPrincipalDep,
+    OperatorPrincipalDep,
     RecoveryExecutorDep,
     SessionDep,
-    require_agent_token,
+    require_agent_run_access,
+    require_operator_run_access,
 )
 from dataops_control_plane.api.schemas import (
     RecoveryApprovalRequest,
@@ -22,6 +25,7 @@ from dataops_control_plane.api.schemas import (
 )
 from dataops_control_plane.domain.models import (
     Incident,
+    PipelineRun,
     RecoveryAttempt,
     RecoveryAuditEvent,
     RecoveryPlan,
@@ -44,7 +48,6 @@ from dataops_control_plane.services.recovery_policy import (
 router = APIRouter(
     prefix="/api/v1/incidents",
     tags=["recovery"],
-    dependencies=[Depends(require_agent_token)],
 )
 
 
@@ -54,11 +57,13 @@ router = APIRouter(
 )
 def create_plan(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
 ) -> RecoveryPlanReceipt:
     incident = session.get(Incident, incident_id)
     if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    _require_incident_access(session, principal, incident)
     try:
         result = create_recovery_plan(session, incident)
     except RecoveryPlanUnavailable as exc:
@@ -71,9 +76,14 @@ def approve_plan(
     request: RecoveryApprovalRequest,
     incident_id: Annotated[UUID, Path(description="Incident ID")],
     plan_id: Annotated[UUID, Path(description="Recovery plan ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
 ) -> RecoveryPlanRead:
     plan = _get_plan(session, incident_id, plan_id)
+    incident = session.get(Incident, incident_id)
+    if incident is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    _require_incident_access(session, principal, incident)
     try:
         approved = approve_recovery_plan(session, plan, actor=request.actor)
     except (RecoveryPlanAlreadyDecided, RecoveryPlanUnavailable) as exc:
@@ -86,9 +96,14 @@ def reject_plan(
     request: RecoveryRejectionRequest,
     incident_id: Annotated[UUID, Path(description="Incident ID")],
     plan_id: Annotated[UUID, Path(description="Recovery plan ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
 ) -> RecoveryPlanRead:
     plan = _get_plan(session, incident_id, plan_id)
+    incident = session.get(Incident, incident_id)
+    if incident is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    _require_incident_access(session, principal, incident)
     try:
         rejected = reject_recovery_plan(
             session,
@@ -108,12 +123,14 @@ def reject_plan(
 def execute_plan(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
     plan_id: Annotated[UUID, Path(description="Recovery plan ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
     executor: RecoveryExecutorDep,
 ) -> RecoveryAttemptReceipt:
     incident = session.get(Incident, incident_id)
     if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    _require_incident_access(session, principal, incident)
     plan = _get_plan(session, incident_id, plan_id)
     try:
         result = execute_recovery_plan(session, incident, plan, executor)
@@ -133,10 +150,13 @@ def execute_plan(
 @router.get("/{incident_id}/recovery-audit")
 def get_recovery_audit(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
+    principal: OperatorPrincipalDep,
     session: SessionDep,
 ) -> RecoveryAuditListResponse:
-    if session.get(Incident, incident_id) is None:
+    incident = session.get(Incident, incident_id)
+    if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    _require_incident_access(session, principal, incident)
     events = session.exec(
         select(RecoveryAuditEvent)
         .where(RecoveryAuditEvent.incident_id == incident_id)
@@ -152,11 +172,16 @@ def verify_attempt(
     request: RecoveryVerificationCreate,
     incident_id: Annotated[UUID, Path(description="Incident ID")],
     attempt_id: Annotated[UUID, Path(description="Recovery attempt ID")],
+    principal: AgentPrincipalDep,
     session: SessionDep,
 ) -> RecoveryAttemptReceipt:
     incident = session.get(Incident, incident_id)
     if incident is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
+    if pipeline_run is None:
+        raise RuntimeError(f"Incident {incident.id} references an unknown pipeline run")
+    require_agent_run_access(principal, pipeline_run, scope="verification:write")
     attempt = session.get(RecoveryAttempt, attempt_id)
     if attempt is None or attempt.incident_id != incident_id:
         raise HTTPException(
@@ -189,6 +214,13 @@ def _get_plan(session, incident_id: UUID, plan_id: UUID) -> RecoveryPlan:
             detail="Recovery plan not found",
         )
     return plan
+
+
+def _require_incident_access(session, principal, incident: Incident) -> None:
+    pipeline_run = session.get(PipelineRun, incident.pipeline_run_id)
+    if pipeline_run is None:
+        raise RuntimeError(f"Incident {incident.id} references an unknown pipeline run")
+    require_operator_run_access(principal, session, pipeline_run)
 
 
 def _plan_read(plan: RecoveryPlan) -> RecoveryPlanRead:
