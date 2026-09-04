@@ -27,6 +27,10 @@ DataOps không thay thế GitHub Actions, GitLab CI hay Jenkins. Provider/runner
 checkout source, test, build và deploy; DataOps bổ sung vòng quan sát, phân tích, quyết định,
 phục hồi và xác minh.
 
+Trạng thái M7 foundation hiện đã triển khai bootstrap/session, workspace/project, project token,
+GitHub onboarding sinh hai file cấu hình, run/incident detail và recovery approval/audit. Member
+invitation, provider credential record, token rotation và settings UI vẫn thuộc các vòng sau.
+
 ## 12.2 Vì sao dùng FastAPI-only
 
 Phiên bản Web đầu tiên dùng FastAPI, Jinja2, HTML/CSS và JavaScript tối thiểu. Không thêm
@@ -125,6 +129,13 @@ Workflow gọi version cố định của Agent thay vì tải script không ki�
   env:
     DATAOPS_URL: ${{ secrets.DATAOPS_URL }}
     DATAOPS_TOKEN: ${{ secrets.DATAOPS_TOKEN }}
+```
+
+Web UI hiển thị đầy đủ hai file cần commit và giá trị `DATAOPS_URL`; `DATAOPS_TOKEN` chỉ được
+hiển thị đúng một lần lúc tạo token. Contract tương ứng cho automation:
+
+```http
+GET /api/v1/projects/{project_id}/onboarding/github
 ```
 
 ## 12.6 Luồng runtime khép kín

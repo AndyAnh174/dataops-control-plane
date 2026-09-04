@@ -53,6 +53,12 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px r
 .setup-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.5rem; }
 .setup-card { padding: 1.5rem; }
 .setup-card pre { padding: 1rem; white-space: pre-wrap; }
+.step-number { color: var(--accent); font-size: .76rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.secret-row { display: grid; grid-template-columns: 150px 1fr; gap: 1rem; align-items: center; padding: .8rem 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .82rem; }
+.code-grid { display: grid; gap: 1rem; margin-top: 1rem; }
+.code-card { min-width: 0; padding: 1.5rem; }
+.code-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.code-card pre { max-height: 420px; margin: 0; padding: 1.2rem; overflow: auto; white-space: pre; }
 .token-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem 0; border-top: 1px solid var(--line); }
 .token-state { color: var(--accent); font-size: .78rem; font-weight: 800; }
 .table-wrap { overflow-x: auto; margin-top: 1.5rem; }
@@ -78,6 +84,22 @@ dialog { width: min(600px, 90vw); padding: 0; color: var(--text); border: 1px so
 dialog::backdrop { background: rgba(0, 0, 0, .72); backdrop-filter: blur(6px); }
 .dialog-content { padding: 2rem; }
 .dialog-content pre { padding: 1rem; white-space: pre-wrap; }
+.detail-card { margin-top: 1.5rem; padding: 1.5rem; }
+.detail-heading, .recovery-status-row, .action-row { display: flex; align-items: center; gap: 1rem; }
+.detail-heading { justify-content: space-between; color: var(--muted); }
+.root-cause { color: var(--text); font-size: 1.25rem; }
+.recommendation { margin-top: 1.5rem; padding: 1rem; border-left: 3px solid var(--accent); background: #091611; }
+.recommendation strong { display: block; margin-top: .5rem; font-size: 1.4rem; }
+.recovery-status-row { display: grid; grid-template-columns: repeat(4, 1fr); }
+.recovery-status-row p { margin: 0 0 .35rem; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+.reason-list { padding-left: 1.2rem; color: var(--muted); }
+.action-row { margin-top: 1.5rem; }
+.button-danger { color: #ffc3c3; background: #411d21; }
+.attempt-card { border-color: var(--accent); }
+.timeline { margin-top: 1.5rem; }
+.timeline-event { display: grid; grid-template-columns: 18px 1fr; gap: 1rem; min-height: 76px; }
+.timeline-event > span { width: 10px; height: 10px; margin-top: .3rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px rgba(98, 237, 174, .5); }
+.timeline-event p { margin: .25rem 0 0; }
 
 @media (max-width: 800px) {
   .shell { width: min(92vw, 680px); padding: 2.5rem 0; }
@@ -86,6 +108,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); backdrop-filter: blur(6px); }
   .project-hero { align-items: flex-start; flex-direction: column; }
   .setup-grid { grid-template-columns: 1fr; }
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .recovery-status-row { grid-template-columns: repeat(2, 1fr); }
   .inline-form { grid-template-columns: 1fr; }
   .account span { display: none; }
 }

@@ -13,7 +13,7 @@
 <section class="summary-grid">
   <article class="panel metric-card"><p>Provider</p><strong>{{ run.provider }}</strong></article>
   <article class="panel metric-card"><p>Failed stage</p><strong>{{ run.failed_stage or "—" }}</strong></article>
-  <article class="panel metric-card"><p>Incident</p><strong>{{ incident.status if incident else "None" }}</strong></article>
+  <article class="panel metric-card"><p>Incident</p><strong>{% if incident %}<a class="text-link" href="/app/incidents/{{ incident.id }}">{{ incident.status }}</a>{% else %}None{% endif %}</strong></article>
   <article class="panel metric-card"><p>Last event</p><strong>{{ run.last_event_at }}</strong></article>
 </section>
 

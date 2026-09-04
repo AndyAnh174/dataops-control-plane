@@ -82,8 +82,9 @@ Trạng thái tại thời điểm cập nhật:
 - FastAPI session auth và bootstrap owner. ✅ M7 foundation
 - Workspace, member role và project. ✅ M7 foundation
 - Token theo project, scope và revoke. ✅ M7 foundation
-- Jinja2/HTML/CSS/JavaScript UI cho setup, dashboard, project, run, log và incident. ✅ M7 foundation
-- Provider integration record, member invitation, token rotation/audit và recovery approval UI.
+- GitHub onboarding sinh workflow, `dataops.yaml` và danh sách Secrets. ✅ M7 foundation
+- Jinja2/HTML/CSS/JavaScript UI cho setup, dashboard, project, run, log, incident và recovery approval/audit. ✅ M7 foundation
+- Provider integration record, member invitation và token rotation/authentication audit.
 - Image `dataops-platform` gồm API + UI, phát hành Docker Hub.
 - Docker Compose, volume, healthcheck, upgrade/backup/rollback guide.
 

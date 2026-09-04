@@ -84,6 +84,24 @@ class ProjectListResponse(BaseModel):
     items: list[ProjectRead]
 
 
+class OnboardingSecretRead(BaseModel):
+    name: str
+    value: str | None
+    sensitive: bool
+    description: str
+
+
+class GitHubOnboardingRead(BaseModel):
+    provider: str
+    project_id: UUID
+    project_ref: str
+    workflow_path: str
+    workflow_yaml: str
+    dataops_config_path: str
+    dataops_config_yaml: str
+    required_secrets: list[OnboardingSecretRead]
+
+
 class IntegrationTokenScope(StrEnum):
     RUNS_WRITE = "runs:write"
     LOGS_WRITE = "logs:write"

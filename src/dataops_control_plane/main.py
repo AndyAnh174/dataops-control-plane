@@ -15,6 +15,7 @@ from dataops_control_plane.api.routes.recovery import router as recovery_router
 from dataops_control_plane.api.routes.retrieval import router as retrieval_router
 from dataops_control_plane.api.routes.runs import router as runs_router
 from dataops_control_plane.api.routes.web_auth import router as web_auth_router
+from dataops_control_plane.api.routes.web_onboarding import router as web_onboarding_router
 from dataops_control_plane.api.routes.web_projects import router as web_projects_router
 from dataops_control_plane.api.routes.web_tokens import router as web_tokens_router
 from dataops_control_plane.api.routes.web_ui import router as web_ui_router
@@ -130,6 +131,7 @@ def create_app(
     application.include_router(retrieval_router)
     application.include_router(runs_router)
     application.include_router(web_auth_router)
+    application.include_router(web_onboarding_router)
     application.include_router(web_projects_router)
     application.include_router(web_tokens_router)
     application.include_router(web_ui_router)

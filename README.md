@@ -127,7 +127,7 @@ Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện t�
 | Hybrid Retrieval và Agentic RCA qua Ollama | Đã có |
 | Policy, approval, recovery và verification callback | Đã có |
 | User, session, workspace, project và token theo integration | Đã có nền tảng M7 |
-| Web UI FastAPI + HTML/CSS/JavaScript | Đã có setup, dashboard, project và run detail |
+| Web UI FastAPI + HTML/CSS/JavaScript | Đã có setup, dashboard, project, run, incident và recovery control |
 | Docker Hub release của `dataops-platform` | Thiết kế tiếp theo; GHCR hiện đã có |
 
 ## Khởi chạy phiên bản hiện tại
@@ -155,8 +155,9 @@ Incident chỉ `RESOLVED` sau verification `PASSED`; dispatch workflow chưa đ�
 
 M7 hiện có bootstrap owner một lần, session cookie phía server, workspace/project, role cơ bản
 và integration token theo project. Token chỉ lưu hash, trả secret đúng một lần, có scope và có
-thể revoke. Web UI đầu tiên cung cấp setup, login, dashboard, project detail và run detail với
-log/incident; API cũ vẫn tương thích với instance token trong giai đoạn chuyển đổi.
+thể revoke. Web UI cung cấp setup, login, dashboard, project/run/incident detail, hướng dẫn
+onboarding GitHub có thể copy và recovery approval/audit. Danh tính người duyệt được lấy từ
+session phía server; API cũ vẫn tương thích với instance token trong giai đoạn chuyển đổi.
 
 Chạy local bằng Python:
 
@@ -218,6 +219,13 @@ Agent tự lấy repository, commit, branch, run ID và attempt từ GitHub; ch�
 stage; giữ nguyên exit code; đồng thời gửi event, log và report có correlation về Control Plane.
 Runtime Node 24 đã được GitHub cung cấp nên ứng dụng không cần cài thêm Python hoặc Docker
 chỉ để chạy agent. Các command trong `dataops.yaml` vẫn cần toolchain riêng của dự án.
+
+Sau khi tạo project, trang project sinh sẵn cả `.github/workflows/dataops.yml`, starter
+`dataops.yaml` và danh sách GitHub Secrets. JSON client có thể đọc cùng contract tại:
+
+```http
+GET /api/v1/projects/{project_id}/onboarding/github
+```
 
 Khai báo report do Pandas/Great Expectations sinh trong cùng file cấu hình:
 
@@ -339,6 +347,8 @@ Authorization: Bearer ${DATAOPS_AGENT_TOKEN}
 
 GitHub executor dùng `DATAOPS_GITHUB_RECOVERY_TOKEN` riêng với quyền Actions write và workflow
 `dataops-recovery.yml`. Cùng một plan chỉ dispatch một lần; callback hợp lệ mới đóng incident.
+Operator có thể thực hiện cùng luồng trên `/app/incidents/{incident_id}`; Web session tự gắn
+email đăng nhập vào approval audit và các mutation từ origin khác bị từ chối.
 Chi tiết policy, API, cấu hình và kịch bản demo ở
 [docs/11-policy-and-recovery.md](docs/11-policy-and-recovery.md).
 

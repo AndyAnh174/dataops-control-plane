@@ -32,7 +32,8 @@ Hiện tại repository đã có:
 - healthcheck, volume và loopback binding cho API/Elastic/Kibana;
 - Agent repository riêng cho GitHub Actions;
 - M1–M6: ingestion, evidence, retrieval, RCA, policy, recovery và verification;
-- nền tảng M7: bootstrap owner, session auth, workspace/project, project token và Web UI đầu tiên.
+- nền tảng M7: bootstrap owner, session auth, workspace/project, project token, GitHub onboarding
+  và Web UI cho run/incident/recovery.
 
 Chưa được xem là hoàn thành:
 

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<a class="back-link" href="/app/runs/{{ run.id }}">← Run {{ run.external_run_id }}</a>
+<section class="project-hero">
+  <div>
+    <p class="eyebrow">Incident · {{ project.name }}</p>
+    <h1>{{ incident.status }}</h1>
+    <p><code>{{ incident.id }}</code></p>
+  </div>
+  <span class="run-status run-{{ run.status|lower }}">{{ run.status }}</span>
+</section>
+
+<section class="summary-grid">
+  <article class="panel metric-card"><p>Failed stage</p><strong>{{ run.failed_stage or "—" }}</strong></article>
+  <article class="panel metric-card"><p>Branch</p><strong>{{ run.branch }}</strong></article>
+  <article class="panel metric-card"><p>Commit</p><strong><code>{{ run.commit_sha[:10] }}</code></strong></article>
+  <article class="panel metric-card"><p>Updated</p><strong>{{ incident.updated_at }}</strong></article>
+</section>
+
+<section class="workspace-section">
+  <div class="section-heading"><div><p class="eyebrow">Agentic RCA</p><h2>Root cause analysis</h2></div></div>
+  {% if report %}
+  <article class="panel detail-card">
+    <div class="detail-heading">
+      <span class="run-status run-success">{{ report.analysis_status }}</span>
+      <span>Confidence {{ "%.0f"|format(report.confidence * 100) }}%</span>
+    </div>
+    <h3>{{ report.incident_type }}</h3>
+    <p class="root-cause">{{ report.root_cause }}</p>
+    <div class="recommendation">
+      <p class="eyebrow">Recommended action</p>
+      <strong>{{ report.recommended_action.get("type") }}</strong>
+      <p>{{ report.recommended_action.get("rationale") }}</p>
+    </div>
+  </article>
+  {% else %}
+  <article class="panel detail-card"><p>No validated RCA report is available yet.</p></article>
+  {% endif %}
+</section>
+
+<section class="workspace-section" id="recovery-control" data-incident-id="{{ incident.id }}" data-plan-id="{{ plan.id if plan else '' }}">
+  <div class="section-heading">
+    <div><p class="eyebrow">Deterministic policy</p><h2>Recovery control</h2></div>
+    {% if report and not plan %}<button class="button button-primary" type="button" data-incident-action="create-plan">Evaluate policy</button>{% endif %}
+  </div>
+  <p class="form-error" role="alert" hidden></p>
+  {% if plan %}
+  <article class="panel detail-card">
+    <div class="recovery-status-row">
+      <div><p>Action</p><strong>{{ plan.action_type }}</strong></div>
+      <div><p>Risk</p><strong>{{ plan.risk_level }}</strong></div>
+      <div><p>Policy</p><strong>{{ plan.policy_decision }}</strong></div>
+      <div><p>Approval</p><strong>{{ plan.approval_status }}</strong></div>
+    </div>
+    <ul class="reason-list">{% for reason in plan.decision_reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+    <div class="action-row">
+      {% if plan.approval_status == "PENDING" %}
+      <button class="button button-primary" type="button" data-incident-action="approve">Approve plan</button>
+      <button class="button button-danger" type="button" data-incident-action="reject">Reject plan</button>
+      {% elif plan.approval_status in ["APPROVED", "NOT_REQUIRED"] and plan.policy_decision != "DENIED" and not attempt %}
+      <button class="button button-primary" type="button" data-incident-action="execute">Execute recovery</button>
+      {% endif %}
+    </div>
+  </article>
+  {% else %}
+  <article class="panel detail-card"><p>No recovery plan has been evaluated.</p></article>
+  {% endif %}
+
+  {% if attempt %}
+  <article class="panel detail-card attempt-card">
+    <p class="eyebrow">Recovery attempt</p>
+    <h3>{{ attempt.status }}</h3>
+    <p>Verification: <strong>{{ attempt.verification_status or "Waiting" }}</strong></p>
+    {% if attempt.external_reference %}<code>{{ attempt.external_reference }}</code>{% endif %}
+  </article>
+  {% endif %}
+</section>
+
+<section class="workspace-section">
+  <div class="section-heading"><div><p class="eyebrow">Immutable history</p><h2>Recovery audit</h2></div></div>
+  <div class="timeline">
+    {% for event in audit_events %}
+    <article class="timeline-event">
+      <span></span>
+      <div><strong>{{ event.event_type }}</strong><p>{{ event.actor }} · {{ event.created_at }}</p></div>
+    </article>
+    {% else %}<article class="panel detail-card"><p>No recovery events recorded.</p></article>{% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -8,6 +8,7 @@ from dataops_control_plane.api.dependencies import (
     AgentPrincipalDep,
     OperatorPrincipalDep,
     RecoveryExecutorDep,
+    SameOriginDep,
     SessionDep,
     require_agent_run_access,
     require_operator_run_access,
@@ -24,6 +25,7 @@ from dataops_control_plane.api.schemas import (
     RecoveryVerificationCreate,
 )
 from dataops_control_plane.domain.models import (
+    AppUser,
     Incident,
     PipelineRun,
     RecoveryAttempt,
@@ -58,6 +60,7 @@ router = APIRouter(
 def create_plan(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
     principal: OperatorPrincipalDep,
+    same_origin: SameOriginDep,
     session: SessionDep,
 ) -> RecoveryPlanReceipt:
     incident = session.get(Incident, incident_id)
@@ -77,6 +80,7 @@ def approve_plan(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
     plan_id: Annotated[UUID, Path(description="Recovery plan ID")],
     principal: OperatorPrincipalDep,
+    same_origin: SameOriginDep,
     session: SessionDep,
 ) -> RecoveryPlanRead:
     plan = _get_plan(session, incident_id, plan_id)
@@ -85,7 +89,11 @@ def approve_plan(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
     _require_incident_access(session, principal, incident)
     try:
-        approved = approve_recovery_plan(session, plan, actor=request.actor)
+        approved = approve_recovery_plan(
+            session,
+            plan,
+            actor=_approval_actor(session, principal, request.actor),
+        )
     except (RecoveryPlanAlreadyDecided, RecoveryPlanUnavailable) as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return _plan_read(approved)
@@ -97,6 +105,7 @@ def reject_plan(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
     plan_id: Annotated[UUID, Path(description="Recovery plan ID")],
     principal: OperatorPrincipalDep,
+    same_origin: SameOriginDep,
     session: SessionDep,
 ) -> RecoveryPlanRead:
     plan = _get_plan(session, incident_id, plan_id)
@@ -108,7 +117,7 @@ def reject_plan(
         rejected = reject_recovery_plan(
             session,
             plan,
-            actor=request.actor,
+            actor=_approval_actor(session, principal, request.actor),
             reason=request.reason,
         )
     except RecoveryPlanAlreadyDecided as exc:
@@ -124,6 +133,7 @@ def execute_plan(
     incident_id: Annotated[UUID, Path(description="Incident ID")],
     plan_id: Annotated[UUID, Path(description="Recovery plan ID")],
     principal: OperatorPrincipalDep,
+    same_origin: SameOriginDep,
     session: SessionDep,
     executor: RecoveryExecutorDep,
 ) -> RecoveryAttemptReceipt:
@@ -221,6 +231,18 @@ def _require_incident_access(session, principal, incident: Incident) -> None:
     if pipeline_run is None:
         raise RuntimeError(f"Incident {incident.id} references an unknown pipeline run")
     require_operator_run_access(principal, session, pipeline_run)
+
+
+def _approval_actor(session, principal, supplied_actor: str) -> str:
+    if principal.authentication_type != "web-session":
+        return supplied_actor
+    user = session.get(AppUser, principal.user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+    return user.email
 
 
 def _plan_read(plan: RecoveryPlan) -> RecoveryPlanRead:

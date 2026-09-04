@@ -7,8 +7,18 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import select
 
 from dataops_control_plane.api.dependencies import LogStoreDep, SessionDep
-from dataops_control_plane.domain.models import Incident, PipelineRun, PlatformState, Project
+from dataops_control_plane.domain.models import (
+    Incident,
+    PipelineRun,
+    PlatformState,
+    Project,
+    RCAReport,
+    RecoveryAttempt,
+    RecoveryAuditEvent,
+    RecoveryPlan,
+)
 from dataops_control_plane.services.pipeline_logs import LogStoreUnavailable
+from dataops_control_plane.services.provider_onboarding import build_github_onboarding
 from dataops_control_plane.services.web_identity import (
     get_user_for_session,
     list_user_workspaces,
@@ -28,6 +38,22 @@ def _current_user(request: Request, session):
     settings = request.app.state.settings
     token = request.cookies.get(settings.web_session_cookie_name, "")
     return get_user_for_session(session, token) if token else None
+
+
+def _project_for_run(session, run: PipelineRun, user_id: UUID) -> Project | None:
+    candidates = session.exec(
+        select(Project).where(
+            Project.provider == run.provider,
+            Project.project_ref == run.project_ref,
+        )
+    ).all()
+    for candidate in candidates:
+        try:
+            require_project_access(session, project_id=candidate.id, user_id=user_id)
+        except ProjectNotFound:
+            continue
+        return candidate
+    return None
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -139,6 +165,16 @@ def project_page(project_id: UUID, request: Request, session: SessionDep):
             "tokens": tokens,
             "runs": runs,
             "incident_by_run": incident_by_run,
+            "onboarding": (
+                build_github_onboarding(
+                    project,
+                    public_url=(
+                        request.app.state.settings.public_url or str(request.base_url).rstrip("/")
+                    ),
+                )
+                if project.provider == "github"
+                else None
+            ),
         },
     )
 
@@ -151,20 +187,7 @@ def run_page(run_id: UUID, request: Request, session: SessionDep, log_store: Log
     run = session.get(PipelineRun, run_id)
     if run is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pipeline run not found")
-    candidates = session.exec(
-        select(Project).where(
-            Project.provider == run.provider,
-            Project.project_ref == run.project_ref,
-        )
-    ).all()
-    project = None
-    for candidate in candidates:
-        try:
-            require_project_access(session, project_id=candidate.id, user_id=user.id)
-        except ProjectNotFound:
-            continue
-        project = candidate
-        break
+    project = _project_for_run(session, run, user.id)
     if project is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pipeline run not found")
     log_warning = None
@@ -185,5 +208,58 @@ def run_page(run_id: UUID, request: Request, session: SessionDep, log_store: Log
             "incident": incident,
             "logs": logs,
             "log_warning": log_warning,
+        },
+    )
+
+
+@router.get("/app/incidents/{incident_id}", response_class=HTMLResponse)
+def incident_page(incident_id: UUID, request: Request, session: SessionDep):
+    user = _current_user(request, session)
+    if user is None:
+        return RedirectResponse("/login", status_code=303)
+    incident = session.get(Incident, incident_id)
+    if incident is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    run = session.get(PipelineRun, incident.pipeline_run_id)
+    if run is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    project = _project_for_run(session, run, user.id)
+    if project is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
+    report = session.exec(
+        select(RCAReport)
+        .where(RCAReport.incident_id == incident.id)
+        .order_by(RCAReport.created_at.desc())
+    ).first()
+    plan = session.exec(
+        select(RecoveryPlan)
+        .where(RecoveryPlan.incident_id == incident.id)
+        .order_by(RecoveryPlan.created_at.desc())
+    ).first()
+    attempt = session.exec(
+        select(RecoveryAttempt)
+        .where(RecoveryAttempt.incident_id == incident.id)
+        .order_by(RecoveryAttempt.started_at.desc())
+    ).first()
+    audit_events = list(
+        session.exec(
+            select(RecoveryAuditEvent)
+            .where(RecoveryAuditEvent.incident_id == incident.id)
+            .order_by(RecoveryAuditEvent.created_at.desc())
+        ).all()
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="incident.html",
+        context={
+            "page_title": f"Incident {incident.id}",
+            "user": user,
+            "project": project,
+            "run": run,
+            "incident": incident,
+            "report": report,
+            "plan": plan,
+            "attempt": attempt,
+            "audit_events": audit_events,
         },
     )

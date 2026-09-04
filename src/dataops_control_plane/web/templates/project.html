@@ -12,16 +12,22 @@
 
 <section class="workspace-section">
   <div class="section-heading">
-    <div><p class="eyebrow">Provider setup</p><h2>Agent connection</h2></div>
+    <div><p class="eyebrow">GitHub onboarding</p><h2>Connect the Agent</h2></div>
   </div>
+  {% if onboarding %}
   <div class="setup-grid">
     <article class="panel setup-card">
-      <p>GitHub Secrets</p>
-      <pre>DATAOPS_URL=https://your-dataops-domain
-DATAOPS_TOKEN=&lt;generated token&gt;</pre>
+      <p class="step-number">01 · Repository secrets</p>
+      <p>Add these under <strong>Settings → Secrets and variables → Actions</strong>.</p>
+      {% for secret in onboarding.required_secrets %}
+      <div class="secret-row">
+        <code>{{ secret.name }}</code>
+        <span>{{ secret.value or "Use the token shown when created" }}</span>
+      </div>
+      {% endfor %}
     </article>
     <article class="panel setup-card">
-      <p>Active tokens</p>
+      <p class="step-number">02 · Active tokens</p>
       {% for token in tokens %}
       <div class="token-row">
         <span><strong>{{ token.name }}</strong><br><code>{{ token.token_prefix }}…</code></span>
@@ -30,6 +36,25 @@ DATAOPS_TOKEN=&lt;generated token&gt;</pre>
       {% else %}<p>No tokens created.</p>{% endfor %}
     </article>
   </div>
+  <div class="code-grid">
+    <article class="panel code-card">
+      <div class="code-heading">
+        <div><p class="step-number">03 · Workflow</p><code>{{ onboarding.workflow_path }}</code></div>
+        <button class="button button-ghost" type="button" data-copy-target="workflow-yaml">Copy</button>
+      </div>
+      <pre id="workflow-yaml">{{ onboarding.workflow_yaml }}</pre>
+    </article>
+    <article class="panel code-card">
+      <div class="code-heading">
+        <div><p class="step-number">04 · Pipeline config</p><code>{{ onboarding.dataops_config_path }}</code></div>
+        <button class="button button-ghost" type="button" data-copy-target="dataops-yaml">Copy</button>
+      </div>
+      <pre id="dataops-yaml">{{ onboarding.dataops_config_yaml }}</pre>
+    </article>
+  </div>
+  {% else %}
+  <article class="panel setup-card"><p>Onboarding instructions are not available for this provider yet.</p></article>
+  {% endif %}
 </section>
 
 <section class="workspace-section">
@@ -44,7 +69,7 @@ DATAOPS_TOKEN=&lt;generated token&gt;</pre>
         <td><code>{{ run.commit_sha[:10] }}</code></td>
         <td>{{ run.branch }}</td>
         <td><span class="run-status run-{{ run.status|lower }}">{{ run.status }}</span></td>
-        <td>{% if incident_by_run.get(run.id) %}{{ incident_by_run.get(run.id).status }}{% else %}—{% endif %}</td>
+        <td>{% if incident_by_run.get(run.id) %}<a href="/app/incidents/{{ incident_by_run.get(run.id).id }}">{{ incident_by_run.get(run.id).status }}</a>{% else %}—{% endif %}</td>
         <td>{{ run.last_event_at }}</td>
       </tr>
       {% else %}

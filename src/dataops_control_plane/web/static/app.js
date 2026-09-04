@@ -79,3 +79,39 @@ document.querySelector("[data-action='close-token']")?.addEventListener("click",
   document.getElementById("token-dialog").close();
   window.location.reload();
 });
+
+document.querySelectorAll("[data-copy-target]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const target = document.getElementById(button.dataset.copyTarget);
+    await navigator.clipboard.writeText(target.textContent);
+    button.textContent = "Copied";
+  });
+});
+
+document.querySelectorAll("[data-incident-action]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const control = document.getElementById("recovery-control");
+    const incidentId = control.dataset.incidentId;
+    const planId = control.dataset.planId;
+    const action = button.dataset.incidentAction;
+    let url = `/api/v1/incidents/${incidentId}/recovery-plans`;
+    const options = { method: "POST" };
+    if (action !== "create-plan") url += `/${planId}/${action}`;
+    if (action === "approve") {
+      options.body = JSON.stringify({ actor: "web-session" });
+    }
+    if (action === "reject") {
+      const reason = window.prompt("Why should this recovery plan be rejected?");
+      if (!reason) return;
+      options.body = JSON.stringify({ actor: "web-session", reason });
+    }
+    button.disabled = true;
+    try {
+      await jsonRequest(url, options);
+      window.location.reload();
+    } catch (error) {
+      button.disabled = false;
+      showError(control, error);
+    }
+  });
+});
