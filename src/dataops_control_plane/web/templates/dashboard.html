@@ -30,13 +30,17 @@
 
   <div class="card-grid">
     {% for project in row.projects %}
-    <article class="project-card">
+    <article class="project-card" data-project-container>
       <div class="project-provider">{{ project.provider }}</div>
       <h3>{{ project.name }}</h3>
       <code>{{ project.project_ref }}</code>
       <p>Default branch: {{ project.default_branch }}</p>
       <a class="text-link" href="/app/projects/{{ project.id }}">Open project →</a>
       <button class="button button-secondary" type="button" data-create-token="{{ project.id }}">Create Agent token</button>
+      {% if row.membership.role == "OWNER" %}
+      <button class="button button-danger" type="button" data-delete-project="{{ project.id }}" data-workspace-id="{{ project.workspace_id }}" data-project-ref="{{ project.project_ref }}">Remove project</button>
+      {% endif %}
+      <p class="form-error" role="alert" hidden></p>
     </article>
     {% else %}
     <article class="empty-card">

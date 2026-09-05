@@ -4,8 +4,9 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
-from sqlmodel import create_engine
+from sqlmodel import Session, create_engine, select
 
+from dataops_control_plane.domain.models import WorkspaceMember
 from dataops_control_plane.main import create_app
 from dataops_control_plane.services.pipeline_logs import LogWriteResult, PipelineLogDocument
 
@@ -130,6 +131,40 @@ def test_project_page_shows_its_pipeline_run_and_incident(
     assert "web-ui-run-42" in page.text
     assert "FAILED" in page.text
     assert "OPEN" in page.text
+    assert 'data-delete-project="' in page.text
+
+
+def test_operator_does_not_see_the_owner_only_project_delete_control(
+    client: TestClient,
+) -> None:
+    """Catches a non-owner being offered a project deletion action they cannot perform."""
+    auth = client.post(
+        "/api/v1/auth/bootstrap",
+        json={
+            "email": "owner@example.com",
+            "password": "correct horse battery staple",
+            "workspace_name": "AndyAnh Lab",
+        },
+    ).json()
+    project = client.post(
+        f"/api/v1/workspaces/{auth['workspaces'][0]['id']}/projects",
+        json={
+            "name": "Demo Pipeline",
+            "provider": "github",
+            "project_ref": "AndyAnh174/dataops-demo",
+            "default_branch": "main",
+        },
+    ).json()
+    with Session(client.app.state.engine) as session:
+        membership = session.exec(select(WorkspaceMember)).one()
+        membership.role = "OPERATOR"
+        session.add(membership)
+        session.commit()
+
+    page = client.get(f"/app/projects/{project['id']}")
+
+    assert page.status_code == 200
+    assert 'data-delete-project="' not in page.text
 
 
 def test_web_responses_set_browser_security_headers(client: TestClient) -> None:

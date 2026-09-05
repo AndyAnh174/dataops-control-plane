@@ -32,6 +32,10 @@ class ProjectNotFound(Exception):
     pass
 
 
+class ProjectConfirmationMismatch(Exception):
+    pass
+
+
 class IntegrationTokenAlreadyExists(Exception):
     pass
 
@@ -120,6 +124,35 @@ def list_projects(
             .order_by(Project.created_at.asc())
         ).all()
     )
+
+
+def delete_project(
+    session: Session,
+    *,
+    workspace_id: UUID,
+    project_id: UUID,
+    user_id: UUID,
+    confirm_project_ref: str,
+) -> None:
+    require_workspace_membership(
+        session,
+        workspace_id=workspace_id,
+        user_id=user_id,
+        allowed_roles={"OWNER"},
+    )
+    project = session.get(Project, project_id)
+    if project is None or project.workspace_id != workspace_id:
+        raise ProjectNotFound("Project not found")
+    if not secrets.compare_digest(confirm_project_ref, project.project_ref):
+        raise ProjectConfirmationMismatch("Project confirmation does not match")
+    tokens = session.exec(
+        select(IntegrationToken).where(IntegrationToken.project_id == project.id)
+    ).all()
+    for token in tokens:
+        session.delete(token)
+    session.flush()
+    session.delete(project)
+    session.commit()
 
 
 def require_project_access(

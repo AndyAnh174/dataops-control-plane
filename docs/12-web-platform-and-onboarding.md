@@ -175,7 +175,7 @@ bật chế độ fail-closed riêng cho quality gate bắt buộc.
 |---|---|
 | Login/bootstrap | Đăng nhập owner và khởi tạo instance |
 | Workspaces | Thành viên và role |
-| Projects | Repository, environment, provider và trạng thái tích hợp |
+| Projects | Tạo/xoá registration, repository, environment, provider và trạng thái tích hợp |
 | Integration tokens | Tạo, rotate, revoke và xem lần dùng cuối |
 | Runs | Trạng thái, commit, stage, thời lượng và deployment link |
 | Run detail | Timeline, log search, report và evidence |
@@ -251,6 +251,8 @@ Web Platform chỉ được xem là hoàn tất khi:
 3. Một commit success và một commit failure đều xuất hiện đúng project.
 4. Incident hiển thị evidence, RCA, policy decision, recovery và verification audit.
 5. Token project không truy cập chéo workspace; revoke có hiệu lực ngay.
-6. Restart container không mất PostgreSQL/Elasticsearch data.
-7. Image Docker Hub được scan, ký/tag bất biến và smoke test trên `amd64`/`arm64`.
-8. Upgrade và rollback được diễn tập với dữ liệu backup.
+6. Chỉ owner xoá được project sau khi nhập đúng repository; token mất hiệu lực nhưng lịch sử
+   vận hành vẫn được giữ cho audit.
+7. Restart container không mất PostgreSQL/Elasticsearch data.
+8. Image Docker Hub được scan, ký/tag bất biến và smoke test trên `amd64`/`arm64`.
+9. Upgrade và rollback được diễn tập với dữ liệu backup.

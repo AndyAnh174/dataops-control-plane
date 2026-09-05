@@ -4,12 +4,20 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Path, status
 
 from dataops_control_plane.api.dependencies import CurrentWebUserDep, SameOriginDep, SessionDep
-from dataops_control_plane.api.schemas import ProjectCreate, ProjectListResponse, ProjectRead
+from dataops_control_plane.api.schemas import (
+    ProjectCreate,
+    ProjectDeleteRequest,
+    ProjectListResponse,
+    ProjectRead,
+)
 from dataops_control_plane.services.web_projects import (
     ProjectAlreadyExists,
+    ProjectConfirmationMismatch,
+    ProjectNotFound,
     WorkspaceNotFound,
     WorkspacePermissionDenied,
     create_project,
+    delete_project,
     list_projects,
 )
 
@@ -54,3 +62,31 @@ def get_projects(
     except WorkspaceNotFound as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return ProjectListResponse(items=[ProjectRead.model_validate(item) for item in projects])
+
+
+@router.delete(
+    "/{workspace_id}/projects/{project_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_project(
+    workspace_id: Annotated[UUID, Path(description="Workspace ID")],
+    project_id: Annotated[UUID, Path(description="Project ID")],
+    payload: ProjectDeleteRequest,
+    user: CurrentWebUserDep,
+    same_origin: SameOriginDep,
+    session: SessionDep,
+) -> None:
+    try:
+        delete_project(
+            session,
+            workspace_id=workspace_id,
+            project_id=project_id,
+            user_id=user.id,
+            confirm_project_ref=payload.confirm_project_ref,
+        )
+    except (WorkspaceNotFound, ProjectNotFound) as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except WorkspacePermissionDenied as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except ProjectConfirmationMismatch as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc

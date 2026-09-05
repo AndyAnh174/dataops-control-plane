@@ -84,6 +84,10 @@ class ProjectListResponse(BaseModel):
     items: list[ProjectRead]
 
 
+class ProjectDeleteRequest(BaseModel):
+    confirm_project_ref: str = Field(min_length=3, max_length=255)
+
+
 class OnboardingSecretRead(BaseModel):
     name: str
     value: str | None

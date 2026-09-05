@@ -28,6 +28,7 @@ from dataops_control_plane.services.web_projects import (
     list_integration_tokens,
     list_projects,
     require_project_access,
+    require_workspace_membership,
 )
 
 router = APIRouter(tags=["web-ui"], include_in_schema=False)
@@ -136,6 +137,11 @@ def project_page(project_id: UUID, request: Request, session: SessionDep):
             project_id=project_id,
             user_id=user.id,
         )
+        membership = require_workspace_membership(
+            session,
+            workspace_id=project.workspace_id,
+            user_id=user.id,
+        )
     except ProjectNotFound as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     runs = list(
@@ -162,6 +168,7 @@ def project_page(project_id: UUID, request: Request, session: SessionDep):
             "page_title": project.name,
             "user": user,
             "project": project,
+            "can_delete_project": membership.role == "OWNER",
             "tokens": tokens,
             "runs": runs,
             "incident_by_run": incident_by_run,

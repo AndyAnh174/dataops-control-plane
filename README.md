@@ -155,7 +155,8 @@ Incident chỉ `RESOLVED` sau verification `PASSED`; dispatch workflow chưa đ�
 
 M7 hiện có bootstrap owner một lần, session cookie phía server, workspace/project, role cơ bản
 và integration token theo project. Token chỉ lưu hash, trả secret đúng một lần, có scope và có
-thể revoke. Web UI cung cấp setup, login, dashboard, project/run/incident detail, hướng dẫn
+thể revoke. Owner có thể xoá project sau xác nhận chính xác; token bị vô hiệu ngay còn lịch sử
+run/incident được giữ cho audit. Web UI cung cấp setup, login, dashboard, project/run/incident detail, hướng dẫn
 onboarding GitHub có thể copy và recovery approval/audit. Danh tính người duyệt được lấy từ
 session phía server; API cũ vẫn tương thích với instance token trong giai đoạn chuyển đổi.
 

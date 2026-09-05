@@ -80,6 +80,30 @@ document.querySelector("[data-action='close-token']")?.addEventListener("click",
   window.location.reload();
 });
 
+document.querySelectorAll("[data-delete-project]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const projectRef = button.dataset.projectRef;
+    const confirmation = window.prompt(
+      `Type ${projectRef} to remove this project and revoke its Agent tokens. Run history is retained.`,
+    );
+    if (confirmation === null) return;
+    button.disabled = true;
+    try {
+      await jsonRequest(
+        `/api/v1/workspaces/${button.dataset.workspaceId}/projects/${button.dataset.deleteProject}`,
+        {
+          method: "DELETE",
+          body: JSON.stringify({ confirm_project_ref: confirmation }),
+        },
+      );
+      window.location.assign("/app");
+    } catch (error) {
+      button.disabled = false;
+      showError(button.closest("[data-project-container]"), error);
+    }
+  });
+});
+
 document.querySelectorAll("[data-copy-target]").forEach((button) => {
   button.addEventListener("click", async () => {
     const target = document.getElementById(button.dataset.copyTarget);

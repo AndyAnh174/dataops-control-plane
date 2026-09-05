@@ -158,6 +158,11 @@ def require_agent_token(
                         provider=project.provider,
                         scopes=frozenset(integration_token.scopes),
                     )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing agent token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     token_auth_is_required = (
         configured_token is not None

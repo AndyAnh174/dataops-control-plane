@@ -50,6 +50,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px r
 .text-link, .back-link { display: inline-block; margin: .5rem 0; color: var(--accent); font-weight: 800; }
 .project-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin: 3rem 0 5rem; }
 .project-hero h1 { margin-bottom: 1.5rem; }
+.project-actions { display: grid; gap: .75rem; justify-items: stretch; }
 .setup-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.5rem; }
 .setup-card { padding: 1.5rem; }
 .setup-card pre { padding: 1rem; white-space: pre-wrap; }

@@ -230,11 +230,16 @@ GET    /api/v1/me
 GET    /api/v1/workspaces
 POST   /api/v1/workspaces
 POST   /api/v1/workspaces/{workspace_id}/projects
+DELETE /api/v1/workspaces/{workspace_id}/projects/{project_id}
 POST   /api/v1/projects/{project_id}/provider-integrations
 POST   /api/v1/projects/{project_id}/tokens
 POST   /api/v1/projects/{project_id}/tokens/{token_id}/rotate
 DELETE /api/v1/projects/{project_id}/tokens/{token_id}
 ```
+
+Xoá project chỉ dành cho `OWNER` và yêu cầu body xác nhận đúng `project_ref`. Thao tác này
+xoá registration cùng integration token để credential mất hiệu lực ngay; lịch sử run/incident
+được giữ lại cho audit và có thể liên kết lại khi đăng ký lại cùng provider/repository.
 
 Browser dùng session cookie `HttpOnly`, `Secure`, `SameSite` và CSRF protection cho request
 thay đổi trạng thái. Agent callback tiếp tục dùng Bearer integration token. Provider webhook

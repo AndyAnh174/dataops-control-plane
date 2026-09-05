@@ -114,6 +114,67 @@ def test_browser_mutations_reject_a_cross_origin_request(client: TestClient) -> 
     assert response.json() == {"detail": "Cross-origin mutation is not allowed"}
 
 
+def test_owner_deletes_a_project_only_after_exact_repository_confirmation(
+    client: TestClient,
+) -> None:
+    """Catches accidental project deletion and credentials surviving a confirmed deletion."""
+    auth = bootstrap_owner(client)
+    workspace_id = auth["workspaces"][0]["id"]
+    project = client.post(
+        f"/api/v1/workspaces/{workspace_id}/projects",
+        json={
+            "name": "Demo Pipeline",
+            "provider": "github",
+            "project_ref": "AndyAnh174/dataops-demo",
+            "default_branch": "main",
+        },
+    ).json()
+    token = client.post(
+        f"/api/v1/projects/{project['id']}/tokens",
+        json={
+            "name": "github-main",
+            "scopes": ["runs:write"],
+            "expires_in_days": 30,
+        },
+    ).json()["token"]
+
+    mismatch = client.request(
+        "DELETE",
+        f"/api/v1/workspaces/{workspace_id}/projects/{project['id']}",
+        json={"confirm_project_ref": "wrong/repository"},
+    )
+    still_listed = client.get(f"/api/v1/workspaces/{workspace_id}/projects")
+    deleted = client.request(
+        "DELETE",
+        f"/api/v1/workspaces/{workspace_id}/projects/{project['id']}",
+        json={"confirm_project_ref": "AndyAnh174/dataops-demo"},
+    )
+    listed_after_delete = client.get(f"/api/v1/workspaces/{workspace_id}/projects")
+    token_replay = client.post(
+        "/api/v1/events/pipeline",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "event_id": "github:deleted-project-token",
+            "event_type": "pipeline.started",
+            "occurred_at": "2026-09-05T08:00:00Z",
+            "provider": "github",
+            "project_ref": "AndyAnh174/dataops-demo",
+            "external_run_id": "deleted-project-run",
+            "attempt": 1,
+            "commit_sha": "abc1234",
+            "branch": "main",
+            "status": "RUNNING",
+        },
+    )
+
+    assert mismatch.status_code == 409
+    assert mismatch.json() == {"detail": "Project confirmation does not match"}
+    assert len(still_listed.json()["items"]) == 1
+    assert deleted.status_code == 204
+    assert listed_after_delete.json() == {"items": []}
+    assert token_replay.status_code == 401
+
+
 def test_project_token_secret_is_returned_once_but_not_listed(
     client: TestClient,
 ) -> None:
