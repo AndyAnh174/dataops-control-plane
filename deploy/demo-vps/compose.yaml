@@ -2,7 +2,7 @@ name: dataops-control-plane-demo
 
 services:
   api:
-    image: ghcr.io/andyanh174/dataops-control-plane:sha-2bb7b21c4fddefb6d469a5b69fac9718ca43de2b
+    image: ghcr.io/andyanh174/dataops-control-plane:sha-20a3015d1fefe057e99bed3d784d8e1533158a11
     environment:
       DATAOPS_DATABASE_URL: postgresql+psycopg://dataops:${DATAOPS_POSTGRES_PASSWORD:?set DATAOPS_POSTGRES_PASSWORD}@postgres:5432/dataops
       DATAOPS_AGENT_TOKEN: ${DATAOPS_AGENT_TOKEN:?set DATAOPS_AGENT_TOKEN}
