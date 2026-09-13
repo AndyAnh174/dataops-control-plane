@@ -27,9 +27,10 @@ DataOps không thay thế GitHub Actions, GitLab CI hay Jenkins. Provider/runner
 checkout source, test, build và deploy; DataOps bổ sung vòng quan sát, phân tích, quyết định,
 phục hồi và xác minh.
 
-Trạng thái M7 foundation hiện đã triển khai bootstrap/session, workspace/project, project token,
-GitHub onboarding sinh hai file cấu hình, run/incident detail và recovery approval/audit. Member
-invitation, provider credential record, token rotation và settings UI vẫn thuộc các vòng sau.
+Trạng thái M7 hiện đã triển khai bootstrap/session, workspace/project, project token,
+GitHub onboarding sinh hai file cấu hình, run/incident detail, recovery approval/audit và
+quản lý thành viên theo role. Provider credential record, token rotation và settings UI vẫn
+thuộc các vòng sau.
 
 ## 12.2 Vì sao dùng FastAPI-only
 
@@ -72,8 +73,20 @@ Role tối thiểu của MVP:
 | `OPERATOR` | Xem dữ liệu, duyệt và chạy recovery được policy cho phép |
 | `VIEWER` | Chỉ xem dashboard, run, log và incident |
 
-Self-hosted instance không mở public signup mặc định. Tài khoản owner đầu tiên được bootstrap
-một lần khi cài đặt; các user tiếp theo được owner mời vào workspace.
+Self-hosted instance không mở public signup. Tài khoản owner đầu tiên được bootstrap một lần
+khi cài đặt; sau đó chỉ `OWNER` được tạo tài khoản thành viên với mật khẩu ban đầu và gán role.
+Owner có thể đổi role hoặc xoá thành viên khác, nhưng không thể tự hạ quyền hoặc tự xoá membership
+để tránh vô tình khoá quyền quản trị cuối cùng.
+
+```http
+GET    /api/v1/workspaces/{workspace_id}/members
+POST   /api/v1/workspaces/{workspace_id}/members
+PATCH  /api/v1/workspaces/{workspace_id}/members/{membership_id}
+DELETE /api/v1/workspaces/{workspace_id}/members/{membership_id}
+```
+
+Mật khẩu ban đầu không được ghi log hay trả lại trong response. Owner phải chuyển mật khẩu bằng
+kênh an toàn; self-service đổi mật khẩu hoặc invitation link dùng một lần là bước hardening sau MVP.
 
 ## 12.4 Hai loại credential không được dùng lẫn
 
@@ -254,5 +267,6 @@ Web Platform chỉ được xem là hoàn tất khi:
 6. Chỉ owner xoá được project sau khi nhập đúng repository; token mất hiệu lực nhưng lịch sử
    vận hành vẫn được giữ cho audit.
 7. Restart container không mất PostgreSQL/Elasticsearch data.
-8. Image Docker Hub được scan, ký/tag bất biến và smoke test trên `amd64`/`arm64`.
-9. Upgrade và rollback được diễn tập với dữ liệu backup.
+8. Owner tạo được tài khoản thành viên, gán role và không thể tự xoá/hạ quyền membership.
+9. Image Docker Hub được scan, ký/tag bất biến và smoke test trên `amd64`/`arm64`.
+10. Upgrade và rollback được diễn tập với dữ liệu backup.

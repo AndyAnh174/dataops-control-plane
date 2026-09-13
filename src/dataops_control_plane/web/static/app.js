@@ -40,11 +40,45 @@ document.querySelectorAll("[data-api-form]").forEach((form) => {
     if (kind === "bootstrap") url = "/api/v1/auth/bootstrap";
     if (kind === "login") url = "/api/v1/auth/login";
     if (kind === "project") url = `/api/v1/workspaces/${form.dataset.workspaceId}/projects`;
+    if (kind === "member") url = `/api/v1/workspaces/${form.dataset.workspaceId}/members`;
     try {
       await jsonRequest(url, { method: "POST", body: JSON.stringify(values) });
       window.location.assign("/app");
     } catch (error) {
       showError(form, error);
+    }
+  });
+});
+
+document.querySelectorAll("[data-member-role]").forEach((select) => {
+  select.addEventListener("change", async () => {
+    select.disabled = true;
+    try {
+      await jsonRequest(
+        `/api/v1/workspaces/${select.dataset.workspaceId}/members/${select.dataset.memberRole}`,
+        { method: "PATCH", body: JSON.stringify({ role: select.value }) },
+      );
+      window.location.reload();
+    } catch (error) {
+      select.disabled = false;
+      showError(select.closest("[data-member-container]"), error);
+    }
+  });
+});
+
+document.querySelectorAll("[data-remove-member]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    if (!window.confirm(`Remove ${button.dataset.memberEmail} from this workspace?`)) return;
+    button.disabled = true;
+    try {
+      await jsonRequest(
+        `/api/v1/workspaces/${button.dataset.workspaceId}/members/${button.dataset.removeMember}`,
+        { method: "DELETE" },
+      );
+      window.location.reload();
+    } catch (error) {
+      button.disabled = false;
+      showError(button.closest("[data-member-container]"), error);
     }
   });
 });

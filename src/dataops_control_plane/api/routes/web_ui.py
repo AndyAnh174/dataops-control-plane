@@ -23,6 +23,7 @@ from dataops_control_plane.services.web_identity import (
     get_user_for_session,
     list_user_workspaces,
 )
+from dataops_control_plane.services.web_members import list_workspace_members
 from dataops_control_plane.services.web_projects import (
     ProjectNotFound,
     list_integration_tokens,
@@ -97,10 +98,20 @@ def dashboard_page(request: Request, session: SessionDep):
         return RedirectResponse("/login", status_code=303)
     workspace_rows = []
     for workspace, membership in list_user_workspaces(session, user.id):
+        members = (
+            list_workspace_members(
+                session,
+                workspace_id=workspace.id,
+                actor_user_id=user.id,
+            )
+            if membership.role == "OWNER"
+            else []
+        )
         workspace_rows.append(
             {
                 "workspace": workspace,
                 "membership": membership,
+                "members": members,
                 "projects": list_projects(
                     session,
                     workspace_id=workspace.id,

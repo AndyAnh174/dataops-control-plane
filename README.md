@@ -126,7 +126,7 @@ Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện t�
 | Event/log/report ingestion, incident và evidence | Đã có |
 | Hybrid Retrieval và Agentic RCA qua Ollama | Đã có |
 | Policy, approval, recovery và verification callback | Đã có |
-| User, session, workspace, project và token theo integration | Đã có nền tảng M7 |
+| User, session, workspace, role, project và token theo integration | Đã có M7, gồm quản lý thành viên bởi OWNER |
 | Web UI FastAPI + HTML/CSS/JavaScript | Đã có setup, dashboard, project, run, incident và recovery control |
 | Docker Hub release của `dataops-platform` | Thiết kế tiếp theo; GHCR hiện đã có |
 
@@ -153,12 +153,15 @@ M6 bổ sung Policy Engine deterministic, approval gate, provider-neutral Recove
 GitHub Actions write adapter, recovery attempt idempotency, audit trail và verification callback.
 Incident chỉ `RESOLVED` sau verification `PASSED`; dispatch workflow chưa được xem là thành công.
 
-M7 hiện có bootstrap owner một lần, session cookie phía server, workspace/project, role cơ bản
-và integration token theo project. Token chỉ lưu hash, trả secret đúng một lần, có scope và có
-thể revoke. Owner có thể xoá project sau xác nhận chính xác; token bị vô hiệu ngay còn lịch sử
-run/incident được giữ cho audit. Web UI cung cấp setup, login, dashboard, project/run/incident detail, hướng dẫn
-onboarding GitHub có thể copy và recovery approval/audit. Danh tính người duyệt được lấy từ
-session phía server; API cũ vẫn tương thích với instance token trong giai đoạn chuyển đổi.
+M7 hiện có bootstrap owner một lần, session cookie phía server, workspace/project, role và
+integration token theo project. Không có public signup: OWNER tạo tài khoản thành viên với mật
+khẩu ban đầu, gán `OWNER`, `OPERATOR` hoặc `VIEWER`, đổi role và xoá thành viên khác. Hệ thống
+chặn owner tự hạ quyền hoặc tự xoá membership. Token chỉ lưu hash, trả secret đúng một lần, có
+scope và có thể revoke. Owner có thể xoá project sau xác nhận chính xác; token bị vô hiệu ngay
+còn lịch sử run/incident được giữ cho audit. Web UI cung cấp setup, login, dashboard,
+project/run/incident detail, hướng dẫn onboarding GitHub có thể copy và recovery approval/audit.
+Danh tính người duyệt được lấy từ session phía server; API cũ vẫn tương thích với instance token
+trong giai đoạn chuyển đổi.
 
 Chạy local bằng Python:
 
@@ -194,6 +197,9 @@ Các cổng local:
 Sau khi đăng nhập, tạo project trên dashboard rồi tạo integration token. Đưa endpoint Platform
 và token vừa sinh vào GitHub Secrets dưới tên `DATAOPS_URL` và `DATAOPS_TOKEN`; raw token sẽ
 không được hiển thị lại sau khi rời trang.
+
+OWNER có thể mở **Manage access** trên dashboard để tạo tài khoản thành viên và gán role. Đây
+không phải public signup; mật khẩu ban đầu do owner đặt và phải được chuyển qua kênh an toàn.
 
 Elasticsearch và Kibana chỉ bind vào loopback. Cấu hình Compose tắt Elastic Security
 để phát triển local; production phải bật TLS/authentication và truyền API key bằng
@@ -429,6 +435,11 @@ Mục tiêu phát hành kế tiếp là image `andyanh174/dataops-platform:<vers
 Hub, chứa FastAPI cùng templates/static assets của Web UI. PostgreSQL và Elasticsearch vẫn
 dùng image chính thức riêng và được khởi động cùng Platform bằng `compose.yaml`; không nhúng
 nhiều database/process vào một container.
+
+Workflow Docker Hub đã được chuẩn bị và tự bật khi repository có hai Actions variables
+`DOCKERHUB_USERNAME`, `DOCKERHUB_NAMESPACE` cùng secret `DOCKERHUB_TOKEN`. Nếu chưa cấu hình,
+job Docker Hub được skip còn GHCR vẫn publish bình thường. Nên dùng Docker Hub access token,
+không lưu mật khẩu tài khoản trong GitHub Secrets.
 
 Rollback bằng cách triển khai lại tag SHA/digest ổn định trước đó, sau đó xác minh
 `http://localhost:8000/health` trả về trạng thái `ok`.

@@ -42,7 +42,12 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px r
 .status-pill { display: inline-flex; gap: .55rem; align-items: center; padding: .6rem .9rem; color: var(--accent); background: var(--accent-dark); border-radius: 999px; white-space: nowrap; }
 .status-pill i { width: .5rem; height: .5rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 16px var(--accent); }
 .workspace-section { margin: 4rem 0; }
+.button-row { display: flex; flex-wrap: wrap; gap: .75rem; }
 .inline-form { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 1rem; align-items: end; margin: 1.5rem 0; padding: 1.25rem; }
+.member-list { display: grid; gap: .75rem; margin-top: 1rem; padding: 0 1.25rem 1.25rem; }
+.member-row { display: grid; grid-template-columns: minmax(220px, 1fr) 160px auto; gap: 1rem; align-items: center; padding-top: .75rem; border-top: 1px solid var(--line); }
+.member-row small { display: block; margin-top: .25rem; color: var(--muted); }
+.member-row .form-error { grid-column: 1 / -1; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .project-card, .empty-card { padding: 1.5rem; }
 .project-card .button { margin-top: 1rem; }
@@ -111,5 +116,6 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); backdrop-filter: blur(6px); }
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
   .recovery-status-row { grid-template-columns: repeat(2, 1fr); }
   .inline-form { grid-template-columns: 1fr; }
+  .member-row { grid-template-columns: 1fr; }
   .account span { display: none; }
 }

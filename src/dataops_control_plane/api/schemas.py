@@ -54,6 +54,45 @@ class AuthContextRead(BaseModel):
     workspaces: list[AuthWorkspaceRead]
 
 
+class WorkspaceRole(StrEnum):
+    OWNER = "OWNER"
+    OPERATOR = "OPERATOR"
+    VIEWER = "VIEWER"
+
+
+class WorkspaceMemberCreate(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    initial_password: str | None = Field(default=None, min_length=12, max_length=128)
+    role: WorkspaceRole
+
+    @field_validator("email")
+    @classmethod
+    def normalize_member_email(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        local, separator, domain = normalized.partition("@")
+        if not separator or not local or "." not in domain:
+            raise ValueError("email must be a valid address")
+        return normalized
+
+
+class WorkspaceMemberUpdate(BaseModel):
+    role: WorkspaceRole
+
+
+class WorkspaceMemberRead(BaseModel):
+    id: UUID
+    workspace_id: UUID
+    user_id: UUID
+    email: str
+    role: WorkspaceRole
+    status: str
+    created_at: datetime
+
+
+class WorkspaceMemberListResponse(BaseModel):
+    items: list[WorkspaceMemberRead]
+
+
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     provider: str = Field(pattern=r"^[a-z][a-z0-9_-]*$", max_length=64)

@@ -16,9 +16,47 @@
       <p class="eyebrow">Workspace · {{ row.membership.role }}</p>
       <h2>{{ row.workspace.name }}</h2>
     </div>
-    <button class="button button-secondary" type="button" data-toggle="project-form-{{ row.workspace.id }}">Add project</button>
+    <div class="button-row">
+      {% if row.membership.role == "OWNER" %}
+      <button class="button button-secondary" type="button" data-toggle="member-panel-{{ row.workspace.id }}">Manage access</button>
+      {% endif %}
+      {% if row.membership.role in ["OWNER", "OPERATOR"] %}
+      <button class="button button-secondary" type="button" data-toggle="project-form-{{ row.workspace.id }}">Add project</button>
+      {% endif %}
+    </div>
   </div>
 
+  {% if row.membership.role == "OWNER" %}
+  <div id="member-panel-{{ row.workspace.id }}" class="panel" hidden>
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Workspace access</p>
+        <h3>Members</h3>
+      </div>
+    </div>
+    <form class="inline-form" data-api-form="member" data-workspace-id="{{ row.workspace.id }}">
+      <label>Email<input name="email" type="email" placeholder="member@example.com" required></label>
+      <label>Initial password<input name="initial_password" type="password" minlength="12" required></label>
+      <label>Role<select name="role"><option value="VIEWER">Viewer</option><option value="OPERATOR">Operator</option><option value="OWNER">Owner</option></select></label>
+      <p class="form-error" role="alert" hidden></p>
+      <button class="button button-primary" type="submit">Add member</button>
+    </form>
+    <div class="member-list">
+      {% for member in row.members %}
+      <div class="member-row" data-member-container>
+        <div><strong>{{ member.user.email }}</strong><small>{{ member.user.status }}</small></div>
+        <select aria-label="Role for {{ member.user.email }}" data-member-role="{{ member.membership.id }}" data-workspace-id="{{ row.workspace.id }}" {% if member.user.id == user.id %}disabled{% endif %}>
+          {% for role in ["OWNER", "OPERATOR", "VIEWER"] %}<option value="{{ role }}" {% if member.membership.role == role %}selected{% endif %}>{{ role|title }}</option>{% endfor %}
+        </select>
+        {% if member.user.id != user.id %}<button class="button button-danger" type="button" data-remove-member="{{ member.membership.id }}" data-workspace-id="{{ row.workspace.id }}" data-member-email="{{ member.user.email }}">Remove</button>{% endif %}
+        <p class="form-error" role="alert" hidden></p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if row.membership.role in ["OWNER", "OPERATOR"] %}
   <form id="project-form-{{ row.workspace.id }}" class="panel inline-form" data-api-form="project" data-workspace-id="{{ row.workspace.id }}" hidden>
     <label>Name<input name="name" placeholder="Customer pipeline" required></label>
     <label>Provider<select name="provider"><option value="github">GitHub Actions</option></select></label>
@@ -27,6 +65,7 @@
     <p class="form-error" role="alert" hidden></p>
     <button class="button button-primary" type="submit">Create project</button>
   </form>
+  {% endif %}
 
   <div class="card-grid">
     {% for project in row.projects %}
