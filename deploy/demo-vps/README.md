@@ -44,7 +44,7 @@ curl --fail https://dataops-console.andyanh.id.vn/health
 Change the API image to the previous known-good immutable tag:
 
 ```text
-ghcr.io/andyanh174/dataops-control-plane:sha-058bb771fb67b1201f147a1b7a9f85f174578211
+ghcr.io/andyanh174/dataops-control-plane:sha-20a3015d1fefe057e99bed3d784d8e1533158a11
 ```
 
 Then run the same `config`, `pull api`, API-only rollout and health checks. Do not remove the
