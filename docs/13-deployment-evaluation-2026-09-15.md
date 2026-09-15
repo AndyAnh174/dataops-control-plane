@@ -226,3 +226,43 @@ Nếu cần rollback Control Plane:
 4. Kiểm tra internal health, public HTTPS health và đối chiếu số lượng dữ liệu.
 5. Chỉ restore PostgreSQL từ backup nếu có bằng chứng dữ liệu bị thay đổi; rollout này không tạo
    migration và hiện không cần restore database.
+
+## 10. Phụ lục A/B model RCA — 2026-09-16
+
+Demo Control Plane được chuyển riêng model RCA từ `gemma4:e2b` sang `qwen3.5:4b`; embedding vẫn là
+`bge-m3:567m`. Image, database và các service dữ liệu không thay đổi.
+
+### Preflight
+
+- Cả ba model `qwen3.5:4b`, `gemma4:e2b` và `bge-m3:567m` đều có sẵn trong Ollama.
+- Lượt Qwen đầu tiên mất 59,3 giây chủ yếu để load model và không tuân schema khi schema chỉ được
+  truyền qua trường `format`.
+- Khi schema được nhúng trực tiếp vào prompt giống production, Qwen trả đúng JSON nhỏ trong
+  0,97 giây.
+- API đạt healthy sau khoảng 10 giây khi restart với model mới.
+
+Backup rollback model:
+
+- `/opt/dataops-demo/control-plane/control-plane.env.pre-qwen-20260915T193731Z`
+- `/opt/dataops-demo/control-plane/compose.yaml.pre-qwen-20260915T193731Z`
+
+### So sánh trên cùng Incident
+
+Hai model được chạy trên cùng Incident `ef9d53b0-6a96-496e-b9e3-dd74b66238aa`, cùng 4 evidence và
+cùng prompt/schema `rca-v1`.
+
+| Model | Thời gian | HTTP | Kết quả |
+| --- | ---: | ---: | --- |
+| `gemma4:e2b` | khoảng 176 giây | 422 | Structured output/validation không đạt |
+| `qwen3.5:4b` | 29,23 giây | 422 | `LLM output failed the RCA schema validation` |
+
+Qwen nhanh hơn khoảng 6 lần nhưng chưa cải thiện tính đúng của RCA. Vì không có RCA report hợp lệ,
+model mới **chưa được xem là ổn định**. Runtime demo tạm giữ Qwen để phục vụ vòng sửa schema/prompt;
+recovery tự động vẫn không được bật.
+
+### Việc cần làm tiếp
+
+1. Capture danh sách lỗi Pydantic ở lớp nội bộ, nhưng chỉ trả failure category an toàn ra API.
+2. Xác định field Qwen tạo sai: evidence citation, knowledge ID, recommended action hay enum.
+3. Thêm tối đa một lượt JSON repair có validation feedback và đo lại tổng thời gian.
+4. Chuyển Incident sang `ANALYSIS_FAILED`/`ACTION_REQUIRED` nếu cả lượt chính và repair đều thất bại.
