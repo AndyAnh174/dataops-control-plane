@@ -1,0 +1,837 @@
+% !TeX program = xelatex
+% Biên dịch khuyến nghị: xelatex bao-cao-tien-do-tieu-luan.tex (chạy 2 lần)
+\documentclass[12pt,a4paper,oneside]{report}
+
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3.2cm,right=2.2cm]{geometry}
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{TeX Gyre Termes}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{Latin Modern Mono}[Scale=0.90]
+
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+\usepackage{hyperref}
+\usepackage{bookmark}
+\usepackage{caption}
+\usepackage{float}
+
+% -----------------------------------------------------------------------------
+% Thông tin sinh viên -- điền trước khi nộp
+% -----------------------------------------------------------------------------
+\newcommand{\StudentName}{[HỌ VÀ TÊN SINH VIÊN]}
+\newcommand{\StudentID}{[MÃ SỐ SINH VIÊN]}
+\newcommand{\ClassName}{[LỚP]}
+\newcommand{\AdvisorName}{[GIẢNG VIÊN HƯỚNG DẪN]}
+\newcommand{\ReportDate}{Tháng 9 năm 2026}
+
+% -----------------------------------------------------------------------------
+% Định dạng tài liệu
+% -----------------------------------------------------------------------------
+\definecolor{DataOpsBlue}{HTML}{164E63}
+\definecolor{DataOpsCyan}{HTML}{0891B2}
+\definecolor{DataOpsGreen}{HTML}{15803D}
+\definecolor{DataOpsAmber}{HTML}{B45309}
+\definecolor{DataOpsRed}{HTML}{B91C1C}
+\definecolor{DataOpsGray}{HTML}{475569}
+\definecolor{DataOpsLight}{HTML}{F1F5F9}
+
+\hypersetup{
+  unicode=true,
+  colorlinks=true,
+  linkcolor=DataOpsBlue,
+  urlcolor=DataOpsCyan,
+  citecolor=DataOpsGreen,
+  pdftitle={Báo cáo tiến độ tiểu luận chuyên ngành -- DataOps Control Plane},
+  pdfauthor={\StudentName}
+}
+
+\setstretch{1.3}
+\setlength{\parindent}{1.2cm}
+\setlength{\parskip}{0.25em}
+\setlist[itemize]{leftmargin=1.8em,itemsep=0.25em,topsep=0.4em}
+\setlist[enumerate]{leftmargin=2em,itemsep=0.25em,topsep=0.4em}
+\setlength{\emergencystretch}{3em}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\color{DataOpsBlue}}
+  {\filleft\Large Chương \thechapter}
+  {0.5ex}
+  {\titlerule\vspace{1ex}\Huge}
+\titleformat{\section}{\Large\bfseries\color{DataOpsBlue}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\large\bfseries\color{DataOpsGray}}{\thesubsection}{0.7em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Báo cáo tiến độ tiểu luận chuyên ngành}
+\fancyhead[R]{\small DataOps Control Plane}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\renewcommand{\contentsname}{Mục lục}
+\renewcommand{\listfigurename}{Danh mục hình}
+\renewcommand{\listtablename}{Danh mục bảng}
+\renewcommand{\figurename}{Hình}
+\renewcommand{\tablename}{Bảng}
+\renewcommand{\bibname}{Tài liệu và minh chứng tham khảo}
+
+\newcommand{\statusdone}{\textcolor{DataOpsGreen}{\textbf{Đã hoàn thành}}}
+\newcommand{\statuspartial}{\textcolor{DataOpsAmber}{\textbf{Một phần}}}
+\newcommand{\statusnext}{\textcolor{DataOpsRed}{\textbf{Chưa hoàn thành}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+
+% -----------------------------------------------------------------------------
+% Trang bìa
+% -----------------------------------------------------------------------------
+\begin{titlepage}
+  \begin{center}
+    {\large\bfseries TRƯỜNG ĐẠI HỌC SƯ PHẠM KỸ THUẬT\par}
+    {\large\bfseries THÀNH PHỐ HỒ CHÍ MINH\par}
+    \vspace{0.35cm}
+    {\large\bfseries KHOA CÔNG NGHỆ THÔNG TIN\par}
+
+    \vspace{1.4cm}
+    {\color{DataOpsBlue}\rule{0.72\textwidth}{1.2pt}\par}
+    \vspace{0.8cm}
+    {\LARGE\bfseries BÁO CÁO TIẾN ĐỘ\par}
+    \vspace{0.25cm}
+    {\Large\bfseries TIỂU LUẬN CHUYÊN NGÀNH\par}
+    \vspace{0.8cm}
+    {\Large\bfseries\color{DataOpsBlue}
+      XÂY DỰNG NỀN TẢNG DATAOPS ĐA NỀN TẢNG\par
+      TÍCH HỢP AI AGENT VÀ HYBRID RAG\par
+      ĐỂ PHÂN TÍCH, PHỤC HỒI SỰ CỐ PIPELINE DỮ LIỆU\par}
+    \vspace{0.8cm}
+    {\color{DataOpsBlue}\rule{0.72\textwidth}{1.2pt}\par}
+
+    \vfill
+    \begin{tabular}{L{5.0cm} L{8.0cm}}
+      \textbf{Sinh viên thực hiện:} & \StudentName \\
+      \textbf{Mã số sinh viên:} & \StudentID \\
+      \textbf{Lớp:} & \ClassName \\
+      \textbf{Giảng viên hướng dẫn:} & \AdvisorName \\
+      \textbf{Mã nguồn:} & \url{https://github.com/AndyAnh174/dataops-control-plane} \\
+    \end{tabular}
+    \vfill
+    {\large Thành phố Hồ Chí Minh, \ReportDate\par}
+  \end{center}
+\end{titlepage}
+
+\pagenumbering{roman}
+
+\chapter*{Thông tin về báo cáo}
+\addcontentsline{toc}{chapter}{Thông tin về báo cáo}
+
+Báo cáo này mô tả trạng thái thực tế của dự án tại ngày 20/09/2026. Nội dung được tổng hợp
+từ mã nguồn, tài liệu thiết kế, kết quả kiểm thử tự động, bản triển khai demo và hai lần chạy
+pipeline end-to-end. Các năng lực đã có mã nguồn nhưng chưa vượt qua kiểm thử thực tế được đánh
+dấu là \emph{một phần}, không được xem là hoàn thành ở mức production.
+
+Các thông tin đặt trong dấu ngoặc vuông ở trang bìa cần được sinh viên điền trước khi nộp.
+Mọi token, mật khẩu và thông tin bí mật đều bị loại khỏi báo cáo.
+
+\chapter*{Tóm tắt}
+\addcontentsline{toc}{chapter}{Tóm tắt}
+
+Đề tài xây dựng một DataOps Control Plane độc lập với nhà cung cấp CI/CD. Hệ thống nhận event,
+log và báo cáo chất lượng dữ liệu từ một DataOps Agent chạy trong pipeline; tạo incident khi có
+lỗi; thu thập bằng chứng; truy xuất tri thức bằng Hybrid RAG; dùng LLM để đề xuất phân tích nguyên
+nhân gốc; sau đó đưa đề xuất qua Policy Engine, cổng phê duyệt và quy trình verification trước khi
+đóng incident.
+
+Đến thời điểm báo cáo, các milestone M1--M7 đã có nền tảng mã nguồn: ingestion, incident,
+evidence, Data Quality report, Hybrid Retrieval, LangGraph RCA, policy/recovery/verification,
+authentication, workspace, project, token và Web UI. Hệ thống đã được đóng gói container, triển
+khai public qua HTTPS và chạy thành công một pipeline bình thường cùng một pipeline lỗi có kiểm
+soát. Bộ test hiện tại đạt 96 test; bài scan image không còn lỗ hổng mức High/Critical.
+
+Giới hạn quan trọng nhất là LLM RCA chưa ổn định: cả \code{gemma4:e2b} và
+\code{qwen3.5:4b} đều trả output không vượt qua schema validation trên incident thực. Do đó,
+phần AI hiện đạt mức thử nghiệm, chưa được quyền tự thực hiện recovery. Ngoài ra, Docker Hub,
+provider thứ hai, bộ benchmark nhiều fault scenario và UAT đầy đủ theo ba vai trò vẫn là công
+việc tiếp theo. Đánh giá tổng thể hiện tại là \textbf{đạt mức demo kỹ thuật, chưa production-ready
+cho AI RCA}.
+
+\vspace{0.5em}
+\noindent\textbf{Từ khóa:} DataOps, CI/CD, FastAPI, Hybrid RAG, LangGraph, Ollama,
+Elasticsearch, Data Quality, RCA, Human-in-the-loop.
+
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+
+% =============================================================================
+\chapter{Tổng quan đề tài}
+
+\section{Bối cảnh và bài toán}
+
+Pipeline dữ liệu thường được ghép từ nhiều công cụ: hệ thống quản lý mã nguồn, CI/CD, engine xử
+lý dữ liệu, kho log và hạ tầng triển khai. Khi pipeline thất bại, kỹ sư phải tự tìm run tương ứng,
+đọc lượng lớn log, đối chiếu commit, kiểm tra báo cáo chất lượng dữ liệu và tra cứu runbook. Quy
+trình này mất thời gian, khó tái lập và phụ thuộc kinh nghiệm cá nhân.
+
+Đề tài giải quyết bài toán trên bằng một control plane đứng ngoài CI/CD. Control plane chuẩn hóa
+dữ liệu từ provider, theo dõi vòng đời run, lưu bằng chứng và hỗ trợ xử lý incident. AI chỉ đóng
+vai trò phân tích và đề xuất; quyết định thực thi được kiểm soát bởi policy xác định trước.
+
+\section{Mục tiêu}
+
+Các mục tiêu chính của đề tài gồm:
+
+\begin{enumerate}
+  \item Chuẩn hóa cách theo dõi pipeline giữa nhiều nền tảng CI/CD.
+  \item Thu thập event, log, Data Quality report và metadata theo cùng một định danh run.
+  \item Tạo incident và bằng chứng có checksum, nguồn trích dẫn và cơ chế chống trùng.
+  \item Kết hợp tìm kiếm từ khóa và vector để truy xuất runbook/incident tương tự.
+  \item Tạo RCA có cấu trúc, có citation và có thể kiểm tra bằng máy.
+  \item Thực hiện recovery an toàn qua Policy Engine, approval, audit và verification.
+  \item Cung cấp Web UI self-hosted để quản lý workspace, project, token, run và incident.
+  \item Chứng minh kiến trúc có thể mở rộng sang GitLab CI hoặc Jenkins mà không viết lại core.
+\end{enumerate}
+
+\section{Phạm vi hiện tại}
+
+MVP chọn GitHub Actions làm provider đầu tiên và pipeline batch làm loại workload chính. Hệ thống
+không thay thế GitHub Actions, không tự merge code, không trực tiếp sửa dữ liệu production và
+không gọi LLM ở happy path. Provider thứ hai và đánh giá production-scale nằm ngoài phạm vi bản
+demo hiện tại.
+
+Sản phẩm gồm hai phần tách biệt:
+
+\begin{itemize}
+  \item \textbf{DataOps Agent:} chạy trong CI/CD, đọc \code{dataops.yaml}, thực thi tuần tự các
+  stage, giữ nguyên exit code và gửi telemetry về Control Plane.
+  \item \textbf{DataOps Platform/Control Plane:} một deployable FastAPI phục vụ JSON API và Web
+  UI; PostgreSQL lưu trạng thái, Elasticsearch lưu log/knowledge, Ollama phục vụ embedding và RCA.
+\end{itemize}
+
+% =============================================================================
+\chapter{Phân tích yêu cầu và nguyên tắc thiết kế}
+
+\section{Yêu cầu chức năng}
+
+\begin{longtable}{L{1.3cm} L{6.0cm} L{6.5cm}}
+\caption{Các nhóm yêu cầu chức năng chính}\label{tab:functional-requirements}\\
+\toprule
+\textbf{Mã} & \textbf{Yêu cầu} & \textbf{Kết quả mong đợi} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Mã} & \textbf{Yêu cầu} & \textbf{Kết quả mong đợi} \\
+\midrule
+\endhead
+FR-01 & Đăng ký workspace, project và repository & Mỗi project có cấu hình provider và token tích hợp riêng. \\
+FR-02 & Nhận event/log/report & Dữ liệu được validate, correlation theo run và chống ghi trùng. \\
+FR-03 & Quản lý incident & Run lỗi tạo tối đa một incident và có state transition rõ ràng. \\
+FR-04 & Thu thập evidence & Metadata, log lỗi, commit diff và Data Quality report có citation/checksum. \\
+FR-05 & Hybrid Retrieval & BM25 và dense vector được hợp nhất bằng Reciprocal Rank Fusion. \\
+FR-06 & Agentic RCA & RCA theo JSON Schema, claim gắn evidence/knowledge ID hợp lệ. \\
+FR-07 & Recovery an toàn & Policy quyết định deny/approval; executor idempotent; có verification. \\
+FR-08 & Web UI và RBAC & OWNER, OPERATOR, VIEWER có quyền phù hợp; không có public signup. \\
+FR-09 & Self-hosted & Có container image, Compose, healthcheck, backup và rollback guide. \\
+FR-10 & Đa nền tảng & Core không phụ thuộc provider; thêm adapter mà không đổi domain chính. \\
+\bottomrule
+\end{longtable}
+
+\section{Yêu cầu phi chức năng}
+
+\begin{itemize}
+  \item \textbf{An toàn:} LLM không nhận credential; log được redact; action thay đổi trạng thái
+  phải qua policy và approval.
+  \item \textbf{Tin cậy:} event, report và recovery có idempotency; incident chỉ đóng khi
+  verification pass.
+  \item \textbf{Khả năng vận hành:} healthcheck, immutable image tag, backup trước rollout và
+  rollback rõ ràng.
+  \item \textbf{Khả năng mở rộng:} provider adapter, modular monolith và storage tách theo loại
+  dữ liệu.
+  \item \textbf{Hiệu năng:} happy path không chờ LLM; chỉ failure path mới chạy evidence/RAG/RCA.
+  \item \textbf{Khả năng kiểm toán:} lưu actor, quyết định policy, approval, attempt và kết quả
+  verification.
+\end{itemize}
+
+\section{Nguyên tắc human-in-the-loop}
+
+Trong bản hiện tại, LLM không có quyền gọi trực tiếp provider hoặc hạ tầng. Model chỉ tạo RCA và
+recommended action. Policy Engine là thành phần deterministic kiểm tra môi trường, loại incident,
+độ tin cậy và action. Các thao tác \code{RETRY}, \code{QUARANTINE}, \code{ROLLBACK} hoặc
+\code{CREATE\_PR} được chuyển qua approval gate trước khi Recovery Executor chạy. Cách thiết kế
+này tránh việc một output sai schema hoặc hallucination của model tác động trực tiếp lên production.
+
+% =============================================================================
+\chapter{Kiến trúc và luồng hoạt động}
+
+\section{Kiến trúc tổng thể}
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=12mm and 14mm,
+  box/.style={draw=DataOpsBlue, rounded corners=2mm, very thick, align=center,
+              minimum width=30mm, minimum height=12mm, fill=DataOpsLight},
+  store/.style={draw=DataOpsGray, cylinder, shape border rotate=90, aspect=0.28,
+                very thick, align=center, minimum height=13mm, fill=white},
+  arrow/.style={-{Latex[length=2.5mm]}, thick, draw=DataOpsGray}
+]
+  \node[box] (dev) {Developer\\commit/push};
+  \node[box, right=of dev] (ci) {GitHub Actions\\Self-hosted runner};
+  \node[box, right=of ci] (agent) {DataOps Agent\\\code{dataops.yaml}};
+  \node[box, right=of agent, minimum width=38mm] (api) {FastAPI Control Plane\\API + Web UI};
+  \node[store, above right=8mm and 16mm of api] (pg) {PostgreSQL};
+  \node[store, right=16mm of api] (es) {Elasticsearch};
+  \node[box, below right=8mm and 16mm of api] (ollama) {Ollama\\Qwen + BGE-M3};
+  \node[box, below=17mm of api] (operator) {Operator\\browser/session};
+
+  \draw[arrow] (dev) -- (ci);
+  \draw[arrow] (ci) -- (agent);
+  \draw[arrow] (agent) -- node[above, font=\small] {event/log/report} (api);
+  \draw[arrow] (api) -- (pg);
+  \draw[arrow] (api) -- (es);
+  \draw[arrow] (api) -- (ollama);
+  \draw[arrow] (operator) -- node[right, font=\small] {HTTPS} (api);
+  \draw[arrow, bend right=18] (api.south west) to node[below, font=\small] {recovery dispatch} (ci.south east);
+\end{tikzpicture}%
+}
+\caption{Kiến trúc triển khai hiện tại của DataOps Control Plane}
+\label{fig:architecture}
+\end{figure}
+
+Core được thiết kế provider-neutral. Mọi thao tác đọc diff, trigger workflow hoặc verification đều
+đi qua provider adapter. FastAPI được chọn theo hướng modular monolith: API và HTML/CSS/JavaScript
+cùng một deployable, nhưng domain, service và adapter được tách module để có thể mở rộng sau này.
+
+\section{Luồng từ commit đến kết quả}
+
+\begin{enumerate}
+  \item Developer commit và push mã nguồn lên GitHub.
+  \item GitHub Actions cấp runner, checkout code và gọi \code{dataops-agent@v0}.
+  \item Agent đọc \code{dataops.yaml}, thực thi stage, gửi event, log và report bằng project token.
+  \item Control Plane cập nhật \code{PipelineRun}; PostgreSQL lưu metadata, Elasticsearch lưu log.
+  \item Nếu thành công, run chuyển \code{SUCCESS}; không gọi LLM và không tạo incident.
+  \item Nếu thất bại, Control Plane tạo incident, thu thập evidence và truy xuất tri thức.
+  \item LangGraph gọi Ollama để tạo RCA có cấu trúc; server kiểm tra schema và citation.
+  \item Policy Engine đánh giá action; operator phê duyệt khi policy yêu cầu.
+  \item Recovery Executor gọi provider adapter để retry/quarantine/rollback.
+  \item Verification callback quyết định incident được \code{RESOLVED} hay cần can thiệp.
+\end{enumerate}
+
+\section{Luồng an toàn khi AI sai}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=8mm,
+  step/.style={draw=DataOpsBlue, rounded corners, thick, align=center,
+               minimum width=105mm, minimum height=9mm, fill=DataOpsLight},
+  bad/.style={draw=DataOpsRed, rounded corners, thick, align=center,
+              minimum width=105mm, minimum height=9mm, fill=red!5},
+  arrow/.style={-{Latex[length=2.5mm]}, thick, draw=DataOpsGray}
+]
+  \node[step] (a) {Evidence Collector + Hybrid Retrieval};
+  \node[step, below=of a] (b) {LLM tạo RCA JSON};
+  \node[step, below=of b] (c) {Pydantic/schema/citation validation};
+  \node[bad, below=of c] (d) {Không hợp lệ: không lưu RCA, không tạo recovery plan tự động};
+  \node[step, below=of d] (e) {Chuyển ACTION\_REQUIRED / ANALYSIS\_FAILED và lưu audit};
+  \draw[arrow] (a) -- (b);
+  \draw[arrow] (b) -- (c);
+  \draw[arrow] (c) -- node[right, font=\small, text=DataOpsRed] {fail} (d);
+  \draw[arrow] (d) -- (e);
+\end{tikzpicture}
+\caption{Fail-safe flow đề xuất khi output RCA không hợp lệ}
+\label{fig:ai-fail-safe}
+\end{figure}
+
+Trạng thái \code{ANALYSIS\_FAILED} trong Hình~\ref{fig:ai-fail-safe} là công việc P0 tiếp theo.
+Phiên bản đang chạy hiện giữ incident ở \code{ANALYZING} khi API trả 422; đây là một giới hạn đã
+được ghi nhận, không phải trạng thái cuối mong muốn.
+
+% =============================================================================
+\chapter{Thiết kế và hiện thực hệ thống}
+
+\section{Công nghệ sử dụng}
+
+\begin{table}[H]
+\centering
+\caption{Tech stack của phiên bản hiện tại}
+\label{tab:tech-stack}
+\begin{tabularx}{\textwidth}{L{3.7cm} Y}
+\toprule
+\textbf{Nhóm} & \textbf{Công nghệ và vai trò} \\
+\midrule
+Backend/Web & Python 3.11+, FastAPI, Jinja2, HTML, CSS, JavaScript \\
+Validation/ORM & Pydantic Settings, SQLModel/SQLAlchemy \\
+Metadata & PostgreSQL \\
+Log và knowledge & Elasticsearch; Kibana cho quan sát vận hành \\
+AI orchestration & LangGraph, Ollama, JSON Schema \\
+Embedding & \code{bge-m3:567m}, vector 1024 chiều \\
+RCA model thử nghiệm & \code{qwen3.5:4b}; trước đó \code{gemma4:e2b} \\
+CI/CD & GitHub Actions, self-hosted runner, \code{dataops-agent@v0} \\
+Container/Deploy & Docker, Docker Compose, GHCR, Nginx, Certbot/TLS \\
+Quality/Security & pytest, Ruff, Trivy \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Các module đã hiện thực}
+
+Mã nguồn tổ chức thành bốn lớp chính:
+
+\begin{itemize}
+  \item \code{api/routes}: event, run, log, incident, retrieval, recovery, web authentication,
+  member, project, token, onboarding và UI.
+  \item \code{services}: pipeline event/log, evidence, GitHub adapter, Elasticsearch, Ollama,
+  retrieval, RCA, policy, execution, audit và web identity.
+  \item \code{domain}: model quan hệ và state của hệ thống.
+  \item \code{web}: template Jinja2 cùng static CSS/JavaScript.
+\end{itemize}
+
+Tại thời điểm thống kê, repository có 41 file Python phía ứng dụng với khoảng 5.854 dòng, và
+22 file test với khoảng 4.357 dòng. Các con số này chỉ dùng mô tả quy mô hiện tại, không được xem
+là chỉ số chất lượng độc lập.
+
+\section{Identity, workspace và token}
+
+Hệ thống không có public signup. Lần khởi động đầu tiên cho phép bootstrap một OWNER. OWNER đăng
+nhập bằng server-side session, tạo tài khoản thành viên và gán một trong ba vai trò:
+\code{OWNER}, \code{OPERATOR}, \code{VIEWER}. Hệ thống chặn owner tự xóa hoặc tự hạ quyền của
+chính mình.
+
+Mỗi project có integration token riêng. Secret chỉ hiển thị một lần, server chỉ lưu hash/prefix;
+token có scope và có thể revoke. OWNER có thể xóa project sau khi nhập đúng repository để xác nhận.
+Token mất hiệu lực ngay nhưng lịch sử run/incident vẫn được giữ để audit.
+
+\section{Data Quality, evidence và retrieval}
+
+DataOps Agent upload report versioned gồm contract, scenario, kết quả tổng và từng check. Các
+scenario hỗ trợ gồm schema drift, missing value, duplicate, range và volume. Khi incident được
+tạo, Evidence Collector gom pipeline metadata, failed-stage log, GitHub commit diff và Data
+Quality report. Nội dung được giới hạn kích thước, redact secret và chống trùng bằng SHA-256.
+
+Knowledge index tách khỏi raw log. BM25 tìm exact term như tên cột, error code; dense vector tìm
+runbook hoặc incident tương tự về ngữ nghĩa. Hai danh sách được hợp nhất bằng Reciprocal Rank
+Fusion. Raw log không bị embedding từng dòng nhằm giảm chi phí và tránh nhiễu.
+
+\section{Recovery và verification}
+
+Policy Engine trả một trong ba quyết định: \code{DENIED}, \code{REQUIRE\_APPROVAL} hoặc
+\code{AUTO\_APPROVED}. Bản demo cấu hình thận trọng, yêu cầu con người phê duyệt action thay đổi
+trạng thái. Recovery attempt có idempotency key, audit trail và số lần retry giới hạn. Việc
+dispatch workflow chỉ chứng minh lệnh đã được gửi; incident chỉ đóng sau verification \code{PASSED}.
+
+% =============================================================================
+\chapter{Tiến độ thực hiện}
+
+\section{Trạng thái theo milestone}
+
+\begin{longtable}{C{1.2cm} L{4.2cm} L{6.0cm} L{2.4cm}}
+\caption{Tiến độ M1--M8 tại ngày 20/09/2026}\label{tab:milestones}\\
+\toprule
+\textbf{Mốc} & \textbf{Phạm vi} & \textbf{Kết quả hiện tại} & \textbf{Trạng thái} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Mốc} & \textbf{Phạm vi} & \textbf{Kết quả hiện tại} & \textbf{Trạng thái} \\
+\midrule
+\endhead
+M1 & Ingestion và incident & Event/log API, correlation, idempotency, run state, incident khi failed & \statusdone \\
+M2 & Evidence & Metadata, failed log, GitHub diff, checksum, redact, duplicate detection & \statusdone \\
+M3 & Data Quality & Report contract, upload trước failed event, các scenario mẫu & \statusdone \\
+M4 & Hybrid Retrieval & BM25 + BGE-M3 vector + filter + RRF, knowledge index riêng & \statusdone \\
+M5 & Agentic RCA & LangGraph và schema validation đã có; model thực tế chưa sinh output hợp lệ ổn định & \statuspartial \\
+M6 & Policy và recovery & Deterministic policy, approval, executor, audit, verification callback & \statusdone \\
+M7 & Web Platform & Bootstrap/login, workspace/member/role, project/token, UI, onboarding, guarded delete & \statusdone \\
+M8 & Đa nền tảng & Core và adapter contract đã chuẩn bị; chưa tích hợp GitLab/Jenkins thực tế & \statusnext \\
+\bottomrule
+\end{longtable}
+
+\section{Đối chiếu Definition of Done}
+
+\begin{longtable}{L{7.5cm} L{4.5cm} L{2.0cm}}
+\caption{Mức đáp ứng tiêu chí hoàn thành MVP}\label{tab:dod}\\
+\toprule
+\textbf{Tiêu chí} & \textbf{Minh chứng hiện tại} & \textbf{Mức đạt} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tiêu chí} & \textbf{Minh chứng hiện tại} & \textbf{Mức đạt} \\
+\midrule
+\endhead
+Onboard repository GitHub bằng template & Web UI sinh workflow, \code{dataops.yaml}, danh sách Secrets & Đạt \\
+Success và failure xuất hiện đúng project & Hai pipeline thực tế đã correlation đúng & Đạt \\
+Lưu run, incident, evidence và audit & PostgreSQL/Elasticsearch có dữ liệu; restart không mất volume & Đạt \\
+RCA hợp lệ trên incident thực & Cả Gemma và Qwen còn fail schema & Một phần \\
+Không có action nguy hiểm vượt policy & AI chỉ đề xuất; approval và executor tách biệt & Đạt \\
+Demo retry/quarantine/rollback end-to-end & API/adapter đã có; chưa báo cáo đủ ba kịch bản lặp lại & Một phần \\
+Ít nhất năm fault scenario có ground truth & Đã thiết kế F01--F06; mới chạy công khai \code{null\_rate} & Chưa đạt \\
+Token không truy cập chéo/revoke tức thời & Scope project, hash token và test auth đã có & Đạt \\
+Phân phối self-hosted hoàn chỉnh & GHCR đa kiến trúc có; Docker Hub chưa cấu hình & Một phần \\
+Provider thứ hai chứng minh portability & Chưa triển khai GitLab CI/Jenkins & Chưa đạt \\
+\bottomrule
+\end{longtable}
+
+Với cách chấm theo phạm vi kỹ thuật, dự án hiện hoàn thành khoảng \textbf{80\% khối lượng MVP}.
+Đây là ước lượng quản lý tiến độ, không phải số đo production readiness. Phần còn lại có độ rủi ro
+cao hơn tỷ lệ khối lượng vì tập trung ở độ tin cậy AI, benchmark, provider thứ hai và phát hành.
+
+% =============================================================================
+\chapter{Triển khai, kiểm thử và kết quả demo}
+
+\section{Môi trường triển khai}
+
+Control Plane được triển khai bằng Docker Compose, public qua Nginx và HTTPS tại:
+
+\begin{itemize}
+  \item Web Console: \url{https://dataops-console.andyanh.id.vn}
+  \item Ứng dụng demo: \url{https://dataops.andyanh.id.vn}
+  \item Mã nguồn: \url{https://github.com/AndyAnh174/dataops-control-plane}
+\end{itemize}
+
+Release được pin bằng image bất biến:
+\code{ghcr.io/andyanh174/dataops-control-plane:sha-5575c6e31bdc62c65bbba3a07bd0bf62f9f24577}.
+Trước rollout, PostgreSQL được backup; Compose config được validate và chỉ API container bị
+recreate. PostgreSQL, Elasticsearch và Kibana giữ nguyên volume.
+
+\section{Kiểm thử tự động và bảo mật}
+
+\begin{table}[H]
+\centering
+\caption{Kết quả kiểm tra release}
+\label{tab:release-tests}
+\begin{tabularx}{\textwidth}{Y C{4.0cm}}
+\toprule
+\textbf{Kiểm tra} & \textbf{Kết quả} \\
+\midrule
+Internal và public health & HTTP 200 \\
+TLS public endpoint & Xác minh thành công \\
+Login page & HTTP 200 \\
+Members API khi chưa đăng nhập & HTTP 401 đúng auth boundary \\
+Bộ test tự động & 96 passed \\
+Elasticsearch integration CI & Passed \\
+Trivy image scan & 0 High, 0 Critical \\
+Kiến trúc image & linux/amd64 và linux/arm64 trên GHCR \\
+Kích thước image & khoảng 146,2 MiB \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Pipeline thành công}
+
+Run minh chứng: \url{https://github.com/AndyAnh174/dataops-demo-app/actions/runs/34995816200}.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả pipeline success}
+\label{tab:success-run}
+\begin{tabularx}{\textwidth}{Y C{5cm}}
+\toprule
+\textbf{Chỉ số} & \textbf{Kết quả} \\
+\midrule
+Tổng thời gian job & 9 phút 38 giây \\
+DataOps Agent step & 6 phút 35 giây \\
+Lifecycle event / Data Quality report & 2 / 1 \\
+Log Elasticsearch & 813 dòng \\
+Run status / incident mới & SUCCESS / 0 \\
+Ứng dụng sau deploy & HTTP 200, khoảng 0,256 giây \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Run này chứng minh luồng checkout, quality, build, scan, publish, deploy và telemetry hoạt động.
+Happy path không gọi LLM. Tuy nhiên thời gian setup Node/cache và build/scan image còn lớn, cần
+benchmark và tối ưu cache.
+
+\section{Pipeline lỗi có kiểm soát}
+
+Run minh chứng: \url{https://github.com/AndyAnh174/dataops-demo-app/actions/runs/34997172237}.
+Kịch bản tiêm lỗi là \code{null\_rate} vượt ngưỡng ở stage Data Quality.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả pipeline failure}
+\label{tab:failure-run}
+\begin{tabularx}{\textwidth}{Y C{5cm}}
+\toprule
+\textbf{Chỉ số} & \textbf{Kết quả} \\
+\midrule
+Tổng thời gian job & 5 phút 8 giây \\
+Thời gian Agent đến lúc phát hiện lỗi & khoảng 30 giây \\
+Stage lỗi & data-quality \\
+Event / report / log & 2 / 1 / 56 \\
+Incident mới & 1 \\
+Evidence & 4, không warning, không duplicate \\
+Build/publish/deploy sau lỗi & Không chạy \\
+Revision cũ & Vẫn healthy \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Kết quả cho thấy quality gate đã ngăn release lỗi đi vào runtime. Evidence Collector thu đủ bốn
+nhóm bằng chứng và BGE-M3 tạo knowledge document trong khoảng 60 giây.
+
+\section{Đánh giá LLM và thử nghiệm function calling}
+
+Hai model RCA được chạy trên cùng incident và cùng prompt/schema \code{rca-v1}:
+
+\begin{table}[H]
+\centering
+\caption{So sánh model RCA trên incident thực}
+\label{tab:models}
+\begin{tabularx}{\textwidth}{L{3.2cm} C{2.8cm} C{1.8cm} Y}
+\toprule
+\textbf{Model} & \textbf{Thời gian} & \textbf{HTTP} & \textbf{Kết quả} \\
+\midrule
+\code{gemma4:e2b} & khoảng 176 giây & 422 & Output không vượt structured/schema validation \\
+\code{qwen3.5:4b} & 29,23 giây & 422 & \code{LLM output failed the RCA schema validation} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Qwen nhanh hơn xấp xỉ sáu lần nhưng chưa chính xác hơn ở contract RCA. Runtime demo tạm giữ Qwen
+để phục vụ vòng sửa prompt/schema; embedding vẫn dùng \code{bge-m3:567m}.
+
+\code{functiongemma:latest} (khoảng 268 triệu tham số, Q8\_0) cũng được kiểm tra độc lập. Model
+nhận biết được tool phù hợp trong một số prompt nhưng tạo duplicate tool call, có argument sai kiểu,
+sinh thêm nội dung rác và dừng do giới hạn độ dài. Test single-tool vẫn lặp lời gọi. Vì vậy model
+này chưa được tích hợp vào Control Plane. Kết luận kỹ thuật là capability ``tools'' trong metadata
+không đồng nghĩa function calling đủ ổn định cho hệ thống có side effect.
+
+% =============================================================================
+\chapter{Đánh giá kết quả}
+
+\section{Kết quả đạt được}
+
+\begin{itemize}
+  \item Kiến trúc tách Agent và Platform, core không khóa vào GitHub.
+  \item Telemetry có correlation và idempotency; failure tạo incident đúng.
+  \item Evidence có provenance, checksum, redact và giới hạn kích thước.
+  \item Hybrid Retrieval kết hợp lexical/semantic thay vì đưa toàn bộ log vào context.
+  \item Web UI có login, phân quyền, project/token, run/incident và recovery control.
+  \item Luồng deploy dùng immutable image, backup, health gate và rollback artifact.
+  \item Quality gate chặn release lỗi; revision đang chạy không bị ảnh hưởng.
+  \item LLM bị cô lập khỏi credential và side effect; recovery có approval/audit/verification.
+\end{itemize}
+
+\section{Hạn chế và rủi ro}
+
+\begin{enumerate}
+  \item \textbf{RCA reliability:} schema validation thất bại với hai model; chưa có RCA report hợp
+  lệ cho incident demo.
+  \item \textbf{State khi phân tích lỗi:} incident còn ở \code{ANALYZING} sau HTTP 422, dễ gây
+  hiểu nhầm tác vụ đang chạy.
+  \item \textbf{Benchmark chưa đủ:} mới công bố đầy đủ một success và một \code{null\_rate}
+  failure; chưa có bảng baseline trên F01--F06.
+  \item \textbf{Portability chưa được chứng minh thực nghiệm:} provider-neutral ở mức thiết kế,
+  nhưng chưa có GitLab/Jenkins adapter chạy thật.
+  \item \textbf{Phân phối:} image đã có trên GHCR, job Docker Hub còn skip do thiếu biến/secret.
+  \item \textbf{Hiệu năng CI:} restore cache trên self-hosted runner chiếm phần lớn thời gian ở ca
+  lỗi nhanh; stage timestamp chưa đủ chi tiết.
+  \item \textbf{Bảo mật vận hành:} credential từng được chia sẻ ngoài secret manager phải được
+  thu hồi/rotate trước khi xem là môi trường production.
+\end{enumerate}
+
+\section{Đánh giá định lượng hiện tại}
+
+\begin{table}[H]
+\centering
+\caption{Điểm đánh giá release demo}
+\label{tab:scores}
+\begin{tabularx}{\textwidth}{L{4.5cm} C{2.0cm} Y}
+\toprule
+\textbf{Hạng mục} & \textbf{Điểm} & \textbf{Nhận xét} \\
+\midrule
+Deployment safety & 9/10 & Backup, immutable tag, health gate, rollback rõ ràng \\
+Telemetry/correlation & 9/10 & Event, report và log khớp đúng run \\
+Failure containment & 9/10 & Pipeline lỗi không build/publish/deploy \\
+Web/auth foundation & 8/10 & Nền tảng tốt; còn UAT đa tài khoản \\
+AI RCA reliability & 4/10 & Evidence/RAG đạt, structured RCA thất bại \\
+Performance & 6/10 & Setup/cache và image build/scan còn tốn thời gian \\
+Operability & 7/10 & Dashboard, ELK, rollback có; thiếu trạng thái analysis failed \\
+\midrule
+\textbf{Tổng quan} & \textbf{7,4/10} & \textbf{Demo kỹ thuật tốt; AI RCA chưa production-ready} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =============================================================================
+\chapter{Kế hoạch công việc tiếp theo}
+
+\section{Ưu tiên P0: hoàn thiện RCA an toàn}
+
+\begin{enumerate}
+  \item Ghi chi tiết lỗi Pydantic ở log nội bộ và trả failure category an toàn qua API.
+  \item Thêm tối đa một lượt JSON repair với validation feedback; tuyệt đối không retry vô hạn.
+  \item Thêm trạng thái \code{ANALYSIS\_FAILED}/\code{ACTION\_REQUIRED} khi cả lượt chính và repair
+  đều thất bại.
+  \item Bổ sung test regression bằng output thực của Gemma/Qwen: JSON sai, enum sai, citation hoặc
+  knowledge ID không tồn tại.
+  \item Chạy lại incident demo và chỉ đánh dấu M5 hoàn thành thực nghiệm khi RCA được lưu hợp lệ.
+\end{enumerate}
+
+\section{Ưu tiên P1: benchmark, UI và vận hành}
+
+\begin{enumerate}
+  \item Chạy F01--F06 lặp lại; đo root-cause accuracy, evidence recall@k, unsupported-claim rate,
+  RCA latency, recovery success và unsafe action rate.
+  \item So sánh rule-based, LLM raw log, LLM + Hybrid RAG và Agentic Hybrid RAG.
+  \item UAT với OWNER/OPERATOR/VIEWER cho member, project deletion, token revoke và approval.
+  \item Benchmark cache trên self-hosted runner; bổ sung \code{stage.started/completed} để đo timeline.
+  \item Rotate credential, dùng quyền tối thiểu và chuyển runtime secret sang secret manager.
+\end{enumerate}
+
+\section{Ưu tiên P2: phân phối và đa nền tảng}
+
+\begin{enumerate}
+  \item Cấu hình Docker Hub access token và phát hành image SemVer đa kiến trúc.
+  \item Hoàn thiện install/upgrade/backup/rollback guide và smoke test trên máy sạch.
+  \item Triển khai GitLab CI hoặc Jenkins adapter, chạy lại cùng success/failure scenario.
+  \item Đối chiếu mã nguồn core trước/sau provider thứ hai để chứng minh mức độ tái sử dụng.
+\end{enumerate}
+
+\section{Kết quả kỳ vọng cho lần báo cáo kế tiếp}
+
+Lần báo cáo tiếp theo cần có ít nhất: một RCA hợp lệ có citation, một recovery được phê duyệt và
+verification pass, bảng benchmark F01--F06, UAT ba role, image Docker Hub có tag bất biến và một
+pipeline trên provider thứ hai. Khi đó đề tài mới đáp ứng đầy đủ tuyên bố ``đa nền tảng tích hợp
+AI Agent'' ở mức thực nghiệm.
+
+% =============================================================================
+\chapter{Kết luận}
+
+Dự án đã vượt qua giai đoạn thiết kế ý tưởng và có một hệ thống end-to-end chạy thật. Các khối
+ingestion, incident, evidence, Hybrid RAG, policy/recovery, Web UI, authentication và vận hành
+container đã được xây dựng và kiểm thử. Hai pipeline demo chứng minh DataOps Agent thu thập đúng
+telemetry và quality gate bảo vệ revision đang chạy.
+
+Kết quả đồng thời chỉ ra giới hạn nghiên cứu có giá trị: model nhỏ có thể nhanh hơn nhưng vẫn không
+đảm bảo tuân thủ schema hoặc function calling. Vì vậy kiến trúc không đặt niềm tin vào LLM cho
+side effect; mọi output phải được validate và mọi recovery phải qua deterministic policy,
+approval và verification. Đây là đóng góp quan trọng về mặt kỹ thuật và an toàn của đề tài.
+
+Ở thời điểm hiện tại, hệ thống phù hợp cho demo kỹ thuật và tiếp tục thực nghiệm. Công việc trọng
+tâm không phải bổ sung thêm nhiều tính năng, mà là làm RCA đo lường được và fail-safe, hoàn thiện
+benchmark, phát hành self-hosted ổn định và chứng minh provider thứ hai.
+
+% =============================================================================
+\appendix
+\chapter{Minh chứng và đường dẫn}
+
+\begin{longtable}{L{4.5cm} L{10.0cm}}
+\toprule
+\textbf{Nội dung} & \textbf{Đường dẫn/định danh} \\
+\midrule
+Repository chính & \url{https://github.com/AndyAnh174/dataops-control-plane} \\
+DataOps Agent & \url{https://github.com/AndyAnh174/dataops-agent} \\
+Web Console & \url{https://dataops-console.andyanh.id.vn} \\
+Ứng dụng demo & \url{https://dataops.andyanh.id.vn} \\
+Pipeline success & \url{https://github.com/AndyAnh174/dataops-demo-app/actions/runs/34995816200} \\
+Pipeline failure & \url{https://github.com/AndyAnh174/dataops-demo-app/actions/runs/34997172237} \\
+Release image & \code{ghcr.io/andyanh174/dataops-control-plane:sha-5575c6e31bdc62c65bbba3a07bd0bf62f9f24577} \\
+License & MIT License, Copyright 2026 AndyAnh174 \\
+\bottomrule
+\end{longtable}
+
+\chapter{API và cấu hình chính}
+
+\begin{table}[H]
+\centering
+\caption{Nhóm endpoint quan trọng}
+\begin{tabularx}{\textwidth}{L{5.8cm} Y}
+\toprule
+\textbf{Nhóm} & \textbf{Endpoint tiêu biểu} \\
+\midrule
+Event & \code{POST /api/v1/events/pipeline} \\
+Log & \code{POST /api/v1/runs/\{run\_id\}/logs} \\
+Data Quality & \code{POST /api/v1/runs/\{run\_id\}/reports/data-quality} \\
+Incident/Evidence & \code{POST /api/v1/incidents/\{id\}/collect-evidence} \\
+Retrieval & \code{POST /api/v1/retrieval/search} \\
+RCA & \code{POST /api/v1/incidents/\{id\}/analyze} \\
+Recovery & create plan, approve, execute, verification callback \\
+Onboarding & \code{GET /api/v1/projects/\{id\}/onboarding/github} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Hai GitHub Secrets tối thiểu cho repository tích hợp là:
+
+\begin{verbatim}
+DATAOPS_URL=https://dataops-console.andyanh.id.vn
+DATAOPS_TOKEN=<project-integration-token>
+\end{verbatim}
+
+Workflow gọi agent sau bước checkout:
+
+\begin{verbatim}
+- uses: AndyAnh174/dataops-agent@v0
+  env:
+    DATAOPS_URL: ${{ secrets.DATAOPS_URL }}
+    DATAOPS_TOKEN: ${{ secrets.DATAOPS_TOKEN }}
+\end{verbatim}
+
+\chapter{Thuật ngữ viết tắt}
+
+\begin{longtable}{L{3.0cm} L{11.0cm}}
+\toprule
+\textbf{Thuật ngữ} & \textbf{Ý nghĩa} \\
+\midrule
+CI/CD & Continuous Integration / Continuous Delivery \\
+DataOps & Phương pháp tự động hóa và quản trị vòng đời pipeline dữ liệu \\
+DQ & Data Quality \\
+RCA & Root Cause Analysis -- phân tích nguyên nhân gốc \\
+RAG & Retrieval-Augmented Generation \\
+RRF & Reciprocal Rank Fusion \\
+RBAC & Role-Based Access Control \\
+MTTD & Mean Time To Detect \\
+MTTR & Mean Time To Recover/Resolve \\
+UAT & User Acceptance Testing \\
+LLM & Large Language Model \\
+\bottomrule
+\end{longtable}
+
+\begin{thebibliography}{9}
+\bibitem{project-readme}
+AndyAnh174, ``DataOps Control Plane -- README và tài liệu dự án,'' 2026.\\
+\url{https://github.com/AndyAnh174/dataops-control-plane}
+
+\bibitem{deployment-report}
+AndyAnh174, ``Báo cáo triển khai và đánh giá DataOps end-to-end,'' tài liệu nội bộ dự án,
+15--16/09/2026.
+
+\bibitem{fastapi}
+FastAPI, ``FastAPI Documentation.''\\
+\url{https://fastapi.tiangolo.com/}
+
+\bibitem{elastic}
+Elastic, ``Elasticsearch Reference.''\\
+\url{https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html}
+
+\bibitem{langgraph}
+LangChain, ``LangGraph Documentation.''\\
+\url{https://docs.langchain.com/oss/python/langgraph/}
+
+\bibitem{ollama}
+Ollama, ``Ollama Documentation.''\\
+\url{https://docs.ollama.com/}
+\end{thebibliography}
+
+\end{document}
