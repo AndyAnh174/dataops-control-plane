@@ -1,13 +1,22 @@
-% !TeX program = xelatex
-% Biên dịch khuyến nghị: xelatex bao-cao-tien-do-tieu-luan.tex (chạy 2 lần)
+% !TeX program = pdflatex
+% Biên dịch 2 lần bằng pdfLaTeX, XeLaTeX hoặc LuaLaTeX.
 \documentclass[12pt,a4paper,oneside]{report}
 
 \usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3.2cm,right=2.2cm]{geometry}
-\usepackage{fontspec}
-\defaultfontfeatures{Ligatures=TeX}
-\setmainfont{TeX Gyre Termes}
-\setsansfont{TeX Gyre Heros}
-\setmonofont{Latin Modern Mono}[Scale=0.90]
+\usepackage{iftex}
+\ifPDFTeX
+  % Nhánh tương thích trình biên dịch mặc định pdfLaTeX trên Overleaf.
+  \usepackage[utf8]{inputenc}
+  \usepackage[T5]{fontenc}
+  \usepackage[vietnamese]{babel}
+\else
+  % XeLaTeX/LuaLaTeX dùng Unicode và font OpenType trực tiếp.
+  \usepackage{fontspec}
+  \defaultfontfeatures{Ligatures=TeX}
+  \setmainfont{TeX Gyre Termes}
+  \setsansfont{TeX Gyre Heros}
+  \setmonofont{Latin Modern Mono}[Scale=0.90]
+\fi
 
 \usepackage{microtype}
 \usepackage{setspace}
