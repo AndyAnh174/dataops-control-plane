@@ -40,3 +40,18 @@ class Settings(BaseSettings):
     github_recovery_token: SecretStr | None = None
     github_recovery_workflow: str = "dataops-recovery.yml"
     github_recovery_timeout_seconds: float = 15.0
+    # Provider selection
+    llm_provider: str = "ollama"
+    embedding_provider: str = "ollama"
+    
+    #google gemini setting
+    gemini_api_key: SecretStr | None = None
+    gemini_base_url: str = "https://generativelanguage.googleapis.com"
+    gemini_llm_model: str = "gemini-3.5-flash"
+    gemini_embedding_model: str = "gemini-embedding-001"
+    gemini_embedding_dimensions: int = 1024
+
+    #deepseek setting
+    deepseek_api_key: SecretStr | None = None
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_llm_model: str = "deepseek-chat"
