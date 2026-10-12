@@ -64,6 +64,13 @@ def create_app(
         ElasticsearchKnowledgeStore.from_settings(settings),
         create_embedding_provider(settings),
     )
+    if settings.llm_provider == "openai" or settings.llm_provider == "deepseek":
+        rca_client = OpenAIRCAClient.from_settings(settings)
+    elif settings.llm_provider == "gemini":
+        rca_client = GeminiRCAClient.from_settings(settings)
+    else:
+        rca_client = OllamaRCAClient.from_settings(settings)
+
     incident_rca_agent = rca_agent or RCAAgent(
         knowledge_retriever,
         create_rca_client(settings),

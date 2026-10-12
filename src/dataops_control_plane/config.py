@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     embedding_model: str = "bge-m3:567m"
     embedding_dimensions: int = 1024
     embedding_timeout_seconds: float = 60.0
+    llm_provider: str = "ollama"
+    llm_api_key: SecretStr | None = None
     llm_url: str = "http://localhost:11434"
     llm_model: str = "gemma4:e2b"
     llm_timeout_seconds: float = 300.0
