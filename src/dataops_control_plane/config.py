@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,6 +30,7 @@ class Settings(BaseSettings):
     embedding_model: str = "bge-m3:567m"
     embedding_dimensions: int = 1024
     embedding_timeout_seconds: float = 60.0
+    llm_api_key: SecretStr | None = None
     llm_url: str = "http://localhost:11434"
     llm_model: str = "gemma4:e2b"
     llm_timeout_seconds: float = 300.0
@@ -38,3 +42,44 @@ class Settings(BaseSettings):
     github_recovery_token: SecretStr | None = None
     github_recovery_workflow: str = "dataops-recovery.yml"
     github_recovery_timeout_seconds: float = 15.0
+    # Provider selection
+    llm_provider: str = "ollama"
+    embedding_provider: str = "ollama"
+
+    # Google Gemini settings
+    gemini_api_key: SecretStr | None = None
+    gemini_base_url: str = "https://generativelanguage.googleapis.com"
+    gemini_llm_model: str = "gemini-3.5-flash"
+    gemini_embedding_model: str = "gemini-embedding-001"
+    gemini_embedding_dimensions: int = 1024
+
+    # DeepSeek settings
+    deepseek_api_key: SecretStr | None = None
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_llm_model: str = "deepseek-chat"
+
+    @property
+    def embedding_profile(self) -> tuple[str, str, str, int]:
+        provider = self.embedding_provider.lower().strip()
+        if provider == "gemini":
+            return (
+                provider,
+                self.gemini_base_url.rstrip("/"),
+                self.gemini_embedding_model,
+                self.gemini_embedding_dimensions,
+            )
+        return (
+            provider,
+            self.embedding_url.rstrip("/"),
+            self.embedding_model,
+            self.embedding_dimensions,
+        )
+
+    @property
+    def embedding_index_suffix(self) -> str:
+        provider, _, model, dimensions = self.embedding_profile
+        # Preserve knowledge already indexed by the original BGE installation.
+        if provider == "ollama" and model == "bge-m3:567m" and dimensions == 1024:
+            return ""
+        identity = json.dumps(self.embedding_profile, separators=(",", ":"))
+        return "-" + hashlib.sha256(identity.encode()).hexdigest()[:16]
