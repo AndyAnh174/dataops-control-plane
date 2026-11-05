@@ -12,7 +12,8 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends --only-upgrade libpcre2-8-0 \
+    && apt-get install --yes --no-install-recommends --only-upgrade \
+        apt libapt-pkg6.0 libssl3 openssl perl-base libpcre2-8-0 \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 10001 appuser \
     && mkdir /data \
@@ -22,7 +23,8 @@ COPY --from=uv /uv /uvx /bin/
 COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 
-RUN uv sync --frozen --no-dev --no-editable
+RUN uv sync --frozen --no-dev --no-editable \
+    && uv cache clean
 
 # Build tooling is not needed at runtime and carries avoidable transitive CVEs.
 RUN rm -rf \
