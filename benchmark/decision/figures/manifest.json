@@ -1,0 +1,166 @@
+{
+  "study": "HCMUTE Decision Proxy Benchmark",
+  "source_data_sha256": "5068e0ae5e22c7288be8669db8e0196161ba049f67a0fc7463143abbb7ffa88f",
+  "script_sha256": "410f669719a46109a09e65b704674a2cd1b751b0b046ce426d156f06a4e9eb0c",
+  "matplotlib": "3.11.2",
+  "numpy": "2.4.6",
+  "pillow": "12.3.0",
+  "python_dateutil": "2.9.0.post0",
+  "pypdf": "6.10.0",
+  "dpi_png": 300,
+  "uncertainty": "Descriptive means of three dependent repeats; no population confidence intervals.",
+  "cost": "No billing-cost measurement was made; latency is not converted into dollar cost.",
+  "files": [
+    {
+      "file": "01_quality_heatmap.svg",
+      "bytes": 29475,
+      "sha256": "58169e9e1994abb422c73735598ad9435c8bfddc56b48161b03082688dd9f710",
+      "description": "Thanh xếp hạng và heatmap F1 theo cùng dữ liệu HCMUTE, trung bình ba lượt phụ thuộc."
+    },
+    {
+      "file": "01_quality_heatmap.pdf",
+      "bytes": 37861,
+      "sha256": "b9a5b1e111c99cbce47b4a6e8ccddbb1e0a76aa3d2a43254b71f1423fbdbb2ab",
+      "description": "Thanh xếp hạng và heatmap F1 theo cùng dữ liệu HCMUTE, trung bình ba lượt phụ thuộc."
+    },
+    {
+      "file": "01_quality_heatmap.png",
+      "bytes": 295564,
+      "sha256": "4559fe92b886c8d8c6e1137f8c52afc11f12bc26ed16b5b7f1a423a1f5696940",
+      "description": "Thanh xếp hạng và heatmap F1 theo cùng dữ liệu HCMUTE, trung bình ba lượt phụ thuộc."
+    },
+    {
+      "file": "02_latency_p50_p95.svg",
+      "bytes": 13347,
+      "sha256": "dc90bcc39d1bfd742cd31bdd2deb92f02d81768e27db22169f863a394f94f7d2",
+      "description": "So sánh p50 và p95 end-to-end sau warmup; API bao gồm đường mạng từ Colab."
+    },
+    {
+      "file": "02_latency_p50_p95.pdf",
+      "bytes": 30395,
+      "sha256": "87a5f2fbc1ebe6fb4c38e08917f9ac0457f2bbc5ca2aa8a589c42eb0d13d6ffe",
+      "description": "So sánh p50 và p95 end-to-end sau warmup; API bao gồm đường mạng từ Colab."
+    },
+    {
+      "file": "02_latency_p50_p95.png",
+      "bytes": 216587,
+      "sha256": "3a7386006cf0e43d3b8ccd68c5d0bb0d352246dc24526e69ca9729dd49fc13de",
+      "description": "So sánh p50 và p95 end-to-end sau warmup; API bao gồm đường mạng từ Colab."
+    },
+    {
+      "file": "03_quality_latency.svg",
+      "bytes": 13090,
+      "sha256": "e9b14e666ddbce1f2a121cc59955458628240a52224d08c15b26a94185409f67",
+      "description": "Scatter đo chất lượng theo độ trễ, đầy đủ trục 0–1 và 0 ms."
+    },
+    {
+      "file": "03_quality_latency.pdf",
+      "bytes": 29058,
+      "sha256": "653d0f5f4a78cce36afdcbba5e78fe5379b2206f055c777b5adbc7a7895cf825",
+      "description": "Scatter đo chất lượng theo độ trễ, đầy đủ trục 0–1 và 0 ms."
+    },
+    {
+      "file": "03_quality_latency.png",
+      "bytes": 194312,
+      "sha256": "5fa5229c6977c1284b8490a35f1bad3cd4846c64e412907a40552ee9cb616b3a",
+      "description": "Scatter đo chất lượng theo độ trễ, đầy đủ trục 0–1 và 0 ms."
+    },
+    {
+      "file": "04_probability_quality.svg",
+      "bytes": 40271,
+      "sha256": "14d315ddc049108babb7878fdc5364b4070e5c72d45b454d66c6779ba184d238",
+      "description": "Heatmap Brier và AUROC với cùng giới hạn 0–1, không suy ra hiệu chuẩn sự cố thật."
+    },
+    {
+      "file": "04_probability_quality.pdf",
+      "bytes": 34134,
+      "sha256": "b77411622b3a71033574a36cd9afee69feeaca95f5a33efa0a17f9ba2fca6ba0",
+      "description": "Heatmap Brier và AUROC với cùng giới hạn 0–1, không suy ra hiệu chuẩn sự cố thật."
+    },
+    {
+      "file": "04_probability_quality.png",
+      "bytes": 218739,
+      "sha256": "a635a5c00990f9ef7c532cae6c1ed8a4f7145b0ea80a904352f594c32b6b2a93",
+      "description": "Heatmap Brier và AUROC với cùng giới hạn 0–1, không suy ra hiệu chuẩn sự cố thật."
+    },
+    {
+      "file": "05_prompt_injection.svg",
+      "bytes": 10405,
+      "sha256": "2940314515783b79bf978560220ba543148d0c57fed382bf30dec66493801781",
+      "description": "ASR có điều kiện với từng tử số và mẫu số, n nguồn bằng sáu."
+    },
+    {
+      "file": "05_prompt_injection.pdf",
+      "bytes": 29400,
+      "sha256": "fd8a085ad36de336d30eac58675f58fbbb2ec16c021effbcb1cbae990a66d23a",
+      "description": "ASR có điều kiện với từng tử số và mẫu số, n nguồn bằng sáu."
+    },
+    {
+      "file": "05_prompt_injection.png",
+      "bytes": 200984,
+      "sha256": "8f814efc0f3176f24451e52537eff9b6798025744f676d5b69a6f0db559ea03e",
+      "description": "ASR có điều kiện với từng tử số và mẫu số, n nguồn bằng sáu."
+    },
+    {
+      "file": "06_gpu_memory.svg",
+      "bytes": 9258,
+      "sha256": "479d357a5cf9df3675a075d49464593d3af6d08cfda7d1f80a8fe738c852f706",
+      "description": "Bộ nhớ GPU đỉnh được lấy mẫu, chỉ ba model local có số đo."
+    },
+    {
+      "file": "06_gpu_memory.pdf",
+      "bytes": 29438,
+      "sha256": "be9a53db95f827ad8dcdc9d973ea12af63d07224b0702e711072134138430db1",
+      "description": "Bộ nhớ GPU đỉnh được lấy mẫu, chỉ ba model local có số đo."
+    },
+    {
+      "file": "06_gpu_memory.png",
+      "bytes": 164807,
+      "sha256": "71a0db81a8e8063cc02a48253cbdfb2eb2a7d37cca365c812ffdecfff7ecc9cf",
+      "description": "Bộ nhớ GPU đỉnh được lấy mẫu, chỉ ba model local có số đo."
+    },
+    {
+      "file": "07_benchmark_flow.svg",
+      "bytes": 25668,
+      "sha256": "8bae62f105b4759c7ec9357e40de7fb33be1a1ffc20855df7d794f94a510b69a",
+      "description": "Luồng benchmark Decision HCMUTE; dữ liệu và nhãn proxy giữ nguyên theo protocol."
+    },
+    {
+      "file": "07_benchmark_flow.pdf",
+      "bytes": 36751,
+      "sha256": "fe2d776c05733ddaad5794f32b3816c12385edb10477f4077a007ecf828356a7",
+      "description": "Luồng benchmark Decision HCMUTE; dữ liệu và nhãn proxy giữ nguyên theo protocol."
+    },
+    {
+      "file": "07_benchmark_flow.png",
+      "bytes": 714275,
+      "sha256": "5572f811da72130f9b14399300003db1a7f64fa97888f2283b97b75fda8f0cb3",
+      "description": "Luồng benchmark Decision HCMUTE; dữ liệu và nhãn proxy giữ nguyên theo protocol."
+    },
+    {
+      "file": "08_injection_design.svg",
+      "bytes": 12677,
+      "sha256": "2f62fa9769d8a452474d75f7a50c63303b0a1ee44db67df0d392ccfab9505366",
+      "description": "Thiết kế đối chứng prompt injection; dữ liệu và nhãn proxy giữ nguyên theo protocol."
+    },
+    {
+      "file": "08_injection_design.pdf",
+      "bytes": 27757,
+      "sha256": "6ee021975faef023dc1e9c9024b29eb3d61258a779e3d602736e75af238cbdbc",
+      "description": "Thiết kế đối chứng prompt injection; dữ liệu và nhãn proxy giữ nguyên theo protocol."
+    },
+    {
+      "file": "08_injection_design.png",
+      "bytes": 394373,
+      "sha256": "b3372feccb8418b408c830ffe82e14df178a7cb9a441b240e02e3b05e3d7de17",
+      "description": "Thiết kế đối chứng prompt injection; dữ liệu và nhãn proxy giữ nguyên theo protocol."
+    },
+    {
+      "file": "all_charts.pdf",
+      "bytes": 251228,
+      "pages": 8,
+      "sha256": "7895303faa31847330842fdfdf208fe54b36301d399e301968cfa70a59e4c5c4",
+      "description": "Tám hình vector ghép thành một PDF để trình bày."
+    }
+  ]
+}

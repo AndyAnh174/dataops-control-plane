@@ -1,0 +1,5 @@
+# Preserve the exact Colab export bytes recorded by figures/manifest.json.
+# Matplotlib SVG path data contains generated trailing whitespace.
+figures/* -text -whitespace linguist-generated=true
+results/*.json -text -whitespace
+results/*.csv -text -whitespace
