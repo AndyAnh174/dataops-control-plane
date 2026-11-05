@@ -1,6 +1,10 @@
 import time
+
 from dataops_control_plane.config import Settings
-from dataops_control_plane.services.provider_factory import create_embedding_provider, create_rca_client
+from dataops_control_plane.services.provider_factory import (
+    create_embedding_provider,
+    create_rca_client,
+)
 
 print("=" * 60)
 print("🚀 ĐANG KHỞI ĐỘNG KIỂM TRA GOOGLE GEMINI THẬT...")
@@ -28,7 +32,8 @@ result = rca_client.generate(
     system_prompt="You are an expert DataOps Incident Analysis Agent.",
     user_prompt=(
         "Pipeline run #42 failed at stage 'data-quality'. "
-        "Error log shows: Great Expectations validation failed because column 'amount' was renamed to 'total_amount'. "
+        "Error log shows: Great Expectations validation failed because "
+        "column 'amount' was renamed to 'total_amount'. "
         "Please provide root cause analysis and recommended recovery action."
     ),
     schema={
@@ -47,9 +52,9 @@ print(f"✅ Gemini đã phân tích xong trong {llm_time}s!")
 print("\n" + "=" * 60)
 print("🎯 KẾT QUẢ PHÂN TÍCH TỪ GEMINI TRẢ VỀ:")
 print("=" * 60)
-print(f"📌 Nguyên nhân gốc (Root Cause):")
+print("📌 Nguyên nhân gốc (Root Cause):")
 print(f"   {result.payload.get('root_cause')}\n")
-print(f"📌 Đề xuất xử lý (Recommended Action):")
+print("📌 Đề xuất xử lý (Recommended Action):")
 print(f"   {result.payload.get('recommended_action')}\n")
 print(f"📌 Độ tin cậy (Confidence): {result.payload.get('confidence') * 100}%")
 print(f"📌 Số token sử dụng      : {result.prompt_tokens + result.completion_tokens} tokens")

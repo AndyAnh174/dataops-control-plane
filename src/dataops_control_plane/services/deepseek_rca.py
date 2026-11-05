@@ -27,9 +27,7 @@ class DeepSeekRCAClient:
     @classmethod
     def from_settings(cls, settings: Settings) -> "DeepSeekRCAClient":
         api_key = (
-            settings.deepseek_api_key.get_secret_value()
-            if settings.deepseek_api_key
-            else None
+            settings.deepseek_api_key.get_secret_value() if settings.deepseek_api_key else None
         )
         return cls(
             httpx.Client(

@@ -23,11 +23,7 @@ class GeminiEmbeddingProvider:
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "GeminiEmbeddingProvider":
-        api_key = (
-            settings.gemini_api_key.get_secret_value()
-            if settings.gemini_api_key
-            else None
-        )
+        api_key = settings.gemini_api_key.get_secret_value() if settings.gemini_api_key else None
         return cls(
             httpx.Client(
                 base_url=settings.gemini_base_url.rstrip("/"),
@@ -93,7 +89,9 @@ class GeminiEmbeddingProvider:
                 or not math.isfinite(float(value))
                 for value in values
             ):
-                raise EmbeddingUnavailable("Gemini embedding service returned invalid vector values")
+                raise EmbeddingUnavailable(
+                    "Gemini embedding service returned invalid vector values"
+                )
             embeddings.append([float(value) for value in values])
 
         return embeddings

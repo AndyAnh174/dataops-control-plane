@@ -26,11 +26,7 @@ class GeminiRCAClient:
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "GeminiRCAClient":
-        api_key = (
-            settings.gemini_api_key.get_secret_value()
-            if settings.gemini_api_key
-            else None
-        )
+        api_key = settings.gemini_api_key.get_secret_value() if settings.gemini_api_key else None
         return cls(
             httpx.Client(
                 base_url=settings.gemini_base_url.rstrip("/"),

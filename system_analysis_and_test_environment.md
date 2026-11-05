@@ -230,15 +230,15 @@ services:
       DATAOPS_GITHUB_API_URL: http://mock-github:8080
       DATAOPS_GITHUB_TOKEN: "fake-github-token"
       DATAOPS_GITHUB_RECOVERY_TOKEN: "fake-recovery-token"
-  
+
   mock-ollama:
     build: ./test-env/mock-ollama
     # Trả response cố định cho embedding + RCA generation
-  
+
   mock-github:
     build: ./test-env/mock-github
     # Giả lập GitHub API: commit diff, workflow dispatch
-  
+
   test-agent:
     build: ./test-env/test-agent
     # Giả lập DataOps Agent gửi events/logs/reports
@@ -279,7 +279,7 @@ def full_platform():
     mock_retriever = FixedRetriever(documents=[...])
     mock_rca = StaticRCAClient(response={...})
     mock_executor = RecordingRecoveryExecutor()
-    
+
     app = create_app(
         engine=engine,
         log_store=mock_log_store,
@@ -289,6 +289,7 @@ def full_platform():
         recovery_executor=mock_executor,
     )
     return TestClient(app)
+
 
 @pytest.fixture
 def seeded_incident(full_platform):
@@ -378,24 +379,24 @@ Hoặc tạo script Python mô phỏng chính xác hành vi của `dataops-agent
 # test-env/simulate_agent.py
 class DataOpsAgentSimulator:
     """Giả lập chính xác luồng mà dataops-agent@v0 thực hiện."""
-    
+
     async def run_scenario(self, scenario: Scenario):
         # 1. Gửi RUNNING event
         await self.send_event("pipeline.started", status="RUNNING")
-        
+
         # 2. Chạy từng stage theo dataops.yaml
         for stage in scenario.stages:
             logs = stage.generate_logs()
             await self.send_logs(logs)
-            
+
             if stage.has_report:
                 await self.send_report(stage.report)
-        
+
         # 3. Gửi completion event
         if scenario.should_fail:
-            await self.send_event("pipeline.completed", 
-                                   status="FAILED",
-                                   failed_stage=scenario.fail_stage)
+            await self.send_event(
+                "pipeline.completed", status="FAILED", failed_stage=scenario.fail_stage
+            )
         else:
             await self.send_event("pipeline.completed", status="SUCCESS")
 ```

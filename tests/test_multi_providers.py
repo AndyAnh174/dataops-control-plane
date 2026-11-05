@@ -180,9 +180,7 @@ def test_gemini_embeddings_success() -> None:
 def test_gemini_embeddings_dimension_mismatch() -> None:
     mock_client = MagicMock(spec=httpx.Client)
     mock_response = MagicMock(spec=httpx.Response)
-    mock_response.json.return_value = {
-        "embeddings": [{"values": [0.1, 0.2]}]
-    }
+    mock_response.json.return_value = {"embeddings": [{"values": [0.1, 0.2]}]}
     mock_client.post.return_value = mock_response
 
     provider = GeminiEmbeddingProvider(

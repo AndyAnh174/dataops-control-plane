@@ -53,7 +53,11 @@ class OpenAIRCAClient:
                     "messages": [
                         {
                             "role": "system",
-                            "content": f"{system_prompt}\n\nYou MUST return a JSON object that satisfies this schema:\n{json.dumps(schema)}"
+                            "content": (
+                                f"{system_prompt}\n\n"
+                                "You MUST return a JSON object that satisfies this schema:\n"
+                                f"{json.dumps(schema)}"
+                            ),
                         },
                         {"role": "user", "content": user_prompt},
                     ],
@@ -88,7 +92,11 @@ class OpenAIRCAClient:
             payload = json.loads(value)
         except json.JSONDecodeError:
             lines = value.strip().splitlines()
-            if len(lines) < 3 or lines[0].strip().lower() != "```json" or lines[-1].strip() != "```":
+            if (
+                len(lines) < 3
+                or lines[0].strip().lower() != "```json"
+                or lines[-1].strip() != "```"
+            ):
                 raise
             payload = json.loads("\n".join(lines[1:-1]))
         if not isinstance(payload, dict):

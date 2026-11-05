@@ -90,7 +90,10 @@ class ElasticsearchKnowledgeStore:
                 client_options["ca_certs"] = settings.elasticsearch_ca_certs
         return cls(
             Elasticsearch(settings.elasticsearch_url, **client_options),
-            dimensions=settings.embedding_dimensions,
+            dimensions=settings.embedding_profile[3],
+            index_name=INDEX_NAME + settings.embedding_index_suffix,
+            alias_name=INDEX_ALIAS + settings.embedding_index_suffix,
+            index_template_name=INDEX_TEMPLATE_NAME + settings.embedding_index_suffix,
         )
 
     def ensure_resources(self) -> None:

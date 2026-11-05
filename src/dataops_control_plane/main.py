@@ -26,11 +26,11 @@ from dataops_control_plane.services.elasticsearch_logs import ElasticsearchPipel
 from dataops_control_plane.services.evidence import EvidenceSource
 from dataops_control_plane.services.github_evidence import GitHubCommitEvidenceSource
 from dataops_control_plane.services.github_recovery import GitHubActionsRecoveryExecutor
+from dataops_control_plane.services.pipeline_logs import PipelineLogStore
 from dataops_control_plane.services.provider_factory import (
     create_embedding_provider,
     create_rca_client,
 )
-from dataops_control_plane.services.pipeline_logs import PipelineLogStore
 from dataops_control_plane.services.rca_agent import RCAAgent
 from dataops_control_plane.services.recovery_execution import (
     DisabledRecoveryExecutor,
@@ -64,13 +64,6 @@ def create_app(
         ElasticsearchKnowledgeStore.from_settings(settings),
         create_embedding_provider(settings),
     )
-    if settings.llm_provider == "openai" or settings.llm_provider == "deepseek":
-        rca_client = OpenAIRCAClient.from_settings(settings)
-    elif settings.llm_provider == "gemini":
-        rca_client = GeminiRCAClient.from_settings(settings)
-    else:
-        rca_client = OllamaRCAClient.from_settings(settings)
-
     incident_rca_agent = rca_agent or RCAAgent(
         knowledge_retriever,
         create_rca_client(settings),
