@@ -1,0 +1,5 @@
+extend = "../../pyproject.toml"
+
+[lint]
+# Preserve frozen prompt strings and long mathematical/report labels verbatim.
+ignore = ["E501"]

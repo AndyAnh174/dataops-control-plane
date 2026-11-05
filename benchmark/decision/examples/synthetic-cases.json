@@ -1,0 +1,8 @@
+[
+  {"id":"demo-prod-info","environment":"prod","task":"masked_severity","state":"Service started and is listening for requests.","label":"INFO","group_id":"synthetic-1","split":"test","label_kind":"synthetic_example"},
+  {"id":"demo-prod-warn","environment":"prod","task":"masked_severity","state":"Upstream rate limit reached; retrying after a short delay.","label":"WARN","group_id":"synthetic-2","split":"test","label_kind":"synthetic_example"},
+  {"id":"demo-prod-error","environment":"prod","task":"masked_severity","state":"Database connection refused; the requested transaction could not complete.","label":"ERROR","group_id":"synthetic-3","split":"test","label_kind":"synthetic_example"},
+  {"id":"demo-dev-info","environment":"dev","task":"masked_severity","state":"Health check completed and returned a valid response.","label":"INFO","group_id":"synthetic-4","split":"test","label_kind":"synthetic_example"},
+  {"id":"demo-ci-success","environment":"ci","task":"build_outcome","state":"All required compilation, unit test and deployment checks completed.","label":"SUCCESS","group_id":"synthetic-5","split":"test","label_kind":"synthetic_example"},
+  {"id":"demo-ci-failure","environment":"ci","task":"build_outcome","state":"Compiler rejected a missing dependency. The required command exited with code 1.","label":"FAILURE","group_id":"synthetic-6","split":"test","label_kind":"synthetic_example"}
+]
