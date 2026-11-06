@@ -133,6 +133,13 @@ def dashboard_page(request: Request, session: SessionDep):
 
 
 @router.get("/app/projects/{project_id}", response_class=HTMLResponse)
+def project_overview(project_id: UUID):
+    return RedirectResponse(f"/app/projects/{project_id}/runs", status_code=303)
+
+
+@router.get("/app/projects/{project_id}/runs", response_class=HTMLResponse)
+@router.get("/app/projects/{project_id}/agent-setup", response_class=HTMLResponse)
+@router.get("/app/projects/{project_id}/tokens", response_class=HTMLResponse)
 def project_page(project_id: UUID, request: Request, session: SessionDep):
     user = _current_user(request, session)
     if user is None:
@@ -172,14 +179,21 @@ def project_page(project_id: UUID, request: Request, session: SessionDep):
         else []
     )
     incident_by_run = {incident.pipeline_run_id: incident for incident in incidents}
+    section = request.url.path.rsplit("/", 1)[-1]
+    view_title = {"runs": "Pipeline runs", "agent-setup": "Agent setup", "tokens": "Tokens"}[
+        section
+    ]
     return templates.TemplateResponse(
         request=request,
         name="project.html",
         context={
-            "page_title": project.name,
+            "page_title": f"{view_title} · {project.name}",
+            "view_title": view_title,
+            "project_section": section,
             "user": user,
             "project": project,
             "can_delete_project": membership.role == "OWNER",
+            "can_manage_tokens": membership.role in {"OWNER", "OPERATOR"},
             "tokens": tokens,
             "runs": runs,
             "incident_by_run": incident_by_run,

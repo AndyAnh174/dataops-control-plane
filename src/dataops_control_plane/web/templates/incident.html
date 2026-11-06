@@ -1,90 +1,23 @@
 {% extends "base.html" %}
+{% from "_components.html" import icon, status_badge, timestamp %}
+{% block breadcrumbs %}<a href="/app">Projects</a>{{ icon("chevron", 13) }}<a href="/app/projects/{{ project.id }}">{{ project.name }}</a>{{ icon("chevron", 13) }}<span aria-current="page">Incident</span>{% endblock %}
 {% block content %}
-<a class="back-link" href="/app/runs/{{ run.id }}">← Run {{ run.external_run_id }}</a>
-<section class="project-hero">
-  <div>
-    <p class="eyebrow">Incident · {{ project.name }}</p>
-    <h1>{{ incident.status }}</h1>
-    <p><code>{{ incident.id }}</code></p>
-  </div>
-  <span class="run-status run-{{ run.status|lower }}">{{ run.status }}</span>
-</section>
-
-<section class="summary-grid">
-  <article class="panel metric-card"><p>Failed stage</p><strong>{{ run.failed_stage or "—" }}</strong></article>
-  <article class="panel metric-card"><p>Branch</p><strong>{{ run.branch }}</strong></article>
-  <article class="panel metric-card"><p>Commit</p><strong><code>{{ run.commit_sha[:10] }}</code></strong></article>
-  <article class="panel metric-card"><p>Updated</p><strong>{{ incident.updated_at }}</strong></article>
-</section>
-
-<section class="workspace-section">
-  <div class="section-heading"><div><p class="eyebrow">Agentic RCA</p><h2>Root cause analysis</h2></div></div>
-  {% if report %}
-  <article class="panel detail-card">
-    <div class="detail-heading">
-      <span class="run-status run-success">{{ report.analysis_status }}</span>
-      <span>Confidence {{ "%.0f"|format(report.confidence * 100) }}%</span>
-    </div>
-    <h3>{{ report.incident_type }}</h3>
-    <p class="root-cause">{{ report.root_cause }}</p>
-    <div class="recommendation">
-      <p class="eyebrow">Recommended action</p>
-      <strong>{{ report.recommended_action.get("type") }}</strong>
-      <p>{{ report.recommended_action.get("rationale") }}</p>
-    </div>
-  </article>
-  {% else %}
-  <article class="panel detail-card"><p>No validated RCA report is available yet.</p></article>
-  {% endif %}
-</section>
-
-<section class="workspace-section" id="recovery-control" data-incident-id="{{ incident.id }}" data-plan-id="{{ plan.id if plan else '' }}">
-  <div class="section-heading">
-    <div><p class="eyebrow">Deterministic policy</p><h2>Recovery control</h2></div>
-    {% if report and not plan %}<button class="button button-primary" type="button" data-incident-action="create-plan">Evaluate policy</button>{% endif %}
-  </div>
-  <p class="form-error" role="alert" hidden></p>
-  {% if plan %}
-  <article class="panel detail-card">
-    <div class="recovery-status-row">
-      <div><p>Action</p><strong>{{ plan.action_type }}</strong></div>
-      <div><p>Risk</p><strong>{{ plan.risk_level }}</strong></div>
-      <div><p>Policy</p><strong>{{ plan.policy_decision }}</strong></div>
-      <div><p>Approval</p><strong>{{ plan.approval_status }}</strong></div>
-    </div>
-    <ul class="reason-list">{% for reason in plan.decision_reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
-    <div class="action-row">
-      {% if plan.approval_status == "PENDING" %}
-      <button class="button button-primary" type="button" data-incident-action="approve">Approve plan</button>
-      <button class="button button-danger" type="button" data-incident-action="reject">Reject plan</button>
-      {% elif plan.approval_status in ["APPROVED", "NOT_REQUIRED"] and plan.policy_decision != "DENIED" and not attempt %}
-      <button class="button button-primary" type="button" data-incident-action="execute">Execute recovery</button>
-      {% endif %}
-    </div>
-  </article>
-  {% else %}
-  <article class="panel detail-card"><p>No recovery plan has been evaluated.</p></article>
-  {% endif %}
-
-  {% if attempt %}
-  <article class="panel detail-card attempt-card">
-    <p class="eyebrow">Recovery attempt</p>
-    <h3>{{ attempt.status }}</h3>
-    <p>Verification: <strong>{{ attempt.verification_status or "Waiting" }}</strong></p>
-    {% if attempt.external_reference %}<code>{{ attempt.external_reference }}</code>{% endif %}
-  </article>
-  {% endif %}
-</section>
-
-<section class="workspace-section">
-  <div class="section-heading"><div><p class="eyebrow">Immutable history</p><h2>Recovery audit</h2></div></div>
-  <div class="timeline">
-    {% for event in audit_events %}
-    <article class="timeline-event">
-      <span></span>
-      <div><strong>{{ event.event_type }}</strong><p>{{ event.actor }} · {{ event.created_at }}</p></div>
-    </article>
-    {% else %}<article class="panel detail-card"><p>No recovery events recorded.</p></article>{% endfor %}
-  </div>
-</section>
+<a class="back-link" href="/app/runs/{{ run.id }}">{{ icon("back", 15) }} Run #{{ run.external_run_id }}</a>
+<section class="page-header"><div><div class="heading-with-icon"><h1>Incident</h1>{{ status_badge(incident.status) }}</div><p class="mono incident-id">{{ incident.id }}</p></div><a class="button button-secondary" href="/app/runs/{{ run.id }}">{{ icon("terminal", 16) }} View run logs</a></section>
+<dl class="metadata-strip"><div><dt>Project</dt><dd>{{ project.name }}</dd></div><div><dt>Failed stage</dt><dd class="mono">{{ run.failed_stage or "—" }}</dd></div><div><dt>Branch / commit</dt><dd>{{ run.branch }} <code>{{ run.commit_sha[:10] }}</code></dd></div><div><dt>Updated</dt><dd>{{ timestamp(incident.updated_at) }}</dd></div></dl>
+<div class="incident-layout"><div>
+  <section class="workspace-section"><div class="section-heading"><h2>Root cause analysis</h2>{% if report %}{{ status_badge(report.analysis_status) }}{% endif %}</div>
+    <article class="panel detail-card">{% if report %}<div class="analysis-meta"><span class="neutral-badge">{{ report.incident_type }}</span><span class="muted">Model confidence {{ "%.0f"|format(report.confidence * 100) }}%</span></div><h3 class="root-cause">{{ report.root_cause }}</h3><div class="recommendation"><span class="overline">Recommended action</span><h3>{{ report.recommended_action.get("type") }}</h3><p>{{ report.recommended_action.get("rationale") }}</p></div>
+    {% else %}<div class="empty-state">{{ icon("search", 26) }}<h3>No validated RCA report yet</h3><p>Evidence collection and analysis must complete before a recovery plan can be evaluated.</p></div>{% endif %}</article>
+  </section>
+  <section class="workspace-section" id="recovery-control" data-incident-id="{{ incident.id }}" data-plan-id="{{ plan.id if plan else '' }}">
+    <div class="section-heading"><h2>Recovery plan</h2>{% if report and not plan %}<button class="button button-primary" type="button" data-incident-action="create-plan">Evaluate policy</button>{% endif %}</div><p class="form-error" role="alert" hidden></p>
+    <article class="panel detail-card">{% if plan %}<dl class="recovery-facts"><div><dt>Action</dt><dd class="mono">{{ plan.action_type }}</dd></div><div><dt>Risk</dt><dd>{{ plan.risk_level|title }}</dd></div><div><dt>Policy</dt><dd>{{ status_badge(plan.policy_decision) }}</dd></div><div><dt>Approval</dt><dd>{{ status_badge(plan.approval_status) }}</dd></div></dl><ul class="reason-list">{% for reason in plan.decision_reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+      <div class="action-row">{% if plan.approval_status == "PENDING" %}<button class="button button-primary" type="button" data-incident-action="approve">{{ icon("check", 16) }} Approve plan</button><button class="button button-danger" type="button" data-incident-action="reject">Reject plan</button>{% elif plan.approval_status in ["APPROVED", "NOT_REQUIRED"] and plan.policy_decision != "DENIED" and not attempt %}<button class="button button-primary" type="button" data-incident-action="execute">Execute recovery {{ icon("arrow", 16) }}</button>{% endif %}</div>
+    {% else %}<p class="muted">No recovery plan has been evaluated.</p>{% endif %}</article>
+    {% if attempt %}<article class="panel detail-card"><div class="section-heading"><h3>Recovery attempt</h3>{{ status_badge(attempt.status) }}</div><p>Verification: <strong>{{ attempt.verification_status or "Waiting" }}</strong></p>{% if attempt.external_reference %}<code class="break-word">{{ attempt.external_reference }}</code>{% endif %}</article>{% endif %}
+  </section>
+</div><aside class="audit-column"><section class="workspace-section"><div class="section-heading"><h2>Activity</h2><span class="neutral-badge">Audit trail</span></div><div class="panel audit-panel">
+  {% for event in audit_events %}<article class="timeline-event"><span class="timeline-marker" aria-hidden="true">{{ icon("clock", 14) }}</span><div><strong>{{ event.event_type }}</strong><p>{{ event.actor }}</p><small>{{ timestamp(event.created_at) }}</small></div></article>{% else %}<p class="muted">No recovery events recorded.</p>{% endfor %}
+</div></section></aside></div>
 {% endblock %}

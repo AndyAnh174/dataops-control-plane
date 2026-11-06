@@ -1,17 +1,15 @@
 {% extends "base.html" %}
-{% block content %}
-<section class="auth-layout">
-  <div class="auth-copy">
-    <p class="eyebrow">First-run setup</p>
-    <h1>Create your DataOps owner</h1>
-    <p>Start a private workspace, then connect the first CI/CD repository.</p>
-  </div>
-  <form class="panel form-stack" data-api-form="bootstrap">
-    <label>Email<input name="email" type="email" autocomplete="email" required></label>
-    <label>Password<input name="password" type="password" minlength="12" autocomplete="new-password" required></label>
-    <label>Workspace name<input name="workspace_name" value="My workspace" required></label>
+{% from "_components.html" import icon %}
+{% block auth_content %}
+<section class="auth-card">
+  <div class="auth-heading"><span class="auth-icon">{{ icon("shield", 24) }}</span><p class="overline">Instance setup</p><h1>Create your DataOps owner</h1><p>Set up the administrator account and first workspace.</p></div>
+  <form class="form-stack" data-api-form="bootstrap">
+    <label>Email<input name="email" type="email" autocomplete="username" placeholder="you@company.com" required></label>
+    <label>Password<input name="password" type="password" minlength="12" autocomplete="new-password" aria-describedby="password-hint" required><span class="form-hint" id="password-hint">Use at least 12 characters.</span></label>
+    <label>Workspace name<input name="workspace_name" placeholder="Your team or organization" required></label>
     <p class="form-error" role="alert" hidden></p>
-    <button class="button button-primary" type="submit">Create owner</button>
+    <button class="button button-primary" type="submit">Create owner {{ icon("arrow", 16) }}</button>
   </form>
+  <p class="auth-note">This setup is available only before the first owner is created.</p>
 </section>
 {% endblock %}

@@ -205,7 +205,7 @@ def test_project_page_shows_copy_ready_github_onboarding(client: TestClient) -> 
     """Catches the API having onboarding data that users cannot reach from the Web UI."""
     project = _bootstrap_project(client)
 
-    response = client.get(f"/app/projects/{project['id']}")
+    response = client.get(f"/app/projects/{project['id']}/agent-setup")
 
     assert response.status_code == 200
     assert ".github/workflows/dataops.yml" in response.text
@@ -224,7 +224,7 @@ def test_incident_page_exposes_rca_policy_and_pending_approval(client: TestClien
     assert response.status_code == 200
     assert "Rows outside the amount contract" in response.text
     assert "QUARANTINE" in response.text
-    assert "PENDING" in response.text
+    assert "Pending" in response.text
     assert "Approve plan" in response.text
     assert "Reject plan" in response.text
     assert "PLAN_CREATED" in response.text

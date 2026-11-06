@@ -1,16 +1,14 @@
 {% extends "base.html" %}
-{% block content %}
-<section class="auth-layout">
-  <div class="auth-copy">
-    <p class="eyebrow">Self-hosted operations</p>
-    <h1>Sign in to DataOps</h1>
-    <p>Inspect pipeline runs, evidence, RCA and controlled recovery from one place.</p>
-  </div>
-  <form class="panel form-stack" data-api-form="login">
-    <label>Email<input name="email" type="email" autocomplete="email" required></label>
+{% from "_components.html" import icon %}
+{% block auth_content %}
+<section class="auth-card">
+  <div class="auth-heading"><span class="auth-icon">{{ icon("terminal", 24) }}</span><h1>Sign in to DataOps</h1><p>Access your workspace and pipeline runs.</p></div>
+  <form class="form-stack" data-api-form="login">
+    <label>Email<input name="email" type="email" autocomplete="username" placeholder="you@company.com" required></label>
     <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
     <p class="form-error" role="alert" hidden></p>
-    <button class="button button-primary" type="submit">Sign in</button>
+    <button class="button button-primary" type="submit">Sign in {{ icon("arrow", 16) }}</button>
   </form>
+  <p class="auth-note">Need access? Contact your workspace owner.</p>
 </section>
 {% endblock %}
