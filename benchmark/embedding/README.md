@@ -48,7 +48,7 @@ python -m pytest -c benchmark/embedding/pytest.ini benchmark/embedding/tests -q
 Đổi chunk/model/prompt/data sau khi xem điểm là thí nghiệm khác. Không âm thầm
 retry, đổi model hay bỏ API lỗi để làm đẹp điểm. Nguồn và giới hạn nằm trong protocol.
 
-Trong lần chạy này, user giữ runtime A100 hiện tại. shared_runtime.py tạo một
+Trong lần chạy này, hai study dùng chung VM A100. shared_runtime.py tạo một
 notebook riêng, chạy bằng nbclient/IPython kernel trên cùng VM, rồi xuất notebook
 đã thực thi cùng ZIP kết quả. Cloud LLM và embedding có thể chồng thời gian; mỗi
 study tuần tự và chỉ một model local được nạp. Khóa chỉ truyền qua bộ nhớ/env của

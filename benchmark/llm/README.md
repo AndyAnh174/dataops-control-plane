@@ -46,5 +46,5 @@ nên không xem số đo là peak toàn bộ job. Nguồn phương pháp đượ
 run_cloud.py tiếp tục các API còn thiếu bằng đúng engine/source/dataset đã đóng
 băng. Source và dataset được kiểm tra hash trước khi resume. Nó hỗ trợ client có
 hoặc không có GPU, không gọi model local, và ghi metadata thật của client. Lần chạy
-này vẫn giữ A100 theo yêu cầu; Gemini thêm 4 giây trước HTTP vào nhịp 2 giây sau
+này dùng chung VM A100; Gemini thêm 4 giây trước HTTP vào nhịp 2 giây sau
 response để phù hợp quota miễn phí. Thời gian chờ được tách khỏi HTTP latency.
