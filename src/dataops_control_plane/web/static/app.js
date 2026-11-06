@@ -281,17 +281,6 @@ document.querySelectorAll("[data-local-time]").forEach((element) => {
   }).format(date);
   element.title = date.toLocaleString(undefined, { timeZoneName: "short" });
 });
-const revealSection = () => {
-  if (window.location.hash === "#agent-setup") document.querySelector("#agent-setup details")?.setAttribute("open", "");
-  const selected = window.location.hash || "#pipeline-runs";
-  document.querySelectorAll(".section-nav a").forEach((link) => {
-    if (link.getAttribute("href") === selected) link.setAttribute("aria-current", "location");
-    else link.removeAttribute("aria-current");
-  });
-};
-window.addEventListener("hashchange", revealSection);
-revealSection();
-
 document.addEventListener("click", (event) => {
   document.querySelectorAll(".row-menu[open]").forEach((menu) => {
     if (!menu.contains(event.target)) menu.removeAttribute("open");

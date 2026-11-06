@@ -205,7 +205,7 @@ def test_project_page_shows_copy_ready_github_onboarding(client: TestClient) -> 
     """Catches the API having onboarding data that users cannot reach from the Web UI."""
     project = _bootstrap_project(client)
 
-    response = client.get(f"/app/projects/{project['id']}")
+    response = client.get(f"/app/projects/{project['id']}/agent-setup")
 
     assert response.status_code == 200
     assert ".github/workflows/dataops.yml" in response.text

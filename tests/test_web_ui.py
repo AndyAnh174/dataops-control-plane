@@ -1,4 +1,5 @@
 from collections.abc import Iterator, Sequence
+from html.parser import HTMLParser
 from uuid import UUID
 
 import pytest
@@ -43,6 +44,90 @@ def client() -> Iterator[TestClient]:
         base_url="https://testserver",
     ) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def navigation_project(client: TestClient) -> dict[str, str]:
+    auth = client.post(
+        "/api/v1/auth/bootstrap",
+        json={
+            "email": "owner@example.com",
+            "password": "correct horse battery staple",
+            "workspace_name": "Navigation workspace",
+        },
+    ).json()
+    response = client.post(
+        f"/api/v1/workspaces/{auth['workspaces'][0]['id']}/projects",
+        json={
+            "name": "Daily reporting",
+            "provider": "github",
+            "project_ref": "example/daily-reporting",
+            "default_branch": "main",
+        },
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
+@pytest.mark.parametrize(
+    ("section", "heading", "content"),
+    [
+        ("runs", "Pipeline runs", "No runs received yet"),
+        ("agent-setup", "Agent setup", "Add repository secrets"),
+        ("tokens", "Tokens", "No tokens created for this project."),
+    ],
+)
+def test_project_navigation_opens_a_distinct_page_with_the_selected_section(
+    client: TestClient,
+    navigation_project: dict[str, str],
+    section: str,
+    heading: str,
+    content: str,
+) -> None:
+    """Catches sidebar links that only scroll the combined project page."""
+    project_url = f"/app/projects/{navigation_project['id']}"
+    response = client.get(f"{project_url}/{section}")
+
+    assert response.status_code == 200
+    assert response.url.path == f"{project_url}/{section}"
+    assert f"<h1>{heading}</h1>" in response.text
+    assert content in response.text
+    for other_content in (
+        "No runs received yet",
+        "Add repository secrets",
+        "No tokens created for this project.",
+    ):
+        if other_content != content:
+            assert other_content not in response.text
+
+    class Links(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.items: list[dict[str, str | None]] = []
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            if tag == "a":
+                self.items.append(dict(attrs))
+
+    links = Links()
+    links.feed(response.text)
+    hrefs = {link.get("href") for link in links.items}
+    assert {f"{project_url}/{suffix}" for suffix in ("runs", "agent-setup", "tokens")} <= hrefs
+    assert not any(href and href.startswith(project_url + "#") for href in hrefs)
+    assert {link.get("href") for link in links.items if link.get("aria-current") == "page"} == {
+        f"{project_url}/{section}"
+    }
+
+
+@pytest.mark.parametrize("section", ["runs", "agent-setup", "tokens"])
+def test_project_section_requires_a_web_login(client: TestClient, section: str) -> None:
+    """Catches a new project subpage bypassing the existing web authentication boundary."""
+    response = client.get(
+        f"/app/projects/00000000-0000-0000-0000-000000000123/{section}",
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/login"
 
 
 def test_root_guides_a_new_instance_to_setup_and_an_owner_to_the_dashboard(

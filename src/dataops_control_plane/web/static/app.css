@@ -45,6 +45,7 @@ pre { margin: 0; line-height: 1.65; }
 .nav-item.is-active { color: var(--accent); background: #edf1ff; }
 .nav-item > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-subitem { padding-left: 16px; font-size: 12px; }
+.project-context { font-weight: 600; }
 .current-project-label { margin-top: 28px; }
 .sidebar-bottom { margin-top: auto; }
 .deployment-label { display: flex; align-items: center; gap: 7px; padding: 16px 10px; color: var(--muted); font-size: 11px; }
@@ -130,7 +131,7 @@ tbody tr:hover { background: #fbfcfe; }
 .row-menu-content button.text-danger { color: var(--danger); }
 .section-nav { display: flex; gap: 24px; margin: 0 0 28px; border-bottom: 1px solid var(--line); }
 .section-nav a { display: flex; align-items: center; gap: 7px; padding: 10px 0 12px; color: var(--muted); font-size: 12px; }
-.section-nav a[aria-current="location"] { color: var(--text); border-bottom: 2px solid var(--accent); margin-bottom: -1px; font-weight: 600; }
+.section-nav a[aria-current="page"] { color: var(--text); border-bottom: 2px solid var(--accent); margin-bottom: -1px; font-weight: 600; }
 .section-nav a span { padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; font-size: 10px; color: var(--muted); background: #fff; }
 .status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid #e1e5eb; border-radius: 5px; color: #5d6778; background: #f4f5f7; font-size: 10px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
 .status-dot { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
