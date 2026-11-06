@@ -1,0 +1,5 @@
+extend = "../../pyproject.toml"
+
+[lint]
+# Keep the frozen model prompts readable and identical to the executed bundle.
+ignore = ["E501"]

@@ -42,6 +42,11 @@ jobs:
       - name: Test
         run: uv run pytest --cov --cov-report=term-missing
 
+      - name: Test benchmark harnesses without model calls
+        run: >-
+          uv run pytest -c benchmark/decision/pytest.ini
+          benchmark/decision/tests benchmark/llm/tests benchmark/embedding/tests -q
+
   elasticsearch-integration:
     needs: quality
     runs-on: ubuntu-latest
