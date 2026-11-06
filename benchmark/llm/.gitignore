@@ -1,0 +1,13 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+data/
+private-results/
+*.zip
+*.jsonl
+*.salt
+.env*
+results/*
+!results/README.md
+!results/hcmute-20261106.json
+!results/comparison_summary.csv

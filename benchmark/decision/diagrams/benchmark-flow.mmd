@@ -1,0 +1,61 @@
+flowchart TB
+    accTitle: Luồng benchmark Decision HCMUTE
+    accDescr: Log prod, dev và CI được kiểm tra, che thông tin, tạo nhãn đại diện và chia theo nhóm trước khi chạy năm model. Nhãn đối chiếu không được gửi vào model; kết quả chính và phép thử chèn chỉ dẫn được báo cáo riêng.
+
+    subgraph corpus ["Dữ liệu và nhãn đại diện"]
+        raw_logs[("Log prod / dev / CI<br/>387 file · 267,09 MiB")]
+        verify_copies["Kiểm tra SHA-256<br/>Đọc bản đủ và ổn định"]
+        redact_extract["Che thông tin phổ biến<br/>Bóc nhãn mức log / build"]
+        deduplicate_group["Loại trùng / gom nguồn<br/>Chọn và chốt 339 mẫu"]
+        raw_logs --> verify_copies --> redact_extract --> deduplicate_group
+    end
+
+    subgraph frozen_data ["Đóng băng 339 mẫu · seed 2026"]
+        group_split["Chia theo cụm nguồn<br/>Giữ template trong một tập"]
+        development_validation["Development 70<br/>Validation 111"]
+        final_test["Test giữ riêng: 158<br/>Prod 29 · Dev 76 · CI 53"]
+        state_payload["State tối đa 2.000 ký tự<br/>Che mức log / kết quả trực tiếp"]
+        proxy_labels[("Nhãn proxy giữ riêng<br/>Không gửi vào request")]
+        deduplicate_group --> group_split
+        group_split --> development_validation
+        group_split --> final_test
+        final_test --> state_payload
+        final_test --> proxy_labels
+    end
+
+    subgraph execution ["Chạy tuần tự trên Colab · concurrency = 1"]
+        shared_harness["Cùng câu hỏi / tiêu chí<br/>Warmup riêng · 3 lượt / model"]
+        ollama_models["Ollama 0.40.14 · Q8_0<br/>d3:9b · nimble-v3:9b<br/>clef-flash:9b"]
+        openai_model["OpenAI Decisions API<br/>gpt-6-luna"]
+        jev_model["TypeSafe SystemOne API<br/>jev-1.14.0"]
+        predictions[("2.370 dự đoán chính<br/>474 / model · 0 lỗi định dạng")]
+        state_payload --> shared_harness
+        shared_harness --> ollama_models
+        shared_harness --> openai_model
+        shared_harness --> jev_model
+        ollama_models --> predictions
+        openai_model --> predictions
+        jev_model --> predictions
+    end
+
+    subgraph evidence ["Chấm điểm và lưu bằng chứng"]
+        evaluate_metrics["F1, precision, recall<br/>Brier, AUROC, p50/p95, VRAM"]
+        paired_probe["Probe riêng: 6 cặp / model<br/>60 dự đoán · ASR có điều kiện"]
+        evidence_report["CSV / JSONL / LaTeX<br/>Hash dữ liệu, câu hỏi, model digest"]
+        next_dataset["Chưa làm: nhãn sự cố<br/>Thêm cụm prod/dev độc lập"]
+        predictions --> evaluate_metrics
+        proxy_labels --> evaluate_metrics
+        final_test -.-> paired_probe
+        evaluate_metrics --> evidence_report
+        paired_probe --> evidence_report
+        evidence_report -.-> next_dataset
+    end
+
+    classDef data fill:#f3f4f6,stroke:#6b7280,stroke-width:2px,color:#1f2937
+    classDef process fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
+    classDef result fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef caution fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
+    class raw_logs,proxy_labels,development_validation data
+    class verify_copies,redact_extract,deduplicate_group,group_split,state_payload,shared_harness,ollama_models,openai_model,jev_model,evaluate_metrics process
+    class final_test,predictions,evidence_report result
+    class paired_probe,next_dataset caution

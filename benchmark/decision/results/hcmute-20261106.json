@@ -1,0 +1,1941 @@
+{
+  "schema_version": 1,
+  "study": "HCMUTE Decision Proxy Benchmark",
+  "date": "2026-11-06",
+  "seed": 2026,
+  "label_kind": "source_derived_proxy",
+  "independent_incident_labels": false,
+  "dataset": {
+    "raw_files": 387,
+    "raw_mib": 267.09,
+    "exported_cases": 339,
+    "split_counts": {
+      "development": 70,
+      "validation": 111,
+      "test": 158
+    },
+    "test_counts": {
+      "prod": 29,
+      "dev": 76,
+      "ci": 53
+    },
+    "test_source_groups": {
+      "prod": 1,
+      "dev": 1,
+      "ci": 53
+    },
+    "dataset_sha256": "3ccaaf86b43c9069b54ac10b7890609bbcfb169ef9db1eeaef987a7ae39efcd0",
+    "dedicated_test_environment_collected": false
+  },
+  "runtime": {
+    "hardware": "NVIDIA A100-SXM4-80GB, 81920 MiB, 580.82.07",
+    "ollama": "0.40.14",
+    "concurrency": 1,
+    "repeats": 3,
+    "state_max_chars": 2000,
+    "worker_active_seconds": 660.4962113809997,
+    "main_predictions": 2370,
+    "paired_probe_predictions": 60,
+    "external_requests": 984
+  },
+  "models": [
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "predictions": 474,
+      "errors": 0,
+      "unique_test_cases": 158,
+      "prod_macro_f1_including_errors": 0.8696476964769649,
+      "prod_macro_f1_including_errors_range": [
+        0.8696476964769649,
+        0.8696476964769649
+      ],
+      "prod_macro_f1_supported_labels": 0.8696476964769647,
+      "prod_macro_f1_supported_labels_range": [
+        0.8696476964769647,
+        0.8696476964769647
+      ],
+      "prod_accuracy_including_errors": 0.9310344827586207,
+      "prod_accuracy_including_errors_range": [
+        0.9310344827586207,
+        0.9310344827586207
+      ],
+      "dev_macro_f1_including_errors": 0.5319223985890652,
+      "dev_macro_f1_including_errors_range": [
+        0.5319223985890652,
+        0.5319223985890652
+      ],
+      "dev_macro_f1_supported_labels": 0.7978835978835979,
+      "dev_macro_f1_supported_labels_range": [
+        0.7978835978835979,
+        0.7978835978835979
+      ],
+      "dev_accuracy_including_errors": 0.6842105263157895,
+      "dev_accuracy_including_errors_range": [
+        0.6842105263157895,
+        0.6842105263157895
+      ],
+      "ci_macro_f1_including_errors": 0.9762651141961487,
+      "ci_macro_f1_including_errors_range": [
+        0.9762651141961487,
+        0.9762651141961487
+      ],
+      "ci_macro_f1_supported_labels": 0.9762651141961487,
+      "ci_macro_f1_supported_labels_range": [
+        0.9762651141961487,
+        0.9762651141961487
+      ],
+      "ci_accuracy_including_errors": 0.9811320754716981,
+      "ci_accuracy_including_errors_range": [
+        0.9811320754716981,
+        0.9811320754716981
+      ],
+      "equal_environment_proxy_index": 0.7926117364207262,
+      "p50_ms": 321.65495949993783,
+      "p95_ms": 589.6678622499619,
+      "peak_gpu_gib": null,
+      "cases_with_prediction_changes_across_repeats": 0
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "predictions": 474,
+      "errors": 0,
+      "unique_test_cases": 158,
+      "prod_macro_f1_including_errors": 1.0,
+      "prod_macro_f1_including_errors_range": [
+        1.0,
+        1.0
+      ],
+      "prod_macro_f1_supported_labels": 1.0,
+      "prod_macro_f1_supported_labels_range": [
+        1.0,
+        1.0
+      ],
+      "prod_accuracy_including_errors": 1.0,
+      "prod_accuracy_including_errors_range": [
+        1.0,
+        1.0
+      ],
+      "dev_macro_f1_including_errors": 0.2857142857142857,
+      "dev_macro_f1_including_errors_range": [
+        0.2857142857142857,
+        0.2857142857142857
+      ],
+      "dev_macro_f1_supported_labels": 0.42857142857142855,
+      "dev_macro_f1_supported_labels_range": [
+        0.42857142857142855,
+        0.42857142857142855
+      ],
+      "dev_accuracy_including_errors": 0.15789473684210525,
+      "dev_accuracy_including_errors_range": [
+        0.15789473684210525,
+        0.15789473684210525
+      ],
+      "ci_macro_f1_including_errors": 0.9467860538807058,
+      "ci_macro_f1_including_errors_range": [
+        0.9316129032258065,
+        0.9552364864864865
+      ],
+      "ci_macro_f1_supported_labels": 0.9467860538807058,
+      "ci_macro_f1_supported_labels_range": [
+        0.9316129032258065,
+        0.9552364864864865
+      ],
+      "ci_accuracy_including_errors": 0.9559748427672956,
+      "ci_accuracy_including_errors_range": [
+        0.9433962264150944,
+        0.9622641509433962
+      ],
+      "equal_environment_proxy_index": 0.7441667798649971,
+      "p50_ms": 132.7824035000731,
+      "p95_ms": 339.318434600159,
+      "peak_gpu_gib": 13.404296875,
+      "cases_with_prediction_changes_across_repeats": 2
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "predictions": 474,
+      "errors": 0,
+      "unique_test_cases": 158,
+      "prod_macro_f1_including_errors": 0.8696476964769649,
+      "prod_macro_f1_including_errors_range": [
+        0.8696476964769649,
+        0.8696476964769649
+      ],
+      "prod_macro_f1_supported_labels": 0.8696476964769647,
+      "prod_macro_f1_supported_labels_range": [
+        0.8696476964769647,
+        0.8696476964769647
+      ],
+      "prod_accuracy_including_errors": 0.9310344827586207,
+      "prod_accuracy_including_errors_range": [
+        0.9310344827586207,
+        0.9310344827586207
+      ],
+      "dev_macro_f1_including_errors": 0.2857142857142857,
+      "dev_macro_f1_including_errors_range": [
+        0.2857142857142857,
+        0.2857142857142857
+      ],
+      "dev_macro_f1_supported_labels": 0.42857142857142855,
+      "dev_macro_f1_supported_labels_range": [
+        0.42857142857142855,
+        0.42857142857142855
+      ],
+      "dev_accuracy_including_errors": 0.15789473684210525,
+      "dev_accuracy_including_errors_range": [
+        0.15789473684210525,
+        0.15789473684210525
+      ],
+      "ci_macro_f1_including_errors": 0.9762651141961487,
+      "ci_macro_f1_including_errors_range": [
+        0.9762651141961487,
+        0.9762651141961487
+      ],
+      "ci_macro_f1_supported_labels": 0.9762651141961487,
+      "ci_macro_f1_supported_labels_range": [
+        0.9762651141961487,
+        0.9762651141961487
+      ],
+      "ci_accuracy_including_errors": 0.9811320754716981,
+      "ci_accuracy_including_errors_range": [
+        0.9811320754716981,
+        0.9811320754716981
+      ],
+      "equal_environment_proxy_index": 0.7105423654624664,
+      "p50_ms": 137.30903199984823,
+      "p95_ms": 344.0909898999962,
+      "peak_gpu_gib": 13.404296875,
+      "cases_with_prediction_changes_across_repeats": 0
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "predictions": 474,
+      "errors": 0,
+      "unique_test_cases": 158,
+      "prod_macro_f1_including_errors": 0.7482801751094433,
+      "prod_macro_f1_including_errors_range": [
+        0.7482801751094433,
+        0.7482801751094433
+      ],
+      "prod_macro_f1_supported_labels": 0.7482801751094433,
+      "prod_macro_f1_supported_labels_range": [
+        0.7482801751094433,
+        0.7482801751094433
+      ],
+      "prod_accuracy_including_errors": 0.896551724137931,
+      "prod_accuracy_including_errors_range": [
+        0.896551724137931,
+        0.896551724137931
+      ],
+      "dev_macro_f1_including_errors": 0.2857142857142857,
+      "dev_macro_f1_including_errors_range": [
+        0.2857142857142857,
+        0.2857142857142857
+      ],
+      "dev_macro_f1_supported_labels": 0.42857142857142855,
+      "dev_macro_f1_supported_labels_range": [
+        0.42857142857142855,
+        0.42857142857142855
+      ],
+      "dev_accuracy_including_errors": 0.15789473684210525,
+      "dev_accuracy_including_errors_range": [
+        0.15789473684210525,
+        0.15789473684210525
+      ],
+      "ci_macro_f1_including_errors": 1.0,
+      "ci_macro_f1_including_errors_range": [
+        1.0,
+        1.0
+      ],
+      "ci_macro_f1_supported_labels": 1.0,
+      "ci_macro_f1_supported_labels_range": [
+        1.0,
+        1.0
+      ],
+      "ci_accuracy_including_errors": 1.0,
+      "ci_accuracy_including_errors_range": [
+        1.0,
+        1.0
+      ],
+      "equal_environment_proxy_index": 0.6779981536079097,
+      "p50_ms": 174.8824714999273,
+      "p95_ms": 405.15219475005324,
+      "peak_gpu_gib": 11.220703125,
+      "cases_with_prediction_changes_across_repeats": 0
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "predictions": 474,
+      "errors": 0,
+      "unique_test_cases": 158,
+      "prod_macro_f1_including_errors": 1.0,
+      "prod_macro_f1_including_errors_range": [
+        1.0,
+        1.0
+      ],
+      "prod_macro_f1_supported_labels": 1.0,
+      "prod_macro_f1_supported_labels_range": [
+        1.0,
+        1.0
+      ],
+      "prod_accuracy_including_errors": 1.0,
+      "prod_accuracy_including_errors_range": [
+        1.0,
+        1.0
+      ],
+      "dev_macro_f1_including_errors": 0.2857142857142857,
+      "dev_macro_f1_including_errors_range": [
+        0.2857142857142857,
+        0.2857142857142857
+      ],
+      "dev_macro_f1_supported_labels": 0.42857142857142855,
+      "dev_macro_f1_supported_labels_range": [
+        0.42857142857142855,
+        0.42857142857142855
+      ],
+      "dev_accuracy_including_errors": 0.15789473684210525,
+      "dev_accuracy_including_errors_range": [
+        0.15789473684210525,
+        0.15789473684210525
+      ],
+      "ci_macro_f1_including_errors": 0.53408900467724,
+      "ci_macro_f1_including_errors_range": [
+        0.5276292335115864,
+        0.5470085470085471
+      ],
+      "ci_macro_f1_supported_labels": 0.53408900467724,
+      "ci_macro_f1_supported_labels_range": [
+        0.5276292335115864,
+        0.5470085470085471
+      ],
+      "ci_accuracy_including_errors": 0.5345911949685535,
+      "ci_accuracy_including_errors_range": [
+        0.5283018867924528,
+        0.5471698113207547
+      ],
+      "equal_environment_proxy_index": 0.6066010967971752,
+      "p50_ms": 230.689093500132,
+      "p95_ms": 290.60141084992205,
+      "peak_gpu_gib": null,
+      "cases_with_prediction_changes_across_repeats": 3
+    }
+  ],
+  "per_environment_repeat": [
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 0,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.5471698113207547,
+      "macro_f1_including_errors": 0.5470085470085471,
+      "macro_f1_supported_labels": 0.5470085470085471,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 1.0,
+          "recall": 0.3684210526315789
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 0.38461538461538464,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.20305660377358492,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 235.5556250004156,
+      "latency_p95_ms": 301.7386399997121,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 1,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.5283018867924528,
+      "macro_f1_including_errors": 0.5276292335115864,
+      "macro_f1_supported_labels": 0.5276292335115864,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 1.0,
+          "recall": 0.34210526315789475
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 0.375,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.1954283018867925,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 235.71059099958802,
+      "latency_p95_ms": 260.9296714002994,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 2,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.5283018867924528,
+      "macro_f1_including_errors": 0.5276292335115864,
+      "macro_f1_supported_labels": 0.5276292335115864,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 1.0,
+          "recall": 0.34210526315789475
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 0.375,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.20266603773584907,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 231.41127500002767,
+      "latency_p95_ms": 297.6840211998933,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.02204605263157895,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 228.50224299963884,
+      "latency_p95_ms": 251.11520075029148,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.023296052631578947,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 231.95683699987057,
+      "latency_p95_ms": 310.39039474990204,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.021398684210526313,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 228.66028100042968,
+      "latency_p95_ms": 247.69845599985274,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.0016896551724137922,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 235.71900900060427,
+      "latency_p95_ms": 372.72246300035437,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.0016896551724137924,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 231.07807700034755,
+      "latency_p95_ms": 289.806555800169,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.00216551724137931,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 227.42690999984916,
+      "latency_p95_ms": 249.35359180017255,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 0,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9811320754716981,
+      "macro_f1_including_errors": 0.9762651141961487,
+      "macro_f1_supported_labels": 0.9762651141961487,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 0.9743589743589743,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 0.9333333333333333
+        }
+      },
+      "brier_valid_only": 0.05058295871129494,
+      "auc_valid_only": 0.980701754385965,
+      "latency_p50_ms": 340.51519800004826,
+      "latency_p95_ms": 345.0852440001199,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 1,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9811320754716981,
+      "macro_f1_including_errors": 0.9762651141961487,
+      "macro_f1_supported_labels": 0.9762651141961487,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 0.9743589743589743,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 0.9333333333333333
+        }
+      },
+      "brier_valid_only": 0.05058295871129496,
+      "auc_valid_only": 0.980701754385965,
+      "latency_p50_ms": 340.8922080002412,
+      "latency_p95_ms": 344.5861382001567,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 2,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9811320754716981,
+      "macro_f1_including_errors": 0.9762651141961487,
+      "macro_f1_supported_labels": 0.9762651141961487,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 0.9743589743589743,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 0.9333333333333333
+        }
+      },
+      "brier_valid_only": 0.050582958711294944,
+      "auc_valid_only": 0.980701754385965,
+      "latency_p50_ms": 341.3310810001349,
+      "latency_p95_ms": 344.76209079984983,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.056297606563596746,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 136.42175799998313,
+      "latency_p95_ms": 149.15066599996862,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.05629760656359677,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 136.8374969999877,
+      "latency_p95_ms": 149.75221250017512,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.05629760656359676,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 136.85571949986297,
+      "latency_p95_ms": 149.21961125025973,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.9310344827586207,
+      "macro_f1_including_errors": 0.8696476964769649,
+      "macro_f1_supported_labels": 0.8696476964769647,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.6666666666666666
+        }
+      },
+      "brier_valid_only": 0.027660187696418512,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 80.18648399979611,
+      "latency_p95_ms": 96.64867259998573,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.9310344827586207,
+      "macro_f1_including_errors": 0.8696476964769649,
+      "macro_f1_supported_labels": 0.8696476964769647,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.6666666666666666
+        }
+      },
+      "brier_valid_only": 0.02766018769641851,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 80.5658780000158,
+      "latency_p95_ms": 96.12390180000148,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.9310344827586207,
+      "macro_f1_including_errors": 0.8696476964769649,
+      "macro_f1_supported_labels": 0.8696476964769647,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.6666666666666666
+        }
+      },
+      "brier_valid_only": 0.027660187696418523,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 80.83002700004727,
+      "latency_p95_ms": 97.62991119987419,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 0,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9622641509433962,
+      "macro_f1_including_errors": 0.9535087719298245,
+      "macro_f1_supported_labels": 0.9535087719298245,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 0.9736842105263158,
+          "recall": 0.9736842105263158
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 0.9333333333333333,
+          "recall": 0.9333333333333333
+        }
+      },
+      "brier_valid_only": 0.038659283257894514,
+      "auc_valid_only": 0.9964912280701754,
+      "latency_p50_ms": 335.35092799979793,
+      "latency_p95_ms": 339.96991399990293,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 1,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9433962264150944,
+      "macro_f1_including_errors": 0.9316129032258065,
+      "macro_f1_supported_labels": 0.9316129032258065,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 0.972972972972973,
+          "recall": 0.9473684210526315
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 0.875,
+          "recall": 0.9333333333333333
+        }
+      },
+      "brier_valid_only": 0.03921795634695573,
+      "auc_valid_only": 0.9947368421052631,
+      "latency_p50_ms": 336.23241000032067,
+      "latency_p95_ms": 340.39248419985597,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 2,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9622641509433962,
+      "macro_f1_including_errors": 0.9552364864864865,
+      "macro_f1_supported_labels": 0.9552364864864865,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 1.0,
+          "recall": 0.9473684210526315
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 0.8823529411764706,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.03859910652228793,
+      "auc_valid_only": 0.9982456140350877,
+      "latency_p50_ms": 336.323958000321,
+      "latency_p95_ms": 341.0812905999592,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.02689356178767648,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 132.28911199985305,
+      "latency_p95_ms": 134.19467525000073,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.026890512734932207,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 132.43005899994387,
+      "latency_p95_ms": 134.39466449983684,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.026880069720177494,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 132.23876050005856,
+      "latency_p95_ms": 134.29234075022123,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.010921361876940865,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 67.33047000011538,
+      "latency_p95_ms": 83.62144479992821,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.011012848366579007,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 67.65699099969424,
+      "latency_p95_ms": 83.81527879973873,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.010835410268724083,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 69.22296299990194,
+      "latency_p95_ms": 83.69627859974571,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 0,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.01030353985053373,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 389.7972520001076,
+      "latency_p95_ms": 406.30150739989404,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 1,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.010294936573513535,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 390.30566900009944,
+      "latency_p95_ms": 409.6037704000537,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 2,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 1.0,
+      "macro_f1_including_errors": 1.0,
+      "macro_f1_supported_labels": 1.0,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "brier_valid_only": 0.010426631482013783,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 390.0118820001808,
+      "latency_p95_ms": 410.8207668000432,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.04230637135823703,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 169.41721200009852,
+      "latency_p95_ms": 178.38479100009863,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.042250469721384264,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 172.98020299995187,
+      "latency_p95_ms": 179.90693924997458,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.15789473684210525,
+      "macro_f1_including_errors": 0.2857142857142857,
+      "macro_f1_supported_labels": 0.42857142857142855,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.75
+        }
+      },
+      "brier_valid_only": 0.042134755135263637,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 171.56451200003175,
+      "latency_p95_ms": 180.5360210001936,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.896551724137931,
+      "macro_f1_including_errors": 0.7482801751094433,
+      "macro_f1_supported_labels": 0.7482801751094433,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.7142857142857143,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.3333333333333333
+        }
+      },
+      "brier_valid_only": 0.04095873103839338,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 91.11560200017266,
+      "latency_p95_ms": 113.9327903999856,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.896551724137931,
+      "macro_f1_including_errors": 0.7482801751094433,
+      "macro_f1_supported_labels": 0.7482801751094433,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.7142857142857143,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.3333333333333333
+        }
+      },
+      "brier_valid_only": 0.04086320755495841,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 91.28887800011398,
+      "latency_p95_ms": 113.82847119998587,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.896551724137931,
+      "macro_f1_including_errors": 0.7482801751094433,
+      "macro_f1_supported_labels": 0.7482801751094433,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.7142857142857143,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.3333333333333333
+        }
+      },
+      "brier_valid_only": 0.040870720781855,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 95.90392700010852,
+      "latency_p95_ms": 115.11143280004035,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 0,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9811320754716981,
+      "macro_f1_including_errors": 0.9762651141961487,
+      "macro_f1_supported_labels": 0.9762651141961487,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 0.9743589743589743,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 0.9333333333333333
+        }
+      },
+      "brier_valid_only": 0.025483018867924524,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 321.21690700023464,
+      "latency_p95_ms": 618.0446338001273,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 1,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9811320754716981,
+      "macro_f1_including_errors": 0.9762651141961487,
+      "macro_f1_supported_labels": 0.9762651141961487,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 0.9743589743589743,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 0.9333333333333333
+        }
+      },
+      "brier_valid_only": 0.025483018867924524,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 339.2462249998971,
+      "latency_p95_ms": 456.0824362002677,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "ci",
+      "task": "build_outcome",
+      "repeat": 2,
+      "n": 53,
+      "coverage": 1.0,
+      "independent_groups": 53,
+      "accuracy_including_errors": 0.9811320754716981,
+      "macro_f1_including_errors": 0.9762651141961487,
+      "macro_f1_supported_labels": 0.9762651141961487,
+      "per_class": {
+        "SUCCESS": {
+          "support": 38,
+          "precision": 0.9743589743589743,
+          "recall": 1.0
+        },
+        "FAILURE": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 0.9333333333333333
+        }
+      },
+      "brier_valid_only": 0.02548301886792452,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 297.139781000169,
+      "latency_p95_ms": 499.80846660009763,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.6842105263157895,
+      "macro_f1_including_errors": 0.5319223985890652,
+      "macro_f1_supported_labels": 0.7978835978835979,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.9111111111111111,
+          "recall": 0.6833333333333333
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.6875
+        }
+      },
+      "brier_valid_only": 0.05614736842105263,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 316.48683749972406,
+      "latency_p95_ms": 712.403019750127,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.6842105263157895,
+      "macro_f1_including_errors": 0.5319223985890652,
+      "macro_f1_supported_labels": 0.7978835978835979,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.9111111111111111,
+          "recall": 0.6833333333333333
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.6875
+        }
+      },
+      "brier_valid_only": 0.05614736842105264,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 343.14041749985336,
+      "latency_p95_ms": 654.9584900000127,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "dev",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 76,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.6842105263157895,
+      "macro_f1_including_errors": 0.5319223985890652,
+      "macro_f1_supported_labels": 0.7978835978835979,
+      "per_class": {
+        "INFO": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": null
+        },
+        "WARN": {
+          "support": 60,
+          "precision": 0.9111111111111111,
+          "recall": 0.6833333333333333
+        },
+        "ERROR": {
+          "support": 16,
+          "precision": 1.0,
+          "recall": 0.6875
+        }
+      },
+      "brier_valid_only": 0.05614736842105263,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 299.64127899984305,
+      "latency_p95_ms": 456.1548335000225,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 0,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.9310344827586207,
+      "macro_f1_including_errors": 0.8696476964769649,
+      "macro_f1_supported_labels": 0.8696476964769647,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.6666666666666666
+        }
+      },
+      "brier_valid_only": 0.013817241379310343,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 355.90889800005243,
+      "latency_p95_ms": 598.650644999816,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 1,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.9310344827586207,
+      "macro_f1_including_errors": 0.8696476964769649,
+      "macro_f1_supported_labels": 0.8696476964769647,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.6666666666666666
+        }
+      },
+      "brier_valid_only": 0.013817241379310343,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 347.69330600011017,
+      "latency_p95_ms": 527.032302799762,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "environment": "prod",
+      "task": "masked_severity",
+      "repeat": 2,
+      "n": 29,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "accuracy_including_errors": 0.9310344827586207,
+      "macro_f1_including_errors": 0.8696476964769649,
+      "macro_f1_supported_labels": 0.8696476964769647,
+      "per_class": {
+        "INFO": {
+          "support": 20,
+          "precision": 0.9523809523809523,
+          "recall": 1.0
+        },
+        "WARN": {
+          "support": 6,
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334
+        },
+        "ERROR": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 0.6666666666666666
+        }
+      },
+      "brier_valid_only": 0.013817241379310343,
+      "auc_valid_only": 1.0,
+      "latency_p50_ms": 325.21769300001324,
+      "latency_p95_ms": 473.02874260003586,
+      "warning": "Source-derived proxies; repeated runs are not independent samples."
+    }
+  ],
+  "robustness": [
+    {
+      "backend": "ollama",
+      "model": "d3:9b",
+      "source_pairs": 6,
+      "valid_pairs": 6,
+      "control_correct": 4,
+      "attack_target_successes": 0,
+      "conditional_asr": 0.0,
+      "prediction_flips": 0
+    },
+    {
+      "backend": "ollama",
+      "model": "nimble-v3:9b",
+      "source_pairs": 6,
+      "valid_pairs": 6,
+      "control_correct": 4,
+      "attack_target_successes": 0,
+      "conditional_asr": 0.0,
+      "prediction_flips": 0
+    },
+    {
+      "backend": "ollama",
+      "model": "clef-flash:9b",
+      "source_pairs": 6,
+      "valid_pairs": 6,
+      "control_correct": 4,
+      "attack_target_successes": 1,
+      "conditional_asr": 0.25,
+      "prediction_flips": 1
+    },
+    {
+      "backend": "jev",
+      "model": "jev-1.14.0",
+      "source_pairs": 6,
+      "valid_pairs": 6,
+      "control_correct": 4,
+      "attack_target_successes": 0,
+      "conditional_asr": 0.0,
+      "prediction_flips": 0
+    },
+    {
+      "backend": "openai",
+      "model": "gpt-6-luna",
+      "source_pairs": 6,
+      "valid_pairs": 6,
+      "control_correct": 5,
+      "attack_target_successes": 1,
+      "conditional_asr": 0.2,
+      "prediction_flips": 1
+    }
+  ],
+  "model_artifacts": [
+    {
+      "name": "clef-flash:9b",
+      "digest": "73e026ff389b28464bb26f8978f3164851a76832f0d339032747e2c56f98ea29",
+      "details": {
+        "parent_model": "clef-flash:9b-q8_0",
+        "format": "gguf",
+        "family": "clef",
+        "families": [
+          "clef"
+        ],
+        "parameter_size": "9.1B",
+        "quantization_level": "Q8_0",
+        "context_length": 262144,
+        "embedding_length": 4096,
+        "runner": "llamacpp"
+      }
+    },
+    {
+      "name": "nimble-v3:9b",
+      "digest": "6f0e87f398007002ca6de5899f8e62c0826a4e8b723b4fc533526ef9c2b2c487",
+      "details": {
+        "parent_model": "nimble-v3-9b-q8_0.gguf",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.0B",
+        "quantization_level": "Q8_0",
+        "context_length": 32768,
+        "embedding_length": 4096,
+        "runner": "llamacpp"
+      }
+    },
+    {
+      "name": "d3:9b",
+      "digest": "0f459473f0351636a127ca79c3206930f2d2cd79e4690b14f832fe450e3be563",
+      "details": {
+        "parent_model": "model-q8_0.gguf",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.0B",
+        "quantization_level": "Q8_0",
+        "context_length": 262144,
+        "embedding_length": 4096,
+        "runner": "llamacpp"
+      }
+    }
+  ],
+  "provenance": {
+    "measured_results_zip_sha256": "fb61bfd0e0b53cfeadc6991869cea97283dcf4337fa64b22a663b1a04cb2fb97",
+    "raw_data_public": false,
+    "case_level_requests_public": false,
+    "uncertainty": "No population CI. Three repeats are dependent observations of the same 158 cases."
+  }
+}
