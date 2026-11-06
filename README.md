@@ -132,6 +132,21 @@ Dự án đang ở giai đoạn **triển khai MVP**. Quyết định hiện t�
 
 ## Khởi chạy phiên bản hiện tại
 
+### Cấu hình cloud của instance
+
+Demo trên chính máy tính, không cần VPS: xem
+[hướng dẫn MVP local](docs/18-local-mvp-demo.md). Helper dùng Agent thật,
+SQLite/Elasticsearch local và yêu cầu người dùng nhập khóa cloud bằng prompt ẩn.
+
+Để dùng OpenAI gpt-6-luna cho RCA và Voyage voyage-4-lite (1024 chiều) cho embedding,
+dùng thêm compose.cloud.yaml. Cấu hình này ghi đè URL/model Ollama cũ và yêu cầu
+OPENAI_API_KEY, VOYAGE_API_KEY từ secret runtime. Xem
+[hướng dẫn chuyển provider và kiểm tra](docs/17-openai-voyage.md).
+
+    docker compose -f compose.yaml -f compose.cloud.yaml up -d --build
+
+Nạp lại knowledge vào index Voyage sau khi chuyển; index BGE cũ được giữ để rollback.
+
 Phiên bản hiện tại đã có health API, normalized pipeline-event ingestion, idempotency
 theo `event_id`, cập nhật trạng thái run, API đọc run, tự tạo một Incident `OPEN` khi
 run thất bại, API đọc Incident và pipeline-log ingestion/search trên Elasticsearch.

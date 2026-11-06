@@ -1,0 +1,9 @@
+version: 1
+reports:
+  data_quality: artifacts/data-quality-report.json
+pipeline:
+  stages:
+    - name: data-quality
+      run: node validate.mjs
+    - name: publish
+      run: node publish.mjs

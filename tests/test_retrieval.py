@@ -27,7 +27,7 @@ class DeterministicEmbeddingProvider:
     def __init__(self) -> None:
         self.embedded_texts: list[str] = []
 
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+    def embed(self, texts: Sequence[str], *, input_type: str = "document") -> list[list[float]]:
         embeddings: list[list[float]] = []
         for text in texts:
             self.embedded_texts.append(text)
@@ -47,7 +47,7 @@ class DeterministicEmbeddingProvider:
 
 
 class UnavailableEmbeddingProvider(DeterministicEmbeddingProvider):
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+    def embed(self, texts: Sequence[str], *, input_type: str = "document") -> list[list[float]]:
         raise EmbeddingUnavailable("Embedding service is temporarily unavailable")
 
 

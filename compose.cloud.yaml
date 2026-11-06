@@ -1,0 +1,15 @@
+# Explicit cloud selection. Legacy Ollama runtime variables cannot override it.
+# The two keys belong in the host secret runtime, never in Git.
+services:
+  api:
+    environment:
+      DATAOPS_LLM_PROVIDER: openai
+      DATAOPS_LLM_URL: https://api.openai.com/v1
+      DATAOPS_LLM_MODEL: gpt-6-luna
+      DATAOPS_LLM_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in the secret runtime}
+      DATAOPS_LLM_MAX_OUTPUT_TOKENS: "1200"
+      DATAOPS_EMBEDDING_PROVIDER: voyage
+      DATAOPS_EMBEDDING_URL: https://api.voyageai.com/v1
+      DATAOPS_EMBEDDING_MODEL: voyage-4-lite
+      DATAOPS_EMBEDDING_API_KEY: ${VOYAGE_API_KEY:?set VOYAGE_API_KEY in the secret runtime}
+      DATAOPS_EMBEDDING_DIMENSIONS: "1024"

@@ -97,7 +97,7 @@ class EmbeddingProvider(Protocol):
     model_name: str
     dimensions: int
 
-    def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
+    def embed(self, texts: Sequence[str], *, input_type: str = "document") -> list[list[float]]: ...
 
     def close(self) -> None: ...
 
@@ -202,7 +202,7 @@ class HybridRetriever:
         )
 
         embedding_input = _bounded_embedding_input(safe_title, safe_content)
-        embedding = self._embedder.embed([embedding_input])[0]
+        embedding = self._embedder.embed([embedding_input], input_type="document")[0]
         now = datetime.now(UTC)
         identity = f"{document_type}\0{safe_source_uri}"
         document_id = hashlib.sha256(identity.encode()).hexdigest()
@@ -286,7 +286,7 @@ class HybridRetriever:
         filters: KnowledgeFilter,
     ) -> HybridSearchResult:
         safe_query, redaction_count = redact_log_text(query)
-        embedding = self._embedder.embed([safe_query])[0]
+        embedding = self._embedder.embed([safe_query], input_type="query")[0]
         candidate_limit = min(max(top_k * 3, 10), 100)
         keyword_results = self._store.keyword_search(
             safe_query,

@@ -34,7 +34,7 @@ class GeminiEmbeddingProvider:
             api_key=api_key,
         )
 
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+    def embed(self, texts: Sequence[str], *, input_type: str = "document") -> list[list[float]]:
         if not texts:
             return []
 
@@ -52,6 +52,9 @@ class GeminiEmbeddingProvider:
             }
             for text in texts
         ]
+        if input_type == "query":
+            for request in requests:
+                request["taskType"] = "RETRIEVAL_QUERY"
 
         response: httpx.Response | None = None
         try:
