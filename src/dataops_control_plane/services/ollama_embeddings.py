@@ -30,7 +30,7 @@ class OllamaEmbeddingProvider:
             dimensions=settings.embedding_dimensions,
         )
 
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+    def embed(self, texts: Sequence[str], *, input_type: str = "document") -> list[list[float]]:
         if not texts:
             return []
         try:

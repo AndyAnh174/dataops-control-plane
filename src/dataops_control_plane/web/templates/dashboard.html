@@ -30,7 +30,7 @@
   <section id="project-form-{{ row.workspace.id }}" class="panel management-panel" hidden>
     <div class="panel-heading"><div><h3>Add a project</h3><p>Connect a repository to this workspace.</p></div><button class="icon-button" type="button" data-toggle="project-form-{{ row.workspace.id }}" aria-label="Close new project form">{{ icon("close") }}</button></div>
     <form class="project-form form-stack" data-api-form="project" data-workspace-id="{{ row.workspace.id }}">
-      <label>Project name<input name="name" placeholder="Customer pipeline" required></label><label>Provider<select name="provider"><option value="github">GitHub Actions</option></select></label><label>Repository<input name="project_ref" placeholder="owner/repository" required></label><label>Default branch<input name="default_branch" value="main" required></label><p class="form-error" role="alert" hidden></p>
+      <label>Project name<input name="name" placeholder="Customer pipeline" required></label><label>Provider<select name="provider"><option value="github">GitHub Actions</option><option value="local">Local demo</option></select></label><label>Repository / project reference<input name="project_ref" placeholder="owner/repository or local/mvp-demo" required></label><label>Default branch<input name="default_branch" value="main" required></label><p class="form-error" role="alert" hidden></p>
       <div class="form-actions"><button class="button button-secondary" type="button" data-toggle="project-form-{{ row.workspace.id }}">Cancel</button><button class="button button-primary" type="submit">Create project</button></div>
     </form>
   </section>

@@ -32,6 +32,9 @@
       <article class="code-card"><div class="code-heading"><code>{{ onboarding.dataops_config_path }}</code><button class="button button-ghost button-small" type="button" data-copy-target="dataops-yaml">{{ icon("copy", 14) }} Copy</button></div><pre id="dataops-yaml">{{ onboarding.dataops_config_yaml }}</pre></article>
     </div></div></section>
     <section class="setup-step"><div class="step-marker">3</div><div><h3>Push a commit</h3><p>The Agent will run your configured stages and report the results here.</p></div></section>
+  {% elif project.provider == "local" %}
+    <section class="setup-step"><div class="step-marker">1</div><div><h3>Run the Agent on this computer</h3><p>Create a project token, then run the local MVP helper from the Control Plane source directory. It uses the real portable Agent and synthetic input data.</p><div class="code-grid"><article class="code-card"><div class="code-heading"><code>Terminal 2</code></div><pre>python demo/local/runner.py agent --scenario both</pre></article><article class="code-card"><div class="code-heading"><code>After a failed run</code></div><pre>python demo/local/runner.py analyze</pre></article></div></div></section>
+    <section class="setup-step"><div class="step-marker">2</div><div><h3>Use the matching project reference</h3><p>The helper defaults to <code>local/mvp-demo</code>. This project's reference is <code>{{ project.project_ref }}</code>. If it differs, pass the corresponding project reference to the helper.</p><p>AI keys stay in the API process. The Agent only receives its project token. Local recovery execution is not configured by this helper.</p></div></section>
   {% else %}<p>Onboarding instructions are not available for this provider yet.</p>{% endif %}</div>
 </div></section>
 {% elif project_section == "tokens" %}

@@ -30,11 +30,13 @@ class Settings(BaseSettings):
     embedding_model: str = "bge-m3:567m"
     embedding_dimensions: int = 1024
     embedding_timeout_seconds: float = 60.0
+    embedding_api_key: SecretStr | None = None
     llm_api_key: SecretStr | None = None
     llm_url: str = "http://localhost:11434"
     llm_model: str = "gemma4:e2b"
     llm_timeout_seconds: float = 300.0
     llm_context_tokens: int = 8_192
+    llm_max_output_tokens: int = 1200
     rca_prompt_version: str = "rca-v1"
     rca_context_max_chars: int = 16_000
     github_api_url: str = "https://api.github.com"

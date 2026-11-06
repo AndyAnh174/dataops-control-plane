@@ -7,6 +7,7 @@ from dataops_control_plane.services.ollama_rca import OllamaRCAClient
 from dataops_control_plane.services.openai_rca import OpenAIRCAClient
 from dataops_control_plane.services.rca_agent import RCAClient
 from dataops_control_plane.services.retrieval import EmbeddingProvider
+from dataops_control_plane.services.voyage_embeddings import VoyageEmbeddingProvider
 
 
 def create_embedding_provider(settings: Settings) -> EmbeddingProvider:
@@ -15,9 +16,11 @@ def create_embedding_provider(settings: Settings) -> EmbeddingProvider:
         return GeminiEmbeddingProvider.from_settings(settings)
     if provider == "ollama":
         return OllamaEmbeddingProvider.from_settings(settings)
+    if provider == "voyage":
+        return VoyageEmbeddingProvider.from_settings(settings)
     raise ValueError(
         f"Unsupported embedding provider: '{settings.embedding_provider}' "
-        "(choose 'ollama' or 'gemini')"
+        "(choose 'ollama', 'gemini', or 'voyage')"
     )
 
 

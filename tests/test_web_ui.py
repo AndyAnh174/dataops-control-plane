@@ -130,6 +130,28 @@ def test_project_section_requires_a_web_login(client: TestClient, section: str) 
     assert response.headers["location"] == "/login"
 
 
+def test_local_project_has_portable_agent_instructions(
+    client: TestClient, navigation_project: dict[str, str]
+) -> None:
+    """Catches local users being shown GitHub-only onboarding or an unavailable-provider message."""
+    dashboard = client.get("/app")
+    assert '<option value="local">' in dashboard.text
+    created = client.post(
+        f"/api/v1/workspaces/{navigation_project['workspace_id']}/projects",
+        json={
+            "name": "Local MVP",
+            "provider": "local",
+            "project_ref": "local/mvp-demo",
+            "default_branch": "main",
+        },
+    )
+    assert created.status_code == 201
+    page = client.get(f"/app/projects/{created.json()['id']}/agent-setup")
+    assert page.status_code == 200
+    assert "demo/local/runner.py" in page.text
+    assert "GitHub Secrets" not in page.text
+
+
 def test_root_guides_a_new_instance_to_setup_and_an_owner_to_the_dashboard(
     client: TestClient,
 ) -> None:
