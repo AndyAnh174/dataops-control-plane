@@ -1,24 +1,45 @@
+{% from "_components.html" import icon %}
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ page_title }} · DataOps</title>
-    <link rel="stylesheet" href="/static/app.css">
-    <script src="/static/app.js" defer></script>
-  </head>
-  <body>
-    <header class="topbar">
-      <a class="brand" href="/">DataOps<span>Control Plane</span></a>
-      {% if user %}
-      <div class="account">
-        <span>{{ user.email }}</span>
-        <button class="button button-ghost" type="button" data-action="logout">Sign out</button>
-      </div>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light">
+  <title>{{ page_title }} · DataOps</title>
+  <link rel="stylesheet" href="/static/app.css?v=20261106"><script src="/static/app.js?v=20261106" defer></script>
+</head>
+<body class="{% if user %}app-layout{% else %}auth-page{% endif %}">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  {% if user %}
+  <aside class="sidebar" aria-label="Application navigation">
+    <a class="brand" href="/app"><span class="brand-mark" aria-hidden="true">{{ icon("activity", 20) }}</span><span>DataOps<small>Platform</small></span></a>
+    <div class="sidebar-section"><p class="nav-label">Workspace</p><nav>
+      <a class="nav-item {% if not project %}is-active{% endif %}" href="/app" {% if not project %}aria-current="page"{% endif %}>{{ icon("projects") }} Projects</a>
+      {% if project %}
+      <p class="nav-label current-project-label">Current project</p>
+      <a class="nav-item is-active" href="/app/projects/{{ project.id }}" title="{{ project.name }}">{{ icon("folder") }} <span>{{ project.name }}</span></a>
+      <a class="nav-item nav-subitem" href="/app/projects/{{ project.id }}#pipeline-runs">{{ icon("activity", 16) }} Pipeline runs</a>
+      <a class="nav-item nav-subitem" href="/app/projects/{{ project.id }}#agent-setup">{{ icon("terminal", 16) }} Agent setup</a>
+      <a class="nav-item nav-subitem" href="/app/projects/{{ project.id }}#agent-tokens">{{ icon("key", 16) }} Tokens</a>
       {% endif %}
-    </header>
-    <main class="shell">
-      {% block content %}{% endblock %}
-    </main>
-  </body>
+    </nav></div>
+    <div class="sidebar-bottom"><div class="deployment-label">{{ icon("shield", 15) }} Self-hosted platform</div><div class="account"><span class="avatar" aria-hidden="true">{{ user.email[:2]|upper }}</span><div class="account-info"><span title="{{ user.email }}">{{ user.email }}</span><small>Workspace account</small></div><button class="icon-button" type="button" data-action="logout" aria-label="Sign out" title="Sign out">{{ icon("logout", 17) }}</button></div></div>
+  </aside>
+  <div class="app-body">
+    <header class="topbar"><nav class="breadcrumbs" aria-label="Breadcrumb">{% block breadcrumbs %}<span>Workspace</span>{{ icon("chevron", 13) }}<span aria-current="page">Projects</span>{% endblock %}</nav><span class="topbar-label">DataOps Control Plane</span></header>
+    <main class="shell" id="main-content">{% block content %}{% endblock %}</main>
+    <footer class="app-footer"><span>DataOps Platform</span><span>Pipeline operations</span></footer>
+  </div>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-description">
+    <form id="confirm-form">
+      <div class="dialog-header"><h2 id="confirm-title">Confirm action</h2><button class="icon-button" type="button" data-close-confirm aria-label="Close confirmation">{{ icon("close") }}</button></div>
+      <div class="dialog-body"><p id="confirm-description"></p><label id="confirm-input-label" hidden><span id="confirm-input-caption"></span><input id="confirm-input" autocomplete="off" spellcheck="false"></label></div>
+      <div class="dialog-footer"><button class="button button-secondary" type="button" data-close-confirm>Cancel</button><button class="button button-danger-solid" id="confirm-submit" type="submit">Confirm</button></div>
+    </form>
+  </dialog>
+  {% else %}
+  <header class="auth-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">{{ icon("activity", 20) }}</span><span>DataOps<small>Platform</small></span></a><span class="topbar-label">Self-hosted</span></header>
+  <main class="auth-shell" id="main-content">{% block auth_content %}{% endblock %}</main>
+  <footer class="auth-footer">DataOps Control Plane</footer>
+  {% endif %}
+  <div class="toast" role="status" aria-live="polite" id="app-toast" hidden></div>
+</body>
 </html>

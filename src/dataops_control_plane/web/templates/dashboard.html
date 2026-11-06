@@ -1,104 +1,55 @@
 {% extends "base.html" %}
+{% from "_components.html" import icon, token_dialog %}
 {% block content %}
-<section class="hero">
-  <div>
-    <p class="eyebrow">Observe · Analyze · Recover · Verify</p>
-    <h1>Pipeline control center</h1>
-    <p>Connect a repository, issue a scoped token and let the Agent report every run.</p>
-  </div>
-  <span class="status-pill"><i></i> Platform ready</span>
-</section>
-
+{% set totals = namespace(projects=0) %}{% for row in workspace_rows %}{% set totals.projects = totals.projects + row.projects|length %}{% endfor %}
+<section class="page-header"><div><h1>Projects</h1><p>Repositories connected to your DataOps workspace.</p></div><div class="page-meta"><span><strong>{{ totals.projects }}</strong> project{{ "" if totals.projects == 1 else "s" }}</span><span><strong>{{ workspace_rows|length }}</strong> workspace{{ "" if workspace_rows|length == 1 else "s" }}</span></div></section>
 {% for row in workspace_rows %}
-<section class="workspace-section">
-  <div class="section-heading">
-    <div>
-      <p class="eyebrow">Workspace · {{ row.membership.role }}</p>
-      <h2>{{ row.workspace.name }}</h2>
-    </div>
-    <div class="button-row">
-      {% if row.membership.role == "OWNER" %}
-      <button class="button button-secondary" type="button" data-toggle="member-panel-{{ row.workspace.id }}">Manage access</button>
-      {% endif %}
-      {% if row.membership.role in ["OWNER", "OPERATOR"] %}
-      <button class="button button-secondary" type="button" data-toggle="project-form-{{ row.workspace.id }}">Add project</button>
-      {% endif %}
-    </div>
-  </div>
-
+<section class="workspace-section" id="workspace-{{ row.workspace.id }}">
+  <div class="section-heading"><div class="section-title">{{ icon("folder", 19) }}<h2>{{ row.workspace.name }}</h2><span class="role-label">{{ row.membership.role|title }}</span></div><div class="button-row">
+    {% if row.membership.role == "OWNER" %}<button class="button button-secondary" type="button" data-toggle="member-panel-{{ row.workspace.id }}" aria-controls="member-panel-{{ row.workspace.id }}" aria-expanded="false">{{ icon("users", 16) }} Manage access</button>{% endif %}
+    {% if row.membership.role in ["OWNER", "OPERATOR"] %}<button class="button button-primary" type="button" data-toggle="project-form-{{ row.workspace.id }}" aria-controls="project-form-{{ row.workspace.id }}" aria-expanded="false">{{ icon("plus", 16) }} Add project</button>{% endif %}
+  </div></div>
   {% if row.membership.role == "OWNER" %}
-  <div id="member-panel-{{ row.workspace.id }}" class="panel" hidden>
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">Workspace access</p>
-        <h3>Members</h3>
-      </div>
-    </div>
+  <section id="member-panel-{{ row.workspace.id }}" class="panel management-panel" hidden>
+    <div class="panel-heading"><div><h3>Workspace members</h3><p>Manage who can view and operate projects.</p></div><button class="icon-button" type="button" data-toggle="member-panel-{{ row.workspace.id }}" aria-label="Close members">{{ icon("close") }}</button></div>
     <form class="inline-form" data-api-form="member" data-workspace-id="{{ row.workspace.id }}">
-      <label>Email<input name="email" type="email" placeholder="member@example.com" required></label>
-      <label>Initial password<input name="initial_password" type="password" minlength="12" required></label>
+      <label>Email<input name="email" type="email" placeholder="member@company.com" required></label>
+      <label>Initial password<input name="initial_password" type="password" minlength="12" autocomplete="new-password" required></label>
       <label>Role<select name="role"><option value="VIEWER">Viewer</option><option value="OPERATOR">Operator</option><option value="OWNER">Owner</option></select></label>
-      <p class="form-error" role="alert" hidden></p>
-      <button class="button button-primary" type="submit">Add member</button>
+      <button class="button button-primary" type="submit">Add member</button><p class="form-error" role="alert" hidden></p>
     </form>
-    <div class="member-list">
-      {% for member in row.members %}
-      <div class="member-row" data-member-container>
-        <div><strong>{{ member.user.email }}</strong><small>{{ member.user.status }}</small></div>
-        <select aria-label="Role for {{ member.user.email }}" data-member-role="{{ member.membership.id }}" data-workspace-id="{{ row.workspace.id }}" {% if member.user.id == user.id %}disabled{% endif %}>
-          {% for role in ["OWNER", "OPERATOR", "VIEWER"] %}<option value="{{ role }}" {% if member.membership.role == role %}selected{% endif %}>{{ role|title }}</option>{% endfor %}
-        </select>
-        {% if member.user.id != user.id %}<button class="button button-danger" type="button" data-remove-member="{{ member.membership.id }}" data-workspace-id="{{ row.workspace.id }}" data-member-email="{{ member.user.email }}">Remove</button>{% endif %}
-        <p class="form-error" role="alert" hidden></p>
-      </div>
-      {% endfor %}
+    <div class="member-list">{% for member in row.members %}
+      <div class="member-row" data-member-container><span class="avatar" aria-hidden="true">{{ member.user.email[:2]|upper }}</span><div class="member-identity"><strong>{{ member.user.email }}</strong><small>{{ "You" if member.user.id == user.id else member.user.status|title }}</small></div>
+        <select aria-label="Role for {{ member.user.email }}" data-member-role="{{ member.membership.id }}" data-workspace-id="{{ row.workspace.id }}" {% if member.user.id == user.id %}disabled{% endif %}>{% for role in ["OWNER", "OPERATOR", "VIEWER"] %}<option value="{{ role }}" {% if member.membership.role == role %}selected{% endif %}>{{ role|title }}</option>{% endfor %}</select>
+        {% if member.user.id != user.id %}<button class="button button-danger" type="button" data-remove-member="{{ member.membership.id }}" data-workspace-id="{{ row.workspace.id }}" data-member-email="{{ member.user.email }}">Remove</button>{% else %}<span></span>{% endif %}<p class="form-error" role="alert" hidden></p>
+      </div>{% endfor %}
     </div>
-  </div>
+  </section>
   {% endif %}
-
   {% if row.membership.role in ["OWNER", "OPERATOR"] %}
-  <form id="project-form-{{ row.workspace.id }}" class="panel inline-form" data-api-form="project" data-workspace-id="{{ row.workspace.id }}" hidden>
-    <label>Name<input name="name" placeholder="Customer pipeline" required></label>
-    <label>Provider<select name="provider"><option value="github">GitHub Actions</option></select></label>
-    <label>Repository<input name="project_ref" placeholder="owner/repository" required></label>
-    <label>Default branch<input name="default_branch" value="main" required></label>
-    <p class="form-error" role="alert" hidden></p>
-    <button class="button button-primary" type="submit">Create project</button>
-  </form>
+  <section id="project-form-{{ row.workspace.id }}" class="panel management-panel" hidden>
+    <div class="panel-heading"><div><h3>Add a project</h3><p>Connect a repository to this workspace.</p></div><button class="icon-button" type="button" data-toggle="project-form-{{ row.workspace.id }}" aria-label="Close new project form">{{ icon("close") }}</button></div>
+    <form class="project-form form-stack" data-api-form="project" data-workspace-id="{{ row.workspace.id }}">
+      <label>Project name<input name="name" placeholder="Customer pipeline" required></label><label>Provider<select name="provider"><option value="github">GitHub Actions</option></select></label><label>Repository<input name="project_ref" placeholder="owner/repository" required></label><label>Default branch<input name="default_branch" value="main" required></label><p class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button class="button button-secondary" type="button" data-toggle="project-form-{{ row.workspace.id }}">Cancel</button><button class="button button-primary" type="submit">Create project</button></div>
+    </form>
+  </section>
   {% endif %}
-
-  <div class="card-grid">
-    {% for project in row.projects %}
-    <article class="project-card" data-project-container>
-      <div class="project-provider">{{ project.provider }}</div>
-      <h3>{{ project.name }}</h3>
-      <code>{{ project.project_ref }}</code>
-      <p>Default branch: {{ project.default_branch }}</p>
-      <a class="text-link" href="/app/projects/{{ project.id }}">Open project →</a>
-      <button class="button button-secondary" type="button" data-create-token="{{ project.id }}">Create Agent token</button>
-      {% if row.membership.role == "OWNER" %}
-      <button class="button button-danger" type="button" data-delete-project="{{ project.id }}" data-workspace-id="{{ project.workspace_id }}" data-project-ref="{{ project.project_ref }}">Remove project</button>
-      {% endif %}
-      <p class="form-error" role="alert" hidden></p>
-    </article>
-    {% else %}
-    <article class="empty-card">
-      <h3>No projects yet</h3>
-      <p>Add the first repository to generate its scoped Agent token.</p>
-    </article>
-    {% endfor %}
+  <div class="panel data-panel">
+    <div class="table-toolbar" data-table-controls="projects-{{ row.workspace.id }}"><label class="search-field">{{ icon("search", 16) }}<span class="sr-only">Search projects in {{ row.workspace.name }}</span><input type="search" placeholder="Search projects…" data-search></label><span class="toolbar-meta">{{ row.projects|length }} projects</span></div>
+    <div class="table-wrap"><table id="projects-{{ row.workspace.id }}" class="project-table">
+      <caption class="sr-only">Projects in {{ row.workspace.name }}</caption><thead><tr><th scope="col">Project</th><th scope="col">Provider</th><th scope="col">Default branch</th><th scope="col" class="align-right">Actions</th></tr></thead><tbody>
+      {% for project in row.projects %}<tr data-search-row data-project-container>
+        <td><div class="project-cell"><span class="project-symbol">{{ icon("folder", 18) }}</span><div><a class="entity-name" href="/app/projects/{{ project.id }}">{{ project.name }}</a><span class="cell-secondary mono">{{ project.project_ref }}</span></div></div></td>
+        <td><span class="provider-label">{{ "GitHub Actions" if project.provider == "github" else project.provider }}</span></td><td><span class="branch-label">{{ icon("branch", 14) }} {{ project.default_branch }}</span></td>
+        <td class="align-right"><div class="row-actions"><a class="button button-ghost button-small" href="/app/projects/{{ project.id }}">Open {{ icon("arrow", 14) }}</a>
+        {% if row.membership.role in ["OWNER", "OPERATOR"] %}<button class="icon-button" type="button" data-create-token="{{ project.id }}" aria-label="Create Agent token for {{ project.name }}" title="Create Agent token">{{ icon("key", 16) }}</button>{% if row.membership.role == "OWNER" %}<button class="icon-button danger-icon" type="button" data-delete-project="{{ project.id }}" data-workspace-id="{{ project.workspace_id }}" data-project-ref="{{ project.project_ref }}" aria-label="Remove {{ project.name }}" title="Remove project">{{ icon("trash", 16) }}</button>{% endif %}{% endif %}
+        </div><p class="form-error" role="alert" hidden></p></td>
+      </tr>{% else %}<tr><td colspan="4"><div class="empty-state">{{ icon("folder", 28) }}<h3>No projects yet</h3><p>{% if row.membership.role in ["OWNER", "OPERATOR"] %}Add a repository to start receiving pipeline runs.{% else %}Your workspace owner can connect a repository.{% endif %}</p></div></td></tr>{% endfor %}
+      <tr data-filter-empty hidden><td colspan="4"><div class="empty-state"><h3>No matching projects</h3><p>Try another project name or repository.</p></div></td></tr>
+    </tbody></table></div>
   </div>
 </section>
-{% endfor %}
-
-<dialog id="token-dialog">
-  <div class="dialog-content">
-    <p class="eyebrow">Shown once</p>
-    <h2>Copy your Agent token</h2>
-    <p>Store it as <code>DATAOPS_TOKEN</code> in your provider secret store.</p>
-    <pre id="token-secret"></pre>
-    <p class="form-error" role="alert" hidden></p>
-    <button class="button button-primary" type="button" data-action="close-token">Done</button>
-  </div>
-</dialog>
+{% else %}<div class="panel empty-state">{{ icon("users", 28) }}<h2>No workspace access</h2><p>Ask your workspace owner to add your account.</p></div>{% endfor %}
+{{ token_dialog() }}
 {% endblock %}

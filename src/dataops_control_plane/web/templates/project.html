@@ -1,98 +1,39 @@
 {% extends "base.html" %}
+{% from "_components.html" import icon, status_badge, timestamp, token_dialog %}
+{% block breadcrumbs %}<a href="/app">Projects</a>{{ icon("chevron", 13) }}<span aria-current="page">{{ project.name }}</span>{% endblock %}
 {% block content %}
-<a class="back-link" href="/app">← All projects</a>
-<section class="project-hero" data-project-container>
-  <div>
-    <p class="eyebrow">{{ project.provider }} · {{ project.default_branch }}</p>
-    <h1>{{ project.name }}</h1>
-    <code>{{ project.project_ref }}</code>
-  </div>
-  <div class="project-actions">
-    <button class="button button-primary" type="button" data-create-token="{{ project.id }}">Create Agent token</button>
-    {% if can_delete_project %}
-    <button class="button button-danger" type="button" data-delete-project="{{ project.id }}" data-workspace-id="{{ project.workspace_id }}" data-project-ref="{{ project.project_ref }}">Remove project</button>
-    {% endif %}
-    <p class="form-error" role="alert" hidden></p>
+<section class="page-header" data-project-container><div><div class="heading-with-icon"><span class="project-symbol project-symbol-large">{{ icon("folder", 22) }}</span><h1>{{ project.name }}</h1></div><p class="repository-meta"><span class="mono">{{ project.project_ref }}</span><span class="meta-divider"></span>{{ "GitHub Actions" if project.provider == "github" else project.provider }}<span class="meta-divider"></span>{{ icon("branch", 14) }} {{ project.default_branch }}</p></div>
+  <div class="project-actions">{% if can_manage_tokens %}<button class="button button-primary" type="button" data-create-token="{{ project.id }}">{{ icon("key", 16) }} Create Agent token</button>{% endif %}
+    {% if can_delete_project %}<details class="row-menu"><summary class="icon-button bordered" aria-label="Project settings" title="Project settings">{{ icon("more") }}</summary><div class="row-menu-content"><button class="text-danger" type="button" data-delete-project="{{ project.id }}" data-workspace-id="{{ project.workspace_id }}" data-project-ref="{{ project.project_ref }}">Remove project</button></div></details>{% endif %}<p class="form-error" role="alert" hidden></p>
   </div>
 </section>
-
-<section class="workspace-section">
-  <div class="section-heading">
-    <div><p class="eyebrow">GitHub onboarding</p><h2>Connect the Agent</h2></div>
-  </div>
-  {% if onboarding %}
-  <div class="setup-grid">
-    <article class="panel setup-card">
-      <p class="step-number">01 · Repository secrets</p>
-      <p>Add these under <strong>Settings → Secrets and variables → Actions</strong>.</p>
-      {% for secret in onboarding.required_secrets %}
-      <div class="secret-row">
-        <code>{{ secret.name }}</code>
-        <span>{{ secret.value or "Use the token shown when created" }}</span>
-      </div>
-      {% endfor %}
-    </article>
-    <article class="panel setup-card">
-      <p class="step-number">02 · Active tokens</p>
-      {% for token in tokens %}
-      <div class="token-row">
-        <span><strong>{{ token.name }}</strong><br><code>{{ token.token_prefix }}…</code></span>
-        <span class="token-state">{% if token.revoked_at %}Revoked{% else %}Active{% endif %}</span>
-      </div>
-      {% else %}<p>No tokens created.</p>{% endfor %}
-    </article>
-  </div>
-  <div class="code-grid">
-    <article class="panel code-card">
-      <div class="code-heading">
-        <div><p class="step-number">03 · Workflow</p><code>{{ onboarding.workflow_path }}</code></div>
-        <button class="button button-ghost" type="button" data-copy-target="workflow-yaml">Copy</button>
-      </div>
-      <pre id="workflow-yaml">{{ onboarding.workflow_yaml }}</pre>
-    </article>
-    <article class="panel code-card">
-      <div class="code-heading">
-        <div><p class="step-number">04 · Pipeline config</p><code>{{ onboarding.dataops_config_path }}</code></div>
-        <button class="button button-ghost" type="button" data-copy-target="dataops-yaml">Copy</button>
-      </div>
-      <pre id="dataops-yaml">{{ onboarding.dataops_config_yaml }}</pre>
-    </article>
-  </div>
-  {% else %}
-  <article class="panel setup-card"><p>Onboarding instructions are not available for this provider yet.</p></article>
-  {% endif %}
+<nav class="section-nav" aria-label="Project sections"><a href="#pipeline-runs">Pipeline runs <span>{{ runs|length }}</span></a><a href="#agent-setup">Agent setup</a><a href="#agent-tokens">Tokens</a></nav>
+<section class="workspace-section" id="pipeline-runs">
+  <div class="section-heading"><div><h2>Pipeline runs</h2><p>Builds and deployments reported by the Agent.</p></div><a class="text-link" href="#agent-setup">{{ icon("terminal", 16) }} Connection instructions</a></div>
+  <div class="panel data-panel"><div class="table-toolbar" data-table-controls="run-table">
+    <label class="search-field">{{ icon("search", 16) }}<span class="sr-only">Search pipeline runs</span><input type="search" placeholder="Search run, commit or branch…" data-search></label><label class="filter-field"><span class="sr-only">Run status</span><select data-status-filter><option value="">All statuses</option><option value="success">Success</option><option value="failed">Failed</option><option value="running">Running</option><option value="canceled">Canceled</option></select></label><span class="toolbar-meta" data-filter-count>{{ runs|length }} runs</span>
+  </div><div class="table-wrap"><table id="run-table"><caption class="sr-only">Pipeline runs for {{ project.name }}</caption><thead><tr><th scope="col">Run</th><th scope="col">Status</th><th scope="col">Branch / commit</th><th scope="col">Incident</th><th scope="col">Last event</th><th scope="col"><span class="sr-only">Details</span></th></tr></thead><tbody>
+    {% for run in runs %}<tr data-search-row data-status="{{ run.status|lower }}">
+      <td><a class="entity-name" href="/app/runs/{{ run.id }}">#{{ run.external_run_id }}</a><span class="cell-secondary">Attempt {{ run.attempt }}{% if run.failed_stage %} · {{ run.failed_stage }}{% endif %}</span></td><td>{{ status_badge(run.status) }}</td>
+      <td><span class="branch-label">{{ icon("branch", 14) }} {{ run.branch }}</span><span class="cell-secondary mono" title="{{ run.commit_sha }}">{{ run.commit_sha[:10] }}</span></td>
+      <td>{% if incident_by_run.get(run.id) %}<a class="incident-link" href="/app/incidents/{{ incident_by_run.get(run.id).id }}"><span class="incident-dot" aria-hidden="true"></span>{{ incident_by_run.get(run.id).status|replace('_', ' ')|title }}</a>{% else %}<span class="muted">—</span>{% endif %}</td><td class="date-cell">{{ timestamp(run.last_event_at) }}</td><td class="align-right"><a class="icon-button" href="/app/runs/{{ run.id }}" aria-label="View run {{ run.external_run_id }}">{{ icon("chevron", 16) }}</a></td>
+    </tr>{% else %}<tr><td colspan="6"><div class="empty-state">{{ icon("activity", 28) }}<h3>No runs received yet</h3><p>Commit the Agent workflow to start reporting pipeline activity.</p><a class="button button-secondary" href="#agent-setup">Connect the Agent {{ icon("arrow", 16) }}</a></div></td></tr>{% endfor %}
+    <tr data-filter-empty hidden><td colspan="6"><div class="empty-state"><h3>No matching runs</h3><p>Change the search or status filter.</p></div></td></tr>
+  </tbody></table></div></div>
 </section>
-
-<section class="workspace-section">
-  <div class="section-heading"><div><p class="eyebrow">Recent activity</p><h2>Pipeline runs</h2></div></div>
-  <div class="table-wrap panel">
-    <table>
-      <thead><tr><th>Run</th><th>Commit</th><th>Branch</th><th>Status</th><th>Incident</th><th>Updated</th></tr></thead>
-      <tbody>
-      {% for run in runs %}
-      <tr>
-        <td><a href="/app/runs/{{ run.id }}">{{ run.external_run_id }}</a></td>
-        <td><code>{{ run.commit_sha[:10] }}</code></td>
-        <td>{{ run.branch }}</td>
-        <td><span class="run-status run-{{ run.status|lower }}">{{ run.status }}</span></td>
-        <td>{% if incident_by_run.get(run.id) %}<a href="/app/incidents/{{ incident_by_run.get(run.id).id }}">{{ incident_by_run.get(run.id).status }}</a>{% else %}—{% endif %}</td>
-        <td>{{ run.last_event_at }}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="6">No runs received yet. Commit the Agent workflow to begin.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<section class="workspace-section" id="agent-setup"><details class="panel disclosure" {% if not runs %}open{% endif %}>
+  <summary><span class="disclosure-heading">{{ icon("terminal", 19) }}<span><strong>Connect the Agent</strong><small>Repository secrets and workflow configuration</small></span></span>{{ icon("down", 16) }}</summary>
+  <div class="disclosure-body">{% if onboarding %}
+    <section class="setup-step"><div class="step-marker">1</div><div><h3>Add repository secrets</h3><p>In GitHub, open <strong>Settings → Secrets and variables → Actions</strong>.</p><dl class="secret-list">{% for secret in onboarding.required_secrets %}<div><dt><code>{{ secret.name }}</code></dt><dd>{{ secret.value or "Use the token shown when created" }}</dd></div>{% endfor %}</dl></div></section>
+    <section class="setup-step"><div class="step-marker">2</div><div><h3>Add the workflow and pipeline config</h3><p>Commit both files to your repository.</p><div class="code-grid">
+      <article class="code-card"><div class="code-heading"><code>{{ onboarding.workflow_path }}</code><button class="button button-ghost button-small" type="button" data-copy-target="workflow-yaml">{{ icon("copy", 14) }} Copy</button></div><pre id="workflow-yaml">{{ onboarding.workflow_yaml }}</pre></article>
+      <article class="code-card"><div class="code-heading"><code>{{ onboarding.dataops_config_path }}</code><button class="button button-ghost button-small" type="button" data-copy-target="dataops-yaml">{{ icon("copy", 14) }} Copy</button></div><pre id="dataops-yaml">{{ onboarding.dataops_config_yaml }}</pre></article>
+    </div></div></section>
+    <section class="setup-step"><div class="step-marker">3</div><div><h3>Push a commit</h3><p>The Agent will run your configured stages and report the results here.</p></div></section>
+  {% else %}<p>Onboarding instructions are not available for this provider yet.</p>{% endif %}</div>
+</details></section>
+<section class="workspace-section" id="agent-tokens"><div class="section-heading"><div><h2>Agent tokens</h2><p>Credentials issued for this project. Secret values are shown only at creation.</p></div></div>
+  <div class="panel data-panel table-wrap"><table><caption class="sr-only">Agent tokens for {{ project.name }}</caption><thead><tr><th scope="col">Name</th><th scope="col">Prefix</th><th scope="col">State</th><th scope="col">Expires</th></tr></thead><tbody>{% for token in tokens %}<tr><td class="cell-strong">{{ token.name }}</td><td><code>{{ token.token_prefix }}…</code></td><td><span class="neutral-badge">{{ "Revoked" if token.revoked_at else "Issued" }}</span></td><td class="date-cell">{{ timestamp(token.expires_at) }}</td></tr>{% else %}<tr><td colspan="4"><div class="empty-state"><p>No tokens created for this project.</p></div></td></tr>{% endfor %}</tbody></table></div>
 </section>
-
-<dialog id="token-dialog">
-  <div class="dialog-content">
-    <p class="eyebrow">Shown once</p><h2>Copy your Agent token</h2>
-    <p>Store it as <code>DATAOPS_TOKEN</code> in GitHub Secrets.</p>
-    <pre id="token-secret"></pre>
-    <p class="form-error" role="alert" hidden></p>
-    <button class="button button-primary" type="button" data-action="close-token">Done</button>
-  </div>
-</dialog>
+{{ token_dialog() }}
 {% endblock %}

@@ -224,7 +224,7 @@ def test_incident_page_exposes_rca_policy_and_pending_approval(client: TestClien
     assert response.status_code == 200
     assert "Rows outside the amount contract" in response.text
     assert "QUARANTINE" in response.text
-    assert "PENDING" in response.text
+    assert "Pending" in response.text
     assert "Approve plan" in response.text
     assert "Reject plan" in response.text
     assert "PLAN_CREATED" in response.text

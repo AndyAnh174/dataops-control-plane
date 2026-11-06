@@ -73,7 +73,7 @@ def test_root_guides_a_new_instance_to_setup_and_an_owner_to_the_dashboard(
     assert owner_visit.headers["location"] == "/app"
     assert dashboard.status_code == 200
     assert "AndyAnh Lab" in dashboard.text
-    assert "Pipeline control center" in dashboard.text
+    assert "<h1>Projects</h1>" in dashboard.text
 
 
 def test_project_page_shows_its_pipeline_run_and_incident(
@@ -129,8 +129,8 @@ def test_project_page_shows_its_pipeline_run_and_incident(
     assert page.status_code == 200
     assert "Demo Pipeline" in page.text
     assert "web-ui-run-42" in page.text
-    assert "FAILED" in page.text
-    assert "OPEN" in page.text
+    assert "Failed" in page.text
+    assert "Open" in page.text
     assert 'data-delete-project="' in page.text
 
 

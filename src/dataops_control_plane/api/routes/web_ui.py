@@ -180,6 +180,7 @@ def project_page(project_id: UUID, request: Request, session: SessionDep):
             "user": user,
             "project": project,
             "can_delete_project": membership.role == "OWNER",
+            "can_manage_tokens": membership.role in {"OWNER", "OPERATOR"},
             "tokens": tokens,
             "runs": runs,
             "incident_by_run": incident_by_run,
